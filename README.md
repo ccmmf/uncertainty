@@ -4,20 +4,6 @@ Trying something new:
 - putting configuration in `000-config.yml` and reading with `config::get(file = "000-config.yml")`.
 - Added PEcAn settings template (`template.xml`) is a placeholder from the workflows repository; needs sensitivity blocks added. config.yml should not duplicate content of the pecan.xml 
 
-Repository layout:
-- `R/` – reusable helper functions for each workflow component.
-- `scripts/` – orchestration entry points (`001`, `011`, `021`, `031` series).
-- `analysis/` – Quarto notebooks for future reporting.
-- `data/`, `results/` – inputs and derived outputs.
-
-## Quickstart
-
-1. Edit `000-config.yml` to match your environment.
-2. Run `Rscript scripts/001_setup_design_points.R` to materialize `data/sa_design_points.csv`.
-3. Work through the remaining scripts in numerical order as functionality lands.
-
-See `instructions.md` for the current iteration plan and `instructions_v0.md` for the detailed long-form design.
-
 ## Repository structure:
 
 <!--not set in stone!-->
@@ -29,14 +15,14 @@ See `instructions.md` for the current iteration plan and `instructions_v0.md` fo
 │   ├── global_sensitivity.R
 │   ├── local_sensitivity.R
 │   └── variance_decomposition.R
-├── analysis
+├── analysis/
 │   ├── global_sensitivity.qmd
 │   ├── local_sensitivity.qmd
 │   └── variance_decomposition.qmd
-├── data_raw
+├── data_raw/   
 │   ├── sa_design_points.csv
 │   └── template.xml
-├── scripts
+├── scripts/
 │   ├── 001_setup_design_points.R
 │   ├── 011_run_local_sensitivity.R
 │   ├── 012_aggregate_sensitivity.R
@@ -45,8 +31,10 @@ See `instructions.md` for the current iteration plan and `instructions_v0.md` fo
 │   ├── 023_compute_sobol_indices.R
 │   ├── 031_partition_variance.R
 │   └── 032_hierarchical_variance.R
-├── documentation
-├── tests
-└── results
+├── docs/
+├── tests/
+└── reports/
     └── uncertainty_analysis.qmd
 ```
+
+note: `data_raw` is for data of limited size (<MB) that is input to the pipeline; small outputs from these workflows can go in 'data/' but most inputs and outputs will go in one of the outdirs listed in config.yml
