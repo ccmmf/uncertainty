@@ -1,8 +1,7 @@
 # Uncertainty Analysis
 
-Trying something new:
-- putting configuration in `000-config.yml` and reading with `config::get(file = "000-config.yml")`.
-- Added PEcAn settings template (`template.xml`) is a placeholder from the workflows repository; needs sensitivity blocks added. config.yml should not duplicate content of the pecan.xml 
+Uncertainty and sensitivity analysis of crop model outputs, including local/global sensitivity, variance decomposition, and CSV-driven design points integrated with model templates.
+
 
 ## Repository structure:
 
@@ -38,3 +37,9 @@ Trying something new:
 ```
 
 note: `data_raw` is for data of limited size (<MB) that is input to the pipeline; small outputs from these workflows can go in 'data/' but most inputs and outputs will go in one of the outdirs listed in config.yml
+
+## Configuration
+
+Trying something new:
+- putting configuration in `000-config.yml` and reading with `config::get(file = "000-config.yml")`.
+- Added PEcAn settings template (`template.xml`) is a placeholder from the workflows repository; needs sensitivity blocks added. config.yml should not duplicate content of the pecan.xml 
