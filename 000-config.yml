@@ -11,5 +11,14 @@ default:
   pecan_xml_template: "data_raw/template.xml"
   sites:
     design_points_file: "data_raw/sa_design_points.csv"
+  sensitivity:
+    sigma_levels: [-2, -1, 1, 2] # for faster runs
+  # Or use [-3, -2, -1, 1, 2, 3] Standard
+  # ensemble:
+  #   size: 20
+  #   n_met: 10
+  # run:
+  #   start_date: "2016-01-01"
+  #   end_date: "2023-12-31"
   projection:
     ca_albers_crs: 3310
