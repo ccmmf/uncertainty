@@ -11,11 +11,13 @@
  <pfts>
   <pft>
    <name>temperate.deciduous</name>
-   <posterior.files>pfts/temperate.deciduous/post.distns.Rdata</posterior.files>
+   <posterior.files><!-- inserted at config time --></posterior.files>
+   <outdir><!-- inserted at config time --></outdir>
   </pft>
   <pft>
    <name>grass</name>
-   <posterior.files>pfts/grass/post.distns.Rdata</posterior.files>
+   <posterior.files><!-- inserted at config time --></posterior.files>
+   <outdir><!-- inserted at config time --></outdir>
   </pft>
  </pfts>
  <ensemble>
@@ -40,13 +42,28 @@
   <start.year><!-- inserted at config time --></start.year>
   <end.year><!-- inserted at config time --></end.year>
  </ensemble>
+ <sensitivity.analysis>
+  <quantiles>
+   <sigma>-3</sigma>
+   <sigma>-2</sigma>
+   <sigma>-1</sigma>
+   <sigma>1</sigma>
+   <sigma>2</sigma>
+   <sigma>3</sigma>
+  </quantiles>
+  <variable>NPP</variable>
+  <variable>TotSoilCarb</variable>
+  <variable>AbvGrndWood</variable>
+  <start.year><!-- inserted at config time --></start.year>
+  <end.year><!-- inserted at config time --></end.year>
+ </sensitivity.analysis>
  <model>
   <id>99000000003</id>
   <type>SIPNET</type>
   <revision>git</revision>
   <delete.raw>FALSE</delete.raw>
-  <binary>sipnet.git</binary>
-  <prerun>cp data/events.in @RUNDIR@</prerun>
+  <binary>../sipnet.git</binary>
+  <prerun>cp /projectnb2/dietzelab/ccmmf/ensemble/events.in @RUNDIR@</prerun>
  </model>
  <run>
   <site><!-- inserted at config time --></site>
@@ -69,13 +86,8 @@
   <name>localhost</name>
   <outdir>output/out</outdir>
   <rundir>output/run</rundir>
-  <qsub>sbatch -J @NAME@ -o @STDOUT@ -e @STDERR@</qsub>
-  <qsub.jobid>.*job ([0-9]+).*</qsub.jobid>
-  <qstat>squeue -j @JOBID@ || echo DONE</qstat>
-  <modellauncher>
-    <binary>slurm_array_submit.sh</binary>
-    <qsub.extra>-a 1-@NJOBS@</qsub.extra>
-    <Njobmax>1000</Njobmax>
-  </modellauncher>
+  <qsub>qsub -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash</qsub>
+  <qsub.jobid>Your job ([0-9]+) .*</qsub.jobid>
+  <qstat>qstat -j @JOBID@ || echo DONE</qstat>
  </host>
 </pecan>
