@@ -1,0 +1,458 @@
+#' Aggregate Local Sensitivity Results Across Sites
+#'
+#' @param sensitivity_outdir Directory containing PEcAn sensitivity outputs
+#' @param design_points Data frame of site metadata
+#' @param response_vars Vector of response variables
+#' @return data frame of aggregated SA results
+aggregate_local_sa <- function(sensitivity_outdir,
+                               design_points,
+                               response_vars) {
+
+  # Read PEcAn settings
+  settings <- PEcAn.settings::read.settings(
+    file.path(sensitivity_outdir, "pecan.CONFIGS.xml")
+  )
+  
+  # Extract ensemble_id -> site_id mapping
+  workflow_site_map <- purrr::map_dfr(
+    names(settings$sensitivity.analysis),
+    function(run_name) {
+      if (grepl("^site\\.", run_name)) {
+        data.frame(
+          ensemble_id = settings$sensitivity.analysis[[run_name]]$ensemble.id,
+          site_id = gsub("^site\\.", "", run_name),
+          stringsAsFactors = FALSE
+        )
+      }
+    }
+  )
+  
+  # Find sensitivity result files
+  # sensitivity.results.<ens_id>.<variable>.<start_date>.<end_date>.Rdata
+  sa_files <- list.files(
+    path = sensitivity_outdir,
+    pattern = "sensitivity\\.results\\..*\\.Rdata$",
+    full.names = TRUE,
+    recursive = TRUE
+  )
+
+  # Process all files
+  all_results <- purrr::map_dfr(sa_files, function(sa_file) {
+    load(sa_file)
+    # Extract identifiers from filename
+    filename_parts <- strsplit(basename(sa_file), "\\.")[[1]]
+    ensemble_id <- filename_parts[3]
+    response_var <- filename_parts[4]
+    # Lookup site_id
+    site_id <- workflow_site_map$site_id[workflow_site_map$ensemble_id == ensemble_id]
+    
+    # Process PFTs
+    purrr::map_dfr(names(sensitivity.results), function(pft_name) {
+      var_data <- sensitivity.results[[pft_name]]$variance.decomposition.output
+      
+      data.frame(
+        site_id = site_id,
+        pft = pft_name,
+        parameter = names(var_data$coef.vars),
+        response_var = response_var,
+        coefficient_of_variation = var_data$coef.vars,
+        elasticity = var_data$elasticities,
+        partial_variance = var_data$partial.variances,
+        sensitivity = var_data$sensitivities,
+        variance_explained = var_data$partial.variances / 
+          sum(var_data$partial.variances, na.rm = TRUE) * 100,
+        stringsAsFactors = FALSE
+      )
+    })
+  })
+
+  # By default, PEcAn runs sensitivity analysis for ALL PFTs configured in the model, at each site
+  # (i.e., sensitivity.results contains parameters for both e.g. grass and temperate.deciduous at every site).
+  # This creates results for PFTs NOT actually present at a given site (e.g, tree results at a grass site).
+  # Workaround: To ensure only site-specific sensitivity results,
+  # we filter to site-PFT pairs actually in the experiment design.
+  # This is achieved by a tidy semi_join on (site_id, pft) from design_points.
+  # This step removes sensitivity output for PFTs not assigned to that site (e.g, avoids tree PFTs at grass sites).
+  
+  site_pft_lookup <- design_points |> dplyr::select(site_id, pft)
+  all_results <- all_results |>
+    dplyr::semi_join(site_pft_lookup, by = c("site_id", "pft")) |>
+    dplyr::left_join(
+      design_points |> dplyr::select(site_id, lat, lon),
+      by = "site_id"
+    ) |>
+    # Reorder so lat, lon appear right after site_id
+    dplyr::relocate(lat, lon, .after = site_id) |>
+    dplyr::arrange(site_id, response_var, dplyr::desc(abs(elasticity)))
+
+  return(all_results)
+}
+
+
+
+#' Analyze Sensitivity Along Environmental Gradients
+#'
+#' @param aggregated_results Data frame from aggregate_local_sa()
+#' @param env_covariates Site environmental data
+#' @param gradient_vars Covariates to test
+#' @param min_sites Minimum sites for regression
+#' @param significance_level P-value threshold
+#' @param r2_threshold R^2 threshold
+#' @return List with regression_results and significant_gradients
+
+analyze_environmental_gradients <- function(aggregated_results,
+                                             env_covariates,
+                                             gradient_vars = c("MAT", "MAP", "clay", "ocd", "twi"),
+                                             min_sites = 5,
+                                             significance_level = 0.05,
+                                             r2_threshold = 0.1) {
+  
+  PEcAn.logger::logger.info("Analyzing environmental gradients")
+  
+  ## Join data
+  analysis_data <- aggregated_results |>
+    dplyr::left_join(env_covariates, by = "site_id") |>
+    dplyr::filter(dplyr::if_all(dplyr::all_of(gradient_vars), ~!is.na(.x)))
+  
+  ## Fit regressions using pmap_dfr (avoids rowwise issues)
+  regression_results <- tidyr::expand_grid(
+    parameter = unique(analysis_data$parameter),
+    response_var = unique(analysis_data$response_var),
+    gradient_var = gradient_vars
+  ) |>
+    purrr::pmap_dfr(function(parameter, response_var, gradient_var) {
+      
+      # Now all three arguments are directly accessible as VALUES!
+      data_subset <- analysis_data |>
+        dplyr::filter(
+          parameter == !!parameter,
+          response_var == !!response_var,
+          !is.na(elasticity),
+          !is.na(.data[[gradient_var]])
+        )
+      
+      if (nrow(data_subset) < min_sites) return(NULL)
+      
+      fit <- tryCatch(
+        lm(as.formula(paste0("abs(elasticity) ~ ", gradient_var)), data = data_subset),
+        error = function(e) NULL
+      )
+      
+      if (is.null(fit)) return(NULL)
+      
+      fit_summary <- broom::glance(fit)
+      fit_coef <- broom::tidy(fit)
+      
+      data.frame(
+        parameter = parameter,
+        response_var = response_var,
+        gradient_var = gradient_var,
+        r_squared = fit_summary$r.squared,
+        adj_r_squared = fit_summary$adj.r.squared,
+        p_value = fit_coef$p.value[2],
+        slope = fit_coef$estimate[2],
+        intercept = fit_coef$estimate[1],
+        n_sites = nrow(data_subset),
+        stringsAsFactors = FALSE
+      )
+    })
+  
+  ## Filter significant
+  significant_gradients <- regression_results |>
+    dplyr::filter(
+      p_value < significance_level,
+      r_squared > r2_threshold
+    ) |>
+    dplyr::arrange(dplyr::desc(r_squared))
+  
+  return(list(
+    regression_results = regression_results,
+    significant_gradients = significant_gradients
+  ))
+}
+
+
+#' Summarize Local Sensitivity Results
+#' 
+#' @param aggregated_results Data frame from aggregate_local_sa()
+#' 
+#' @return List with three summary data frames:
+#'   - parameter_rankings: Overall parameter importance by response_var
+#'   - pft_differences: Parameter sensitivity by PFT
+#'   - response_var_patterns: Top parameters for each response variable
+#' 
+#' @details
+#' This function addresses requirement for "overall summary"
+#' and provides the basis for interpretation:
+#' - Which parameters is the model most sensitive to?
+#' - Which parameters are good candidates for constraint?
+#' - What can we infer about model structure?
+#' 
+#' @examples
+#' \dontrun{
+#' aggregated <- aggregate_local_sa(...)
+#' summary <- summarize_local_sa(aggregated)
+#' 
+#' # View overall parameter rankings
+#' summary$parameter_rankings |>
+#'   dplyr::filter(response_var == "TotSoilCarb") |>
+#'   dplyr::arrange(desc(mean_abs_elasticity))
+#' }
+#' 
+#' @export
+summarize_local_sa <- function(aggregated_results) {
+  
+  PEcAn.logger::logger.info("Generating overall summary statistics")
+  
+  # Validate input
+  required_cols <- c("parameter", "response_var", "elasticity", 
+                     "variance_explained", "coefficient_of_variation", "pft")
+  missing_cols <- setdiff(required_cols, names(aggregated_results))
+  if (length(missing_cols) > 0) {
+    PEcAn.logger::logger.severe(
+      "aggregated_results missing required columns: ",
+      paste(missing_cols, collapse = ", ")
+    )
+  }
+  
+  # ---------------------------------------------------------------------------
+  # 1. OVERALL PARAMETER RANKINGS
+  # ---------------------------------------------------------------------------
+  # Question: Which parameters is the model most sensitive to?
+  # Averaged across all sites, PFTs
+  
+  parameter_rankings <- aggregated_results |>
+    dplyr::group_by(parameter, response_var) |>
+    dplyr::summarize(
+      # Mean absolute elasticity (primary metric for sensitivity)
+      mean_abs_elasticity = mean(abs(elasticity), na.rm = TRUE),
+      median_abs_elasticity = median(abs(elasticity), na.rm = TRUE),
+      
+      # Spread measures
+      sd_elasticity = sd(elasticity, na.rm = TRUE),
+      iqr_elasticity = IQR(elasticity, na.rm = TRUE),
+      
+      # Variance explained
+      mean_variance_explained = mean(variance_explained, na.rm = TRUE),
+      median_variance_explained = median(variance_explained, na.rm = TRUE),
+      
+      # Prior uncertainty (CV from posterior distributions)
+      mean_cv = mean(coefficient_of_variation, na.rm = TRUE),
+      
+      # Sample size
+      n_sites = dplyr::n(),
+      n_sites_significant = sum(variance_explained > 5),  # >5% threshold
+      
+      .groups = "drop"
+    ) |>
+    # Calculate constraint priority score
+    # High elasticity + high CV = high priority for constraint
+    dplyr::mutate(
+      constraint_priority = mean_abs_elasticity * mean_cv
+    ) |>
+    # Sort by sensitivity within each response variable
+    dplyr::arrange(response_var, dplyr::desc(mean_abs_elasticity))
+  
+  # Log top parameters for each response variable
+  purrr::walk(unique(parameter_rankings$response_var), function(var) {
+    top_params <- parameter_rankings |>
+      dplyr::filter(response_var == var) |>
+      dplyr::slice_head(n = 5) |>
+      dplyr::pull(parameter)
+    
+    PEcAn.logger::logger.info(
+      "Top 5 parameters for ", var, ": ",
+      paste(top_params, collapse = ", ")
+    )
+  })
+  
+  # ---------------------------------------------------------------------------
+  # 2. PFT DIFFERENCES
+  # ---------------------------------------------------------------------------
+  # Question: Does sensitivity differ between woody vs annual PFTs?
+  
+  pft_differences <- aggregated_results |>
+    dplyr::group_by(parameter, pft, response_var) |>
+    dplyr::summarize(
+      mean_abs_elasticity = mean(abs(elasticity), na.rm = TRUE),
+      mean_variance_explained = mean(variance_explained, na.rm = TRUE),
+      mean_cv = mean(coefficient_of_variation, na.rm = TRUE),
+      n_sites = dplyr::n(),
+      .groups = "drop"
+    ) |>
+    dplyr::arrange(pft, response_var, dplyr::desc(mean_abs_elasticity))
+  
+  # Check for significant PFT differences (optional: could add t-test)
+  pft_contrast <- aggregated_results |>
+    dplyr::group_by(parameter, response_var) |>
+    dplyr::filter(dplyr::n_distinct(pft) >= 2) |>  # Need both PFTs
+    dplyr::summarize(
+      elasticity_range_across_pfts = max(abs(elasticity), na.rm = TRUE) - 
+                                      min(abs(elasticity), na.rm = TRUE),
+      cv_of_elasticity_across_pfts = sd(elasticity, na.rm = TRUE) / 
+                                      mean(abs(elasticity), na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    dplyr::arrange(dplyr::desc(cv_of_elasticity_across_pfts))
+  
+  # ---------------------------------------------------------------------------
+  # 3. RESPONSE VARIABLE PATTERNS
+  # ---------------------------------------------------------------------------
+  # Question: What controls each output?
+  # SOC most sensitive to turnover, AGB to photosynthesis
+  
+  response_var_patterns <- aggregated_results |>
+    dplyr::group_by(response_var) |>
+    dplyr::summarize(
+      # Top parameters (ordered list)
+      top_parameters = list(
+        unique(parameter[order(abs(elasticity), decreasing = TRUE)])[1:10]
+      ),
+      
+      # Overall statistics
+      mean_total_variance_explained = mean(variance_explained, na.rm = TRUE),
+      median_elasticity = median(abs(elasticity), na.rm = TRUE),
+      
+      # Count of important parameters
+      n_parameters_important = sum(variance_explained > 5, na.rm = TRUE),  # >5%
+      n_parameters_dominant = sum(variance_explained > 20, na.rm = TRUE),  # >20%
+      
+      # Sample size
+      n_observations = dplyr::n(),
+      n_unique_parameters = dplyr::n_distinct(parameter),
+      
+      .groups = "drop"
+    )
+  
+  # ---------------------------------------------------------------------------
+  # 4. MODEL STRUCTURE INFERENCE
+  # ---------------------------------------------------------------------------
+  # Identify parameter categories from top-ranked parameters
+  
+  # Define parameter categories (from SIPNET documentation)
+  photosynthesis_params <- c("Amax", "psnTOpt", "psnTMin", "psnTMax", 
+                              "Vmax", "m", "Vm_low_temp", "Vmax_min_temp")
+  allocation_params <- c("leaf_allocation_rate", "wood_allocation_rate", 
+                         "root_allocation_rate", "leafGrowth")
+  turnover_params <- c("leafTurnover", "rootTurnover", "litterTurnover", 
+                       "soilTurnover", "fineRootTurnover", "coarseRootTurnover")
+  nitrogen_params <- c("leafN", "leafCN", "labile_pool", "N_volatilization_rate")
+  
+  structure_inference <- parameter_rankings |>
+    dplyr::mutate(
+      parameter_category = dplyr::case_when(
+        parameter %in% photosynthesis_params ~ "Photosynthesis",
+        parameter %in% allocation_params ~ "Allocation",
+        parameter %in% turnover_params ~ "Turnover",
+        parameter %in% nitrogen_params ~ "Nitrogen",
+        TRUE ~ "Other"
+      )
+    ) |>
+    dplyr::group_by(response_var, parameter_category) |>
+    dplyr::summarize(
+      n_parameters = dplyr::n(),
+      mean_elasticity = mean(mean_abs_elasticity, na.rm = TRUE),
+      mean_variance_explained = mean(mean_variance_explained, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    dplyr::arrange(response_var, dplyr::desc(mean_variance_explained))
+  
+  # Log model structure insights
+  PEcAn.logger::logger.info("\n", "Model Structure Insights:")
+  purrr::walk(unique(structure_inference$response_var), function(var) {
+    top_category <- structure_inference |>
+      dplyr::filter(response_var == var) |>
+      dplyr::slice_max(mean_variance_explained, n = 1) |>
+      dplyr::pull(parameter_category)
+    
+    PEcAn.logger::logger.info(
+      "  ", var, " is primarily controlled by ", top_category, " parameters"
+    )
+  })
+  
+  return(list(
+    parameter_rankings = parameter_rankings,
+    pft_differences = pft_differences,
+    pft_contrast = pft_contrast,
+    response_var_patterns = response_var_patterns,
+    structure_inference = structure_inference
+  ))
+}
+
+
+#' Plot Sensitivity by Environmental Gradient
+#' 
+#' Creates scatter plots showing how parameter sensitivity varies along
+#' environmental gradients (MAT, MAP, soil properties).
+#' 
+#' @param aggregated_results Data frame from aggregate_local_sa()
+#' @param env_covariates Data frame with site_id and gradient variables
+#' @param gradient_var Character. Which gradient to plot (e.g., "MAT", "MAP")
+#' @param top_n_parameters Integer. Number of top parameters to plot (default: 10)
+#' @param response_var Character. Which response variable to plot (default: "TotSoilCarb")
+#' 
+#' @return ggplot object
+#' 
+#' @examples
+#' \dontrun{
+#' plot_gradient <- plot_sensitivity_gradient(
+#'   aggregated_results = results,
+#'   env_covariates = env_data,
+#'   gradient_var = "MAT",
+#'   top_n_parameters = 5,
+#'   response_var = "TotSoilCarb"
+#' )
+#' ggsave("figures/sensitivity_vs_MAT.pdf", plot_gradient)
+#' }
+#' 
+#' @export
+plot_sensitivity_gradient <- function(aggregated_results,
+                                       env_covariates,
+                                       gradient_var = "MAT",
+                                       top_n_parameters = 10,
+                                       response_var = "TotSoilCarb") {
+  
+  # Join with environmental data
+  plot_data <- aggregated_results |>
+    dplyr::filter(response_var == !!response_var) |>
+    dplyr::left_join(env_covariates, by = "site_id") |>
+    dplyr::filter(!is.na(.data[[gradient_var]]))
+  
+  # Identify top parameters by mean absolute elasticity
+  top_params <- plot_data |>
+    dplyr::group_by(parameter) |>
+    dplyr::summarize(mean_abs_elast = mean(abs(elasticity), na.rm = TRUE), .groups = "drop") |>
+    dplyr::slice_max(mean_abs_elast, n = top_n_parameters) |>
+    dplyr::pull(parameter)
+  
+  # Filter to top parameters
+  plot_data <- plot_data |>
+    dplyr::filter(parameter %in% top_params)
+  
+  # Create plot
+  p <- ggplot2::ggplot(
+    plot_data,
+    ggplot2::aes(
+      x = .data[[gradient_var]],
+      y = abs(elasticity),
+      color = parameter
+    )
+  ) +
+    ggplot2::geom_point(alpha = 0.6, size = 2) +
+    ggplot2::geom_smooth(method = "lm", se = TRUE, linewidth = 1) +
+    ggplot2::facet_wrap(~ parameter, scales = "free_y", ncol = 3) +
+    ggplot2::labs(
+      title = paste0("Parameter Sensitivity vs ", gradient_var),
+      subtitle = paste0("Response variable: ", response_var),
+      x = gradient_var,
+      y = "Absolute Elasticity",
+      color = "Parameter"
+    ) +
+    ggplot2::theme_bw(base_size = 12) +
+    ggplot2::theme(
+      legend.position = "none",  # Redundant with facets
+      strip.background = ggplot2::element_rect(fill = "lightgray")
+    )
+  
+  return(p)
+}
