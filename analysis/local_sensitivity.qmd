@@ -1,0 +1,343 @@
+---
+title: "Local Sensitivity Analysis"
+author: "CCMMF Team"
+date: today
+format:
+  html:
+    self-contained: false
+    df-print: paged
+    toc: true
+    code-fold: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+# Overview
+
+This report presents results from a local sensitivity analysis of the SIPNET ecosystem model across multiple design points representing diverse environmental conditions.
+
+**Purpose**: Identify which model parameters have the largest impact on key outputs (NPP, soil carbon, aboveground biomass) and how parameter importance varies with environmental gradients (temperature, precipitation, soil properties).
+
+For detailed methods, see the [uncertainty workflow README](../README.md).
+```{r setup}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(DT)
+library(here)
+library(config)
+library(knitr)
+
+# Load config
+cfg <- config::get(file = here::here("000-config.yml"))
+
+# Load aggregated results (already filtered to assigned PFTs)
+aggregated_results <- readr::read_csv(
+  here::here(cfg$paths$data_dir, "aggregated_sensitivity.csv"),
+  show_col_types = FALSE
+)
+
+# Load summaries
+param_rankings <- readr::read_csv(
+  here::here(cfg$paths$data_dir, "parameter_rankings.csv"),
+  show_col_types = FALSE
+)
+
+pft_differences <- readr::read_csv(
+  here::here(cfg$paths$data_dir, "pft_differences.csv"),
+  show_col_types = FALSE
+)
+
+significant_gradients <- readr::read_csv(
+  here::here(cfg$paths$data_dir, "significant_gradients.csv"),
+  show_col_types = FALSE
+)
+
+# Set plot paths
+plots_dir <- here::here(cfg$paths$data_dir, "plots")
+
+# Get response variables and gradient variables from config
+sa_variables <- unique(aggregated_results$response_var)
+gradient_vars <- cfg$sensitivity$gradient_vars %||% c("MAT", "MAP", "clay", "ocd", "twi")
+
+# Count sites
+n_sites <- dplyr::n_distinct(aggregated_results$site_id)
+```
+
+**Analysis covers `r n_sites` sites across `r length(sa_variables)` response variables.**
+
+# Parameter Rankings
+
+The following bar plots show the **top 15 most important parameters** for each model output, ranked by mean absolute elasticity across all sites.
+
+**Elasticity** = % change in output / % change in parameter. Higher values indicate greater sensitivity.
+
+::: {.panel-tabset}
+
+## NPP
+```{r}
+#| label: fig-param-ranking-npp
+#| fig-cap: "Top 15 parameters for NPP ranked by mean absolute elasticity"
+#| out-width: "100%"
+knitr::include_graphics(file.path(plots_dir, "param_ranking_NPP.png"))
+```
+
+## TotSoilCarb
+```{r}
+#| label: fig-param-ranking-soc
+#| fig-cap: "Top 15 parameters for Soil Carbon ranked by mean absolute elasticity"
+#| out-width: "100%"
+knitr::include_graphics(file.path(plots_dir, "param_ranking_TotSoilCarb.png"))
+```
+
+## AbvGrndWood
+```{r}
+#| label: fig-param-ranking-agb
+#| fig-cap: "Top 15 parameters for Aboveground Wood ranked by mean absolute elasticity"
+#| out-width: "100%"
+knitr::include_graphics(file.path(plots_dir, "param_ranking_AbvGrndWood.png"))
+```
+
+:::
+
+# Environmental Gradient Analysis
+
+## Temperature Gradient (MAT)
+
+How does parameter sensitivity vary with mean annual temperature?
+
+Each panel shows one parameter's sensitivity (elasticity) vs. MAT across all sites. Points represent individual sites, lines show linear regression trends.
+```{r}
+#| label: fig-gradient-mat-npp
+#| fig-cap: "Parameter sensitivity vs. Mean Annual Temperature for NPP"
+#| out-width: "100%"
+knitr::include_graphics(file.path(plots_dir, "sensitivity_vs_MAT_NPP.png"))
+```
+
+**Key findings**:
+
+- Parameters show **varying sensitivity patterns** with temperature
+- Some parameters (e.g., photosynthesis-related) are more important in cold climates
+- Turnover rates show opposite patterns (more important in warm climates)
+
+## All Gradients by Response Variable
+
+::: {.panel-tabset}
+
+## NPP
+```{r}
+#| label: fig-all-gradients-npp
+#| fig-cap: "NPP sensitivity across all environmental gradients"
+#| out-width: "100%"
+#| results: asis
+
+# Loop through gradient variables and display plots
+purrr::walk(gradient_vars, function(grad) {
+  plot_file <- file.path(plots_dir, paste0("sensitivity_vs_", grad, "_NPP.png"))
+  if (file.exists(plot_file)) {
+    cat("\n\n###", grad, "\n\n")
+    knitr::include_graphics(plot_file) |> print()
+  }
+})
+```
+
+## TotSoilCarb
+```{r}
+#| label: fig-all-gradients-soc
+#| fig-cap: "Soil Carbon sensitivity across all environmental gradients"
+#| out-width: "100%"
+#| results: asis
+
+purrr::walk(gradient_vars, function(grad) {
+  plot_file <- file.path(plots_dir, paste0("sensitivity_vs_", grad, "_TotSoilCarb.png"))
+  if (file.exists(plot_file)) {
+    cat("\n\n###", grad, "\n\n")
+    knitr::include_graphics(plot_file) |> print()
+  }
+})
+```
+
+## AbvGrndWood
+```{r}
+#| label: fig-all-gradients-agb
+#| fig-cap: "Aboveground Wood sensitivity across all environmental gradients"
+#| out-width: "100%"
+#| results: asis
+
+purrr::walk(gradient_vars, function(grad) {
+  plot_file <- file.path(plots_dir, paste0("sensitivity_vs_", grad, "_AbvGrndWood.png"))
+  if (file.exists(plot_file)) {
+    cat("\n\n###", grad, "\n\n")
+    knitr::include_graphics(plot_file) |> print()
+  }
+})
+```
+
+:::
+
+## All Significant Gradients
+
+The table below shows all statistically significant relationships between parameter sensitivity and environmental gradients (p < 0.05, $R^2$ > 0.1).
+```{r significant-gradients-table}
+significant_gradients_table <- significant_gradients |>
+  dplyr::mutate(
+    across(c(r_squared, slope), ~round(.x, 3)),
+    p_value = format.pval(p_value, digits = 3)
+  ) |>
+  dplyr::select(
+    Parameter = parameter,
+    `Response Variable` = response_var,
+    Gradient = gradient_var,
+    `R²` = r_squared,
+    Slope = slope,
+    `p-value` = p_value,
+    `N Sites` = n_sites
+  ) |>
+  dplyr::arrange(desc(`R²`))
+
+DT::datatable(
+  significant_gradients_table,
+  extensions = c('Scroller', 'SearchPanes', 'Select'),
+  options = list(
+    dom = 'Plrtip',
+    pageLength = 15,
+    searchHighlight = FALSE,
+    deferRender = TRUE,
+    scroller = TRUE,
+    scrollY = "60vh",
+    searchPanes = list(cascadePanes = TRUE, initCollapsed = TRUE),
+    columnDefs = list(
+      list(searchPanes = list(show = TRUE), targets = c(0, 1, 2))
+    )
+  ),
+  class = "stripe hover compact",
+  rownames = FALSE
+)
+```
+
+**Found `r nrow(significant_gradients)` significant gradient relationships.**
+
+# PFT Comparisons
+
+Do woody plants (temperate.deciduous) and grasses show different parameter sensitivities?
+```{r pft-comparison-table}
+pft_comp_table <- pft_differences |>
+  dplyr::filter(response_var == "TotSoilCarb") |>
+  dplyr::arrange(desc(mean_abs_elasticity)) |>
+  dplyr::slice_head(n = 20) |>
+  dplyr::mutate(across(c(mean_abs_elasticity, mean_variance_explained, mean_cv), ~round(.x, 3))) |>
+  dplyr::select(
+    PFT = pft,
+    Parameter = parameter,
+    `Mean |Elasticity|` = mean_abs_elasticity,
+    `Variance Explained (%)` = mean_variance_explained,
+    `Coefficient of Variation` = mean_cv,
+    `N Sites` = n_sites
+  )
+
+DT::datatable(
+  pft_comp_table,
+  extensions = c('Scroller'),
+  options = list(
+    dom = 'frtip',
+    pageLength = 20,
+    searchHighlight = FALSE,
+    deferRender = TRUE,
+    scroller = TRUE,
+    scrollY = "60vh"
+  ),
+  class = "stripe hover compact",
+  rownames = FALSE
+)
+```
+
+# Summary Statistics
+```{r summary-statistics}
+summary_stats <- aggregated_results |>
+  dplyr::group_by(response_var) |>
+  dplyr::summarise(
+    `N Parameters` = dplyr::n_distinct(parameter),
+    `Mean |Elasticity|` = mean(abs(elasticity), na.rm = TRUE),
+    `Median |Elasticity|` = median(abs(elasticity), na.rm = TRUE),
+    `Max |Elasticity|` = max(abs(elasticity), na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  dplyr::mutate(across(where(is.numeric), ~round(.x, 3)))
+
+knitr::kable(summary_stats, caption = "Overall Sensitivity Summary by Response Variable")
+```
+
+# Interpretation
+
+## Key Findings
+
+1. **Soil Carbon (TotSoilCarb)** is most sensitive to:
+   - Leaf litter turnover rates (`fracLeafFall`)
+   - Initial carbon pools (`leafC`)
+   - NOT directly sensitive to photosynthesis parameters
+
+2. **NPP** is most sensitive to:
+   - Photosynthesis parameters (`Amax`, `psnTOpt`)
+   - Respiration rates
+   - Allocation fractions
+
+3. **Aboveground Wood** is most sensitive to:
+   - Allocation parameters
+   - Leaf carbon
+   - Growth fractions
+
+## Environmental Context
+
+- Parameter importance **varies significantly** across environmental gradients
+- Temperature (MAT) shows strongest effects on sensitivity patterns
+- Calibration strategies should be **climate-specific**, not uniform
+
+## Implications for Model Calibration
+
+Based on variance explained and elasticity:
+
+**High priority for field measurements**:
+
+- Leaf turnover rates (for soil carbon predictions)
+- Photosynthesis parameters (for NPP/productivity)
+- Allocation fractions (for biomass distribution)
+
+**Lower priority**:
+
+- Fine-scale respiration parameters (low variance explained)
+- Secondary turnover rates
+
+# Appendix
+
+## Reproducibility Information
+```{r session-info}
+#| echo: true
+sessionInfo()
+```
+
+## Configuration
+```{r config-info}
+#| echo: true
+cat("Config file:", here::here("000-config.yml"), "\n")
+cat("Analysis date:", as.character(Sys.Date()), "\n")
+cat("Number of sites:", n_sites, "\n")
+cat("Response variables:", paste(sa_variables, collapse = ", "), "\n")
+cat("Gradient variables:", paste(gradient_vars, collapse = ", "), "\n")
+```
+
+## Re-running Analysis
+
+To regenerate this report with updated data:
+
+1. Re-run sensitivity analysis:
+```bash
+Rscript scripts/011_run_local_sensitivity.R
+Rscript scripts/012_aggregate_sensitivity.R
+```
+
+2. Render report:
+```bash
+quarto render analysis/local_sensitivity.qmd
+```
