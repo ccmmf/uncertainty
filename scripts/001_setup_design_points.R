@@ -92,7 +92,7 @@ dp_selected <- sites_clustered |>
   dplyr::slice_sample(n = 10) |>
   dplyr::left_join(design_points, by = "site_id") |>
   # Map LandIQ PFT names to PEcAn PFT names (currently used two pft in original design_points_198.csv)
-  ddplyr::mutate(
+  dplyr::mutate(
     pft = dplyr::case_when(
       pft == "annual crop" ~ "grass",
       pft == "woody perennial crop" ~ "temperate.deciduous",
