@@ -23,6 +23,10 @@ source("R/local_sensitivity.R")
 # -----------------------------------------------------------------------
 cfg <- config::get(file = "000-config.yml")
 
+if (!dir.exists(cfg$paths$data_dir)) {
+  dir.create(cfg$paths$data_dir, recursive = TRUE)
+}
+
 # Read PEcAn settings (use pecan.CONFIGS.xml from 011 run)
 settings <- PEcAn.settings::read.settings(
   file.path("output", "pecan.CONFIGS.xml")
