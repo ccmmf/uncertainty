@@ -98,6 +98,13 @@ gradient_analysis <- analyze_environmental_gradients(
   r2_threshold = 0.1
 )
 
+# Save FULL regression results (all combinations, both targets)
+readr::write_csv(
+  gradient_analysis$regression_results,
+  file.path(cfg$paths$data_dir, "regression_results.csv")
+)
+
+# Save filtered significant gradients (for quick reference)
 readr::write_csv(
   gradient_analysis$significant_gradients,
   file.path(cfg$paths$data_dir, "significant_gradients.csv")
