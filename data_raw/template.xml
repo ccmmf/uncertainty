@@ -44,12 +44,7 @@
  </ensemble>
  <sensitivity.analysis>
   <quantiles>
-   <sigma>-3</sigma>
-   <sigma>-2</sigma>
-   <sigma>-1</sigma>
-   <sigma>1</sigma>
-   <sigma>2</sigma>
-   <sigma>3</sigma>
+   <sigma><!-- inserted at config time --></sigma>
   </quantiles>
   <variable>NPP</variable>
   <variable>TotSoilCarb</variable>
