@@ -52,10 +52,6 @@ settings$run$inputs$poolinitcond$ensemble <- options$n_ens
 # Sensitivity windows and sigma levels
 settings$sensitivity.analysis$start.year <- lubridate::year(options$start_date)
 settings$sensitivity.analysis$end.year   <- lubridate::year(options$end_date)
-settings$sensitivity.analysis$quantiles  <- lapply(
-  options$sigma_levels,
-  function(x) list(sigma = x)
-)
 
 # Make multisite settings and set ensemble input paths (met + IC)
 settings <- settings |>
@@ -74,6 +70,12 @@ settings <- settings |>
     path = options$ic_dir,
     path_template = "{path}/{id}/IC_site_{id}_{n}.nc"
   )
+
+quantiles_list <- list()
+for (sigma_val in options$sigma_levels) {
+  quantiles_list <- c(quantiles_list, list(sigma = as.character(sigma_val)))
+}
+settings$sensitivity.analysis$quantiles <- quantiles_list
 
 # -----------------------------------------------------------------------
 # Set PFT posterior files and outdirs
