@@ -1,4 +1,4 @@
-#' Aggregate Local Sensitivity Results Across Sites
+#' Aggregate local sensitivity results across sites
 #'
 #' @param sensitivity_outdir Directory containing PEcAn sensitivity outputs
 #' @param design_points Data frame of site metadata
@@ -90,63 +90,67 @@ aggregate_local_sa <- function(sensitivity_outdir,
 
 
 
-#' Analyze Sensitivity Along Environmental Gradients
+#' Analyze sensitivity along environmental gradients
+#'
+#' Fits regressions of both parameter sensitivity (elasticity) and parameter importance (variance explained)
+#' against environmental gradients for each parameter/response pair.
 #'
 #' @param aggregated_results Data frame from aggregate_local_sa()
 #' @param env_covariates Site environmental data
 #' @param gradient_vars Covariates to test
 #' @param min_sites Minimum sites for regression
 #' @param significance_level P-value threshold
-#' @param r2_threshold R^2 threshold
-#' @return List with regression_results and significant_gradients
-
-analyze_environmental_gradients <- function(aggregated_results,
-                                             env_covariates,
-                                             gradient_vars = c("MAT", "MAP", "clay", "ocd", "twi"),
-                                             min_sites = 5,
-                                             significance_level = 0.05,
-                                             r2_threshold = 0.1) {
+#' @param r2_threshold R2 threshold
+#' @return List with regression_results (data.frame) and significant_gradients (filtered)
+analyze_environmental_gradients <- function(
+  aggregated_results,
+  env_covariates,
+  gradient_vars = c("MAT", "MAP", "clay", "ocd", "twi"),
+  min_sites = 5,
+  significance_level = 0.05,
+  r2_threshold = 0.1
+) {
+  PEcAn.logger::logger.info("Analyzing environmental gradients for sensitivity and variance explained")
   
-  PEcAn.logger::logger.info("Analyzing environmental gradients")
-  
-  ## Join data
+  # Join covariate data
   analysis_data <- aggregated_results |>
     dplyr::left_join(env_covariates, by = "site_id") |>
     dplyr::filter(dplyr::if_all(dplyr::all_of(gradient_vars), ~!is.na(.x)))
+
+  analysis_data <- analysis_data |>
+    dplyr::mutate(elasticity = abs(elasticity))
+
+  # Stack for both elasticity and variance explained targeting
+  target_metrics <- c("elasticity", "variance_explained")
   
-  ## Fit regressions using pmap_dfr (avoids rowwise issues)
   regression_results <- tidyr::expand_grid(
     parameter = unique(analysis_data$parameter),
     response_var = unique(analysis_data$response_var),
-    gradient_var = gradient_vars
+    gradient_var = gradient_vars,
+    target = target_metrics
   ) |>
-    purrr::pmap_dfr(function(parameter, response_var, gradient_var) {
-      
-      # Now all three arguments are directly accessible as VALUES!
+    purrr::pmap_dfr(function(parameter, response_var, gradient_var, target) {
+      metric_col <- target  # Either "elasticity" or "variance_explained"
       data_subset <- analysis_data |>
         dplyr::filter(
           parameter == !!parameter,
           response_var == !!response_var,
-          !is.na(elasticity),
+          !is.na(.data[[metric_col]]),
           !is.na(.data[[gradient_var]])
         )
-      
       if (nrow(data_subset) < min_sites) return(NULL)
-      
       fit <- tryCatch(
-        lm(as.formula(paste0("abs(elasticity) ~ ", gradient_var)), data = data_subset),
+        lm(stats::as.formula(paste0(metric_col, " ~ ", gradient_var)), data = data_subset),
         error = function(e) NULL
       )
-      
       if (is.null(fit)) return(NULL)
-      
       fit_summary <- broom::glance(fit)
       fit_coef <- broom::tidy(fit)
-      
       data.frame(
         parameter = parameter,
         response_var = response_var,
         gradient_var = gradient_var,
+        target = target,
         r_squared = fit_summary$r.squared,
         adj_r_squared = fit_summary$adj.r.squared,
         p_value = fit_coef$p.value[2],
@@ -156,15 +160,14 @@ analyze_environmental_gradients <- function(aggregated_results,
         stringsAsFactors = FALSE
       )
     })
-  
-  ## Filter significant
+
   significant_gradients <- regression_results |>
     dplyr::filter(
       p_value < significance_level,
       r_squared > r2_threshold
     ) |>
-    dplyr::arrange(dplyr::desc(r_squared))
-  
+    dplyr::arrange(desc(r_squared))
+
   return(list(
     regression_results = regression_results,
     significant_gradients = significant_gradients
@@ -172,7 +175,8 @@ analyze_environmental_gradients <- function(aggregated_results,
 }
 
 
-#' Summarize Local Sensitivity Results
+
+#' Summarize local sensitivity results
 #' 
 #' @param aggregated_results Data frame from aggregate_local_sa()
 #' 
@@ -252,19 +256,6 @@ summarize_local_sa <- function(aggregated_results) {
     ) |>
     # Sort by sensitivity within each response variable
     dplyr::arrange(response_var, dplyr::desc(mean_abs_elasticity))
-  
-  # Log top parameters for each response variable
-  purrr::walk(unique(parameter_rankings$response_var), function(var) {
-    top_params <- parameter_rankings |>
-      dplyr::filter(response_var == var) |>
-      dplyr::slice_head(n = 5) |>
-      dplyr::pull(parameter)
-    
-    PEcAn.logger::logger.info(
-      "Top 5 parameters for ", var, ": ",
-      paste(top_params, collapse = ", ")
-    )
-  })
   
   # ---------------------------------------------------------------------------
   # 2. PFT DIFFERENCES
@@ -357,19 +348,6 @@ summarize_local_sa <- function(aggregated_results) {
     ) |>
     dplyr::arrange(response_var, dplyr::desc(mean_variance_explained))
   
-  # Log model structure insights
-  PEcAn.logger::logger.info("\n", "Model Structure Insights:")
-  purrr::walk(unique(structure_inference$response_var), function(var) {
-    top_category <- structure_inference |>
-      dplyr::filter(response_var == var) |>
-      dplyr::slice_max(mean_variance_explained, n = 1) |>
-      dplyr::pull(parameter_category)
-    
-    PEcAn.logger::logger.info(
-      "  ", var, " is primarily controlled by ", top_category, " parameters"
-    )
-  })
-  
   return(list(
     parameter_rankings = parameter_rankings,
     pft_differences = pft_differences,
@@ -380,7 +358,7 @@ summarize_local_sa <- function(aggregated_results) {
 }
 
 
-#' Plot Sensitivity by Environmental Gradient
+#' Plot sensitivity by environmental gradient
 #' 
 #' Creates scatter plots showing how parameter sensitivity varies along
 #' environmental gradients (MAT, MAP, soil properties).
@@ -455,4 +433,65 @@ plot_sensitivity_gradient <- function(aggregated_results,
     )
   
   return(p)
+}
+
+
+#' Plot PDP for parameter sensitivity vs. environmental gradients
+#'
+#' @param aggregated_results The output of aggregate_local_sa
+#' @param site_covariates Data frame of site_id & environmental gradients (MAT, MAP,...)
+#' @param response_var Which response variable you want (e.g., "NPP")
+#' @param parameter The model parameter to analyze
+#' @param target  Outcome: "elasticity" or "variance_explained"
+#' @return ggplot
+
+plot_pdp_sensitivity <- function(
+  aggregated_results,
+  site_covariates,
+  response_var,
+  parameter,
+  target = "elasticity",
+  gradients = c("MAT", "MAP", "clay", "ocd", "twi")
+) {
+
+  data <- aggregated_results |>
+    dplyr::left_join(site_covariates, by = "site_id") |>
+    dplyr::filter(response_var == !!response_var, parameter == !!parameter)
+
+  grads_missing <- setdiff(gradients, colnames(data))
+  if (length(grads_missing) > 0) {
+    PEcAn.logger::logger.warn(
+      "Missing gradients: ", paste(grads_missing, collapse = ", ")
+    )
+  }
+
+  grads_used <- setdiff(gradients, grads_missing)
+  if (length(grads_used) == 0) {
+    PEcAn.logger::logger.severe("No valid gradients available to use.")
+  }
+
+  if (nrow(data) < 10) {
+    PEcAn.logger::logger.severe("Not enough sites available for ML / PDP computation.")
+  }
+
+  rf_mod <- randomForest::randomForest(
+    as.formula(paste0(target, " ~ ", paste(grads_used, collapse = "+"))),
+    data = data,
+    na.action = na.exclude,
+    importance = TRUE
+  )
+
+  plots <- lapply(grads_used, function(grad) {
+    pd <- pdp::partial(rf_mod, pred.var = grad, train = data, grid.resolution = 20)
+    ggplot2::autoplot(pd) +
+      ggplot2::labs(
+        title = paste("PDP for", parameter, "-", target, "vs.", grad),
+        subtitle = paste("Response variable:", response_var),
+        y = paste("Predicted", target)
+      ) +
+      ggplot2::theme_minimal()
+  })
+
+  names(plots) <- grads_used
+  return(plots)
 }
