@@ -32,16 +32,11 @@ settings <- PEcAn.settings::read.settings(
   file.path("output", "pecan.CONFIGS.xml")
 )
 
-#----------------------------------
-# read.settings() uses xmlToList loses duplicate <variable> tags, so read XML directly
-library(XML)
-xml_doc <- XML::xmlParse(file.path("output", "pecan.CONFIGS.xml"))
-sa_variables <- unique(XML::xpathSApply(
-  xml_doc,
-  "//sensitivity.analysis//variable",
-  XML::xmlValue
-))
-XML::free(xml_doc)
+# Handles cases where multiple <variable> tags exist
+sa_variables <- settings$sensitivity.analysis |>
+  (\(x) x[names(x) == "variable"])() |>
+  unlist() |>
+  unique()
 
 # -----------------------------------------------------------------------
 # Load design points
