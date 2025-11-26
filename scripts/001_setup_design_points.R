@@ -43,7 +43,7 @@ final_data <- master_data |>
   # This mapping ensures compatibility whether the input is manual or clustered
   dplyr::mutate(
     pft = dplyr::case_when(
-      pft == "annual crop"          ~ "grass",
+      pft == "annual crop" ~ "grass",
       pft == "woody perennial crop" ~ "temperate.deciduous",
       TRUE ~ NA_character_
     )
