@@ -8,9 +8,11 @@ default:
     raw_data_dir: "data_raw"
     cache_dir: "cache"
     pecan_outdir: "/projectnb2/dietzelab/ccmmf/modelout/ccmmf_phase_2b_mixed_pfts_20250701"
+    master_design_points: "/projectnb2/dietzelab/ccmmf/data/design_points.csv"
   pecan_xml_template: "data_raw/template.xml"
   sites:
     design_points_file: "data_raw/sa_design_points.csv"
+    n_sample: 10
   sensitivity:
     sigma_levels: [-3, -2, -1, 1, 2, 3] # Standard
   # Or use [-2, -1, 1, 2] for faster runs
