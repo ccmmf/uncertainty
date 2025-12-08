@@ -25,7 +25,7 @@ cfg <- config::get(file = "000-config.yml")
 
 # Define paths based on config
 master_file <- cfg$paths$master_design_points
-out_file    <- file.path(cfg$paths$raw_data_dir, basename(cfg$paths$sites$design_points_file))
+out_file    <- file.path(cfg$paths$raw_data_dir, basename(cfg$sites$design_points_file))
 
 if (!file.exists(master_file)) {
   PEcAn.logger::logger.severe(
