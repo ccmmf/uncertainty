@@ -137,30 +137,36 @@ build_param_category_lookup <- function(sobol_metadata) {
   param_sources <- sobol_metadata$param_sources
 
   if (is.null(param_names) || length(param_names) == 0) {
-    PEcAn.logger::logger.severe(
-      "sobol_metadata$param_names is missing or empty. Check 021_generate_sobol_design.R."
-    )
+    PEcAn.logger::logger.severe("sobol_metadata$param_names is missing/empty.")
   }
 
-  if (is.null(param_sources) || length(param_sources) != length(param_names)) {
-    PEcAn.logger::logger.warn(
-      "sobol_metadata$param_sources missing or length mismatch; setting source_pft = NA."
-    )
-    param_sources <- rep(NA_character_, length(param_names))
-  }
-
-  tibble::tibble(
+  # create base table from metadata (params + dummy)
+  lookup <- tibble::tibble(
     parameters = param_names,
-    source_pft = param_sources
-  ) %>%
+    source_pft = if(is.null(param_sources)) NA else param_sources
+  )
+
+  # manually append drivers (IC and met) 
+  # these are added in script 024, so they exist in results but not in metadata.
+  drivers <- tibble::tibble(
+    parameters = c("ic_ensemble", "met_ensemble"),
+    source_pft = c(NA, NA)
+  )
+  
+  lookup <- dplyr::bind_rows(lookup, drivers)
+
+  # assign categories
+  lookup <- lookup %>%
     dplyr::mutate(
       category = dplyr::case_when(
         parameters == "ic_ensemble"  ~ "IC",
         parameters == "met_ensemble" ~ "driver",
         parameters == "dummy"        ~ "dummy",
-        TRUE                         ~ "parameter"
+        TRUE                         ~ "parameter" # all others are params
       )
     )
+  
+  return(lookup)
 }
 
 # ----------------------------------------------------------------------
