@@ -130,6 +130,8 @@ params[["dummy"]] <- list(
   original_name = "dummy"
 )
 
+param_source_map[["dummy"]] <- NA_character_ 
+
 # -----------------------------------------------------------------------
 # Generate Sobol design
 # -----------------------------------------------------------------------
@@ -159,6 +161,9 @@ if (!dir.exists(output_dir)) {
 readr::write_csv(sobol_design, args$output)
 
 # Save metadata
+param_names_ordered <- names(params)
+param_sources_ordered <- sapply(param_names_ordered, function(x) param_source_map[[x]])
+
 metadata <- list(
   N = as.integer(args$`sample-size`),
   k = length(params), # PFT params only
@@ -167,8 +172,8 @@ metadata <- list(
   n_met = n_met,
   n_pfts = length(site_pfts),
   pft_names = site_pfts,
-  param_names = names(params), # These are now "pft.param"
-  param_sources = unlist(param_source_map), # required for 022 script
+  param_names = param_names_ordered, # These are now "pft.param"
+  param_sources = unlist(param_sources_ordered), # required for 022 script
   generated_at = Sys.time(),
   settings_file = args$settings
 )
