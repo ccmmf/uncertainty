@@ -33,8 +33,10 @@ settings <- PEcAn.settings::read.settings(
 )
 
 # Handles cases where multiple <variable> tags exist
-sa_variables <- settings$sensitivity.analysis |>
-  (\(x) x[names(x) == "variable"])() |>
+sa_variables <- settings$sensitivity.analysis[
+  grepl("^site\\.", names(settings$sensitivity.analysis))
+] |>
+  purrr::map(~.x[names(.x) == "variable"]) |>
   unlist() |>
   unique()
 
