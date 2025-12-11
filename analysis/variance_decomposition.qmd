@@ -49,6 +49,11 @@ In this analysis, we focus on the **Modeled Variance** components derived from o
 3.  **Initial Conditions ($V_{IC}$):** Uncertainty from the system's starting state (e.g., Soil Carbon pools).
 4.  **Interaction Variance ($V_{Int}$):** Non-additive variance arising from the interplay between parameters and drivers.
 
+::: callout-important
+## Scope Note
+Process Error is excluded from this specific analysis. In managed agricultural systems, process error is often driven by **Model Structure** rather than random stochasticity. This component will be assessed in a separate validation workflow.
+:::
+
 ::: callout-note
 ## Goal
 
@@ -279,7 +284,7 @@ DT::datatable(abs_var_summary, caption = "Absolute Magnitude of Forecast Uncerta
 
 - **Variance Budget:** We successfully decomposed the ensemble variance into internal and external drivers, highlighting distinct drivers for fast (fluxes) vs. slow (pools) variables.
 - **Key Drivers:** The hybrid analysis identified the specific parameters (Figure 2) that serve as the primary levers for model improvement.
-- **Future Work:** This analysis accounts for modeled uncertainty. The final step in the Dietze framework is to compare these variance estimates against validation data to quantify the Residual (Process) Error.
+- **Future Work:** This analysis accounts for modeled uncertainty. The final step in the framework is to compare these variance estimates against observational data. Any remaining residual variance will primarily represent **Model Structural Error** (deficiencies in model physics) rather than stochastic noise.
 
 # References
 
