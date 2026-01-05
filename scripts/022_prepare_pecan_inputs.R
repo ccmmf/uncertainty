@@ -123,6 +123,11 @@ env.samples <- list()
 pft.names <- names(trait.samples)
 trait.names <- lapply(trait.samples, names)
 
+# create output directory if it doesn't exist
+if (!dir.exists(settings$outdir)) {
+  dir.create(settings$outdir, recursive = TRUE)
+}
+
 # Save correctly formatted objects
 save(
   ensemble.samples, # List of data frames

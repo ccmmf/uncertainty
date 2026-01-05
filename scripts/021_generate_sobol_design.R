@@ -15,7 +15,7 @@ options <- list(
     help = "Path to multisite SA settings XML"
   ),
   optparse::make_option(c("-N", "--sample-size"),
-    default = 512,
+    default = 256,
     help = "Sobol base sample size (total = N*(k+2))"
   ),
   optparse::make_option(c("-o", "--output"),
