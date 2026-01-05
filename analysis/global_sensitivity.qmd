@@ -2,16 +2,16 @@
 title: "Global Sensitivity Analysis Using Sobol Indices"
 author: "Akash B V"
 date: "`r Sys.Date()`"
-format:
-  html:
-    self-contained: true
-    df-print: paged
-    toc: true
-    toc-depth: 3
-    code-fold: true
-    code-tools: true
-    theme: cosmo
-    number-sections: true
+# format:
+#   html:
+#     self-contained: true
+#     df-print: paged
+#     toc: true
+#     toc-depth: 3
+#     code-fold: true
+#     code-tools: true
+#     theme: cosmo
+#     number-sections: true
 execute:
   echo: false
   warning: false
