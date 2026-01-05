@@ -1,0 +1,15 @@
+# Default configuration for CCMMF Phase 4 workflows
+default:
+  flags:
+    production: false
+  paths:
+    ccmmf_dir: "/projectnb2/dietzelab/ccmmf"
+    data_dir: "data"
+    raw_data_dir: "data_raw"
+    cache_dir: "cache"
+    pecan_outdir: "/projectnb2/dietzelab/ccmmf/modelout/ccmmf_phase_2b_mixed_pfts_20250701"
+  pecan_xml_template: "data_raw/template.xml"
+  sites:
+    design_points_file: "data_raw/sa_design_points.csv"
+  projection:
+    ca_albers_crs: 3310
