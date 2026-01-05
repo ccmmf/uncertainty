@@ -1,0 +1,14 @@
+# CCMMF Uncertainty Analysis - Environment Configuration
+# 
+# Copy this file to .Renviron and edit paths for your system:
+#   cp .Renviron.example .Renviron
+#
+# This file is read by R on startup (before .Rprofile)
+
+# Base directory for shared CCMMF data and model outputs
+CCMMF_DIR=/projectnb/dietzelab/ccmmf
+
+# renv package cache and library paths
+# Set these to avoid filling home directory quota on HPC
+RENV_PATHS_CACHE=/projectnb/dietzelab/ccmmf/renv-cache
+RENV_PATHS_LIBRARY=/projectnb/dietzelab/ccmmf/renv-library
