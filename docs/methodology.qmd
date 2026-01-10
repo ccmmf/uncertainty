@@ -261,25 +261,3 @@ Parameters with $T_i$ indistinguishable from zero (or from a dummy parameter) ca
 ## Dummy Parameter Method
 
 We include a "dummy" parameter that varies randomly but has no effect on model output. Its Sobol index represents numerical noise. Parameters with $T_i$ within the dummy's confidence interval are candidates for fixing.
-
-------------------------------------------------------------------------
-
-# References
-
-**Primary Framework**
-
-Dietze, M. C. (2017). *Ecological Forecasting*. Princeton University Press.
-
-**Sensitivity Analysis Methods**
-
-Saltelli, A., Ratto, M., Andres, T., Campolongo, F., Cariboni, J., Gatelli, D., Saisana, M., & Tarantola, S. (2008). *Global Sensitivity Analysis: The Primer*. Wiley.
-
-Saltelli, A., Annoni, P., Azzini, I., Campolongo, F., Ratto, M., & Tarantola, S. (2010). Variance based sensitivity analysis of model output. Design and estimator for the total sensitivity index. *Computer Physics Communications*, 181(2), 259-270.
-
-**Software**
-
-Puy, A., Lo Piano, S., Saltelli, A., & Levin, S. A. (2022). sensobol: An R Package to Compute Variance-Based Sensitivity Indices. *Journal of Statistical Software*, 102(5), 1-37.
-
-**Ecosystem Modeling**
-
-LeBauer, D. S., Wang, D., Richter, K. T., Davidson, C. C., & Dietze, M. C. (2013). Facilitating feedbacks between field measurements and ecosystem models. *Ecological Monographs*, 83(2), 133-154.
