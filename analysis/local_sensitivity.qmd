@@ -47,6 +47,7 @@ library(randomForest)
 library(pdp)
 library(patchwork)
 library(tidyr)
+library(rlang)
 
 source(here::here("R", "local_sensitivity.R"))
 
@@ -80,7 +81,7 @@ regression_results <- readr::read_csv(
 )
 
 site_covariates <- readr::read_csv(
-  here::here(cfg$paths$ccmmf_dir, "data/site_covariates.csv"), 
+  here::here("data_raw/site_covariates.csv"), 
   show_col_types = FALSE
 )
 
