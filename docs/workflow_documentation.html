@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Akash B V">
+<meta name="dcterms.date" content="2026-01-10">
+
+<title>Technical Workflow Documentation – Sensitivity Analysis</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f3e75b3cf15ab557ce2a372f1422f5e1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/methodology.html">Docs</a></li><li class="breadcrumb-item"><a href="../docs/workflow_documentation.html">Technical Documentation</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      </a>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Home</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Reports</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/local_sensitivity.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Local Sensitivity</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/global_sensitivity.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Global Sensitivity</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/variance_decomposition.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Variance Decomposition</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Docs</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/methodology.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Methodology</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/workflow_documentation.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Technical Documentation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#pipeline-architecture" id="toc-pipeline-architecture" class="nav-link active" data-scroll-target="#pipeline-architecture"><span class="header-section-number">1</span> Pipeline Architecture</a>
+  <ul class="collapse">
+  <li><a href="#script-execution-order" id="toc-script-execution-order" class="nav-link" data-scroll-target="#script-execution-order"><span class="header-section-number">1.1</span> Script Execution Order</a></li>
+  </ul></li>
+  <li><a href="#configuration" id="toc-configuration" class="nav-link" data-scroll-target="#configuration"><span class="header-section-number">2</span> Configuration</a></li>
+  <li><a href="#phase-1-setup" id="toc-phase-1-setup" class="nav-link" data-scroll-target="#phase-1-setup"><span class="header-section-number">3</span> Phase 1: Setup</a>
+  <ul class="collapse">
+  <li><a href="#setup_design_points.r" id="toc-setup_design_points.r" class="nav-link" data-scroll-target="#setup_design_points.r"><span class="header-section-number">3.1</span> 001_setup_design_points.R</a></li>
+  <li><a href="#build_xml.r" id="toc-build_xml.r" class="nav-link" data-scroll-target="#build_xml.r"><span class="header-section-number">3.2</span> 002_build_xml.R</a></li>
+  </ul></li>
+  <li><a href="#phase-2-local-sensitivity-analysis" id="toc-phase-2-local-sensitivity-analysis" class="nav-link" data-scroll-target="#phase-2-local-sensitivity-analysis"><span class="header-section-number">4</span> Phase 2: Local Sensitivity Analysis</a>
+  <ul class="collapse">
+  <li><a href="#run_local_sensitivity.r" id="toc-run_local_sensitivity.r" class="nav-link" data-scroll-target="#run_local_sensitivity.r"><span class="header-section-number">4.1</span> 011_run_local_sensitivity.R</a></li>
+  <li><a href="#aggregate_sensitivity.r" id="toc-aggregate_sensitivity.r" class="nav-link" data-scroll-target="#aggregate_sensitivity.r"><span class="header-section-number">4.2</span> 012_aggregate_sensitivity.R</a></li>
+  </ul></li>
+  <li><a href="#phase-3-global-sensitivity-analysis" id="toc-phase-3-global-sensitivity-analysis" class="nav-link" data-scroll-target="#phase-3-global-sensitivity-analysis"><span class="header-section-number">5</span> Phase 3: Global Sensitivity Analysis</a>
+  <ul class="collapse">
+  <li><a href="#generate_sobol_design.r" id="toc-generate_sobol_design.r" class="nav-link" data-scroll-target="#generate_sobol_design.r"><span class="header-section-number">5.1</span> 021_generate_sobol_design.R</a></li>
+  <li><a href="#prepare_pecan_inputs.r" id="toc-prepare_pecan_inputs.r" class="nav-link" data-scroll-target="#prepare_pecan_inputs.r"><span class="header-section-number">5.2</span> 022_prepare_pecan_inputs.R</a></li>
+  <li><a href="#run_global_sensitivity.r" id="toc-run_global_sensitivity.r" class="nav-link" data-scroll-target="#run_global_sensitivity.r"><span class="header-section-number">5.3</span> 023_run_global_sensitivity.R</a></li>
+  <li><a href="#compute_sobol_indices.r" id="toc-compute_sobol_indices.r" class="nav-link" data-scroll-target="#compute_sobol_indices.r"><span class="header-section-number">5.4</span> 024_compute_sobol_indices.R</a></li>
+  </ul></li>
+  <li><a href="#phase-4-variance-decomposition" id="toc-phase-4-variance-decomposition" class="nav-link" data-scroll-target="#phase-4-variance-decomposition"><span class="header-section-number">6</span> Phase 4: Variance Decomposition</a>
+  <ul class="collapse">
+  <li><a href="#partition_variance.r" id="toc-partition_variance.r" class="nav-link" data-scroll-target="#partition_variance.r"><span class="header-section-number">6.1</span> 031_partition_variance.R</a></li>
+  </ul></li>
+  <li><a href="#function-library" id="toc-function-library" class="nav-link" data-scroll-target="#function-library"><span class="header-section-number">7</span> Function Library</a>
+  <ul class="collapse">
+  <li><a href="#rlocal_sensitivity.r" id="toc-rlocal_sensitivity.r" class="nav-link" data-scroll-target="#rlocal_sensitivity.r"><span class="header-section-number">7.1</span> R/local_sensitivity.R</a></li>
+  <li><a href="#rglobal_sensitivity.r" id="toc-rglobal_sensitivity.r" class="nav-link" data-scroll-target="#rglobal_sensitivity.r"><span class="header-section-number">7.2</span> R/global_sensitivity.R</a></li>
+  <li><a href="#rvariance_decomposition.r" id="toc-rvariance_decomposition.r" class="nav-link" data-scroll-target="#rvariance_decomposition.r"><span class="header-section-number">7.3</span> R/variance_decomposition.R</a></li>
+  </ul></li>
+  <li><a href="#sge-cluster-execution" id="toc-sge-cluster-execution" class="nav-link" data-scroll-target="#sge-cluster-execution"><span class="header-section-number">8</span> SGE Cluster Execution</a></li>
+  <li><a href="#execution" id="toc-execution" class="nav-link" data-scroll-target="#execution"><span class="header-section-number">9</span> Execution</a></li>
+  <li><a href="#output-variables" id="toc-output-variables" class="nav-link" data-scroll-target="#output-variables"><span class="header-section-number">10</span> Output Variables</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/ccmmf/uncertainty/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/ccmmf/uncertainty/blob/main/docs/workflow_documentation.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/methodology.html">Docs</a></li><li class="breadcrumb-item"><a href="../docs/workflow_documentation.html">Technical Documentation</a></li></ol></nav>
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Technical Workflow Documentation</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">SIPNET Uncertainty Quantification Pipeline</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Akash B V </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 10, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="pipeline-architecture" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="pipeline-architecture"><span class="header-section-number">1</span> Pipeline Architecture</h2>
+<p>This workflow implements variance-based sensitivity analysis for SIPNET following the Dietze (2017) uncertainty partitioning framework. The pipeline decomposes forecast variance into parameter, initial condition, driver, and interaction components using complementary local (OAT) and global (Sobol) methods.</p>
+<section id="script-execution-order" class="level3" data-number="1.1">
+<h3 data-number="1.1" class="anchored" data-anchor-id="script-execution-order"><span class="header-section-number">1.1</span> Script Execution Order</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Phase</th>
+<th style="text-align: left;">Scripts</th>
+<th style="text-align: left;">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Setup</td>
+<td style="text-align: left;">001–002</td>
+<td style="text-align: left;">Design point selection, PEcAn XML configuration</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Local SA</td>
+<td style="text-align: left;">011–012</td>
+<td style="text-align: left;">OAT elasticities, partial variances</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Global SA</td>
+<td style="text-align: left;">021–024</td>
+<td style="text-align: left;">Sobol <span class="math inline">\(S_i\)</span>, <span class="math inline">\(T_i\)</span> with IC/driver indices</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Integration</td>
+<td style="text-align: left;">031</td>
+<td style="text-align: left;">Variance partitioning across uncertainty sources</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+</section>
+<section id="configuration" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="configuration"><span class="header-section-number">2</span> Configuration</h2>
+<p>Central configuration in <a href="000-config.yml"><code>000-config.yml</code></a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">default</span><span class="kw">:</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">paths</span><span class="kw">:</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ccmmf_dir</span><span class="kw">:</span><span class="at"> </span><span class="st">"/projectnb2/dietzelab/ccmmf"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">data_dir</span><span class="kw">:</span><span class="at"> </span><span class="st">"data"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">raw_data_dir</span><span class="kw">:</span><span class="at"> </span><span class="st">"data_raw"</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">sites</span><span class="kw">:</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">n_sample</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">sensitivity</span><span class="kw">:</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">sigma_levels</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="dv">-2</span><span class="kw">,</span><span class="at"> </span><span class="dv">-1</span><span class="kw">,</span><span class="at"> </span><span class="dv">1</span><span class="kw">,</span><span class="at"> </span><span class="dv">2</span><span class="kw">]</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+<section id="phase-1-setup" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="phase-1-setup"><span class="header-section-number">3</span> Phase 1: Setup</h2>
+<section id="setup_design_points.r" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="setup_design_points.r"><span class="header-section-number">3.1</span> 001_setup_design_points.R</h3>
+<p>Selects SA sites from the 198-site master design and maps LandIQ PFT names to PEcAn conventions.</p>
+<p><strong>PFT Mapping:</strong> - <code>annual crop</code> → <code>grass</code> - <code>woody perennial crop</code> → <code>temperate.deciduous</code></p>
+<p><strong>Output:</strong> <code>data_raw/sa_design_points.csv</code></p>
+</section>
+<section id="build_xml.r" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="build_xml.r"><span class="header-section-number">3.2</span> 002_build_xml.R</h3>
+<p>Generates multisite PEcAn settings XML with ensemble paths and sensitivity configuration.</p>
+<p><strong>Key settings:</strong> - Ensemble size: 20 (parameters) x 10 (met) - Simulation period: 2016–2023 - Sigma levels: ±1σ, ±2σ perturbations</p>
+<p><strong>Output:</strong> <code>data_raw/settings_sa.xml</code></p>
+<hr>
+</section>
+</section>
+<section id="phase-2-local-sensitivity-analysis" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="phase-2-local-sensitivity-analysis"><span class="header-section-number">4</span> Phase 2: Local Sensitivity Analysis</h2>
+<section id="run_local_sensitivity.r" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="run_local_sensitivity.r"><span class="header-section-number">4.1</span> 011_run_local_sensitivity.R</h3>
+<p>Executes PEcAn’s OAT sensitivity workflow:</p>
+<ol type="1">
+<li><code>runModule.run.write.configs()</code> — Generate model configurations</li>
+<li><code>runModule_start_model_runs()</code> — Execute SIPNET via SGE</li>
+<li><code>runModule.get.results()</code> — Extract outputs</li>
+<li><code>runModule.run.sensitivity.analysis()</code> — Compute elasticities</li>
+</ol>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/011_run_local_sensitivity.R <span class="at">--settings</span> data_raw/settings_sa.xml</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="aggregate_sensitivity.r" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="aggregate_sensitivity.r"><span class="header-section-number">4.2</span> 012_aggregate_sensitivity.R</h3>
+<p>Aggregates site-level OAT results and analyzes environmental gradients.</p>
+<p><strong>Computed metrics:</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 40%">
+<col style="width: 60%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Metric</th>
+<th style="text-align: left;">Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Elasticity</td>
+<td style="text-align: left;"><span class="math inline">\(\varepsilon_i = \frac{\partial Y}{\partial \theta_i} \cdot \frac{\theta_i}{Y}\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Partial variance</td>
+<td style="text-align: left;"><span class="math inline">\(V_i = \varepsilon_i^2 \cdot \text{Var}(\theta_i)\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Variance explained</td>
+<td style="text-align: left;"><span class="math inline">\(V_i / \sum_j V_j \times 100\)</span></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Environmental gradient analysis:</strong> Regresses elasticity against MAT, MAP, clay, organic carbon, and TWI to identify context-dependent sensitivities.</p>
+<p><strong>Outputs:</strong> - <code>data/aggregated_sensitivity.csv</code> - <code>data/parameter_rankings.csv</code> - <code>data/significant_gradients.csv</code></p>
+<hr>
+</section>
+</section>
+<section id="phase-3-global-sensitivity-analysis" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="phase-3-global-sensitivity-analysis"><span class="header-section-number">5</span> Phase 3: Global Sensitivity Analysis</h2>
+<section id="generate_sobol_design.r" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="generate_sobol_design.r"><span class="header-section-number">5.1</span> 021_generate_sobol_design.R</h3>
+<p>Generates Saltelli quasi-random design matrix for variance-based SA.</p>
+<p><strong>Design structure:</strong> - <span class="math inline">\(N \times (k + 2)\)</span> model evaluations (Saltelli scheme) - Continuous parameters: quantile-transformed from posterior - Discrete inputs (IC, met): inverse transform method</p>
+<p>The design matrix includes both continuous parameters (sampled from posteriors) and discrete inputs (initial conditions, meteorology ensemble members).</p>
+<p><strong>Dummy parameter:</strong> Uniform(0,1) baseline for numerical noise estimation.</p>
+<p><strong>Outputs:</strong> - <code>data/sobol_design_matrix.csv</code> - <code>data/sobol_design_metadata.rds</code></p>
+</section>
+<section id="prepare_pecan_inputs.r" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="prepare_pecan_inputs.r"><span class="header-section-number">5.2</span> 022_prepare_pecan_inputs.R</h3>
+<p>Transforms Sobol design into PEcAn-compatible structures: - Parses <code>pft.parameter</code> namespacing → separate PFT lists - Creates <code>ensemble.samples</code> (list of data frames per PFT) - Creates <code>input_design</code> mapping sample_id → IC/met indices</p>
+<p><strong>Outputs:</strong> - <code>output/samples.Rdata</code> - <code>cache/input_design.rds</code></p>
+</section>
+<section id="run_global_sensitivity.r" class="level3" data-number="5.3">
+<h3 data-number="5.3" class="anchored" data-anchor-id="run_global_sensitivity.r"><span class="header-section-number">5.3</span> 023_run_global_sensitivity.R</h3>
+<p>Executes all <span class="math inline">\(N(k+2)\)</span> model runs specified by the Sobol design.</p>
+</section>
+<section id="compute_sobol_indices.r" class="level3" data-number="5.4">
+<h3 data-number="5.4" class="anchored" data-anchor-id="compute_sobol_indices.r"><span class="header-section-number">5.4</span> 024_compute_sobol_indices.R</h3>
+<p>Computes Sobol indices using <code>sensobol</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>idx <span class="ot">&lt;-</span> sensobol<span class="sc">::</span><span class="fu">sobol_indices</span>(<span class="at">Y =</span> Y, <span class="at">N =</span> N, <span class="at">params =</span> params, <span class="at">boot =</span> <span class="cn">TRUE</span>, <span class="at">R =</span> <span class="dv">500</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Output columns:</strong> - <code>Si_original</code>: First-order index (main effect) - <code>Ti_original</code>: Total-order index (main + interactions) - Bootstrap 95% CIs</p>
+<p><strong>Output:</strong> <code>data/sobol_indices.csv</code></p>
+<hr>
+</section>
+</section>
+<section id="phase-4-variance-decomposition" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="phase-4-variance-decomposition"><span class="header-section-number">6</span> Phase 4: Variance Decomposition</h2>
+<section id="partition_variance.r" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="partition_variance.r"><span class="header-section-number">6.1</span> 031_partition_variance.R</h3>
+<p>Integrates local and global SA to partition total ensemble variance.</p>
+<p><strong>Category-level partition (from Sobol):</strong></p>
+<p><span class="math display">\[V_c = \sum_{i \in c} S_i \times \text{Var}(Y_{\text{ens}})\]</span></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Category</th>
+<th style="text-align: left;">Source</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>parameter</code></td>
+<td style="text-align: left;">All PFT parameters</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>IC</code></td>
+<td style="text-align: left;"><code>ic_ensemble</code> index</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>driver</code></td>
+<td style="text-align: left;"><code>met_ensemble</code> index</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>dummy</code></td>
+<td style="text-align: left;">Numerical baseline</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>interaction</code></td>
+<td style="text-align: left;">Residual: <span class="math inline">\(V_{total} - \sum V_i\)</span></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Parameter-level breakdown (from local SA):</strong></p>
+<p>Uses OAT partial variances to allocate <span class="math inline">\(V_{\text{parameter}}\)</span> to individual parameters:</p>
+<p><span class="math display">\[f_p = \frac{V_p^{OAT}}{\sum_j V_j^{OAT}}, \quad V_{\text{param},p} = f_p \times V_{\text{parameter}}\]</span></p>
+<p><strong>Outputs:</strong> - <code>data/variance_partition_site_level.csv</code> - <code>data/variance_partition_parameters.csv</code> - <code>data/variance_partition_summary.csv</code></p>
+<hr>
+</section>
+</section>
+<section id="function-library" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="function-library"><span class="header-section-number">7</span> Function Library</h2>
+<section id="rlocal_sensitivity.r" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="rlocal_sensitivity.r"><span class="header-section-number">7.1</span> R/local_sensitivity.R</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 52%">
+<col style="width: 47%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Function</th>
+<th style="text-align: left;">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>aggregate_local_sa()</code></td>
+<td style="text-align: left;">Collect site-level OAT results, filter by site-PFT pairs</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>summarize_local_sa()</code></td>
+<td style="text-align: left;">Cross-site rankings, PFT differences, constraint priority</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>analyze_environmental_gradients()</code></td>
+<td style="text-align: left;">Regression of sensitivity vs.&nbsp;site covariates</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="rglobal_sensitivity.r" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="rglobal_sensitivity.r"><span class="header-section-number">7.2</span> R/global_sensitivity.R</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 52%">
+<col style="width: 47%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Function</th>
+<th style="text-align: left;">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>generate_sobol_design()</code></td>
+<td style="text-align: left;">Saltelli sampling with discrete input handling</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="rvariance_decomposition.r" class="level3" data-number="7.3">
+<h3 data-number="7.3" class="anchored" data-anchor-id="rvariance_decomposition.r"><span class="header-section-number">7.3</span> R/variance_decomposition.R</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 52%">
+<col style="width: 47%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Function</th>
+<th style="text-align: left;">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>calculate_ensemble_variance()</code></td>
+<td style="text-align: left;">Extract Var(Y) from ensemble output files</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>build_param_category_lookup()</code></td>
+<td style="text-align: left;">Map parameters → categories from metadata</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>partition_variance_sources()</code></td>
+<td style="text-align: left;">Category-level variance attribution</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>partition_parameter_variance_local()</code></td>
+<td style="text-align: left;">Individual parameter breakdown</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+</section>
+<section id="sge-cluster-execution" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="sge-cluster-execution"><span class="header-section-number">8</span> SGE Cluster Execution</h2>
+<p>Model runs are parallelized via SGE array jobs using <a href="scripts/sge_array_launcher.sh"><code>sge_array_launcher.sh</code></a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">#$ -t 1-@NJOBS@</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#$ -pe omp 1</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#$ -l h_rt=2:00:00</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#$ -l buyin</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The launcher reads <code>joblist.txt</code> (generated by PEcAn) and executes the appropriate run directory for each task ID.</p>
+<hr>
+</section>
+<section id="execution" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="execution"><span class="header-section-number">9</span> Execution</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Complete workflow</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/001_setup_design_points.R</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/002_build_xml.R</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/011_run_local_sensitivity.R</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/012_aggregate_sensitivity.R</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/021_generate_sobol_design.R <span class="at">--sample-size</span> 512</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/022_prepare_pecan_inputs.R</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/023_run_global_sensitivity.R</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/024_compute_sobol_indices.R</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/031_partition_variance.R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+<section id="output-variables" class="level2" data-number="10">
+<h2 data-number="10" class="anchored" data-anchor-id="output-variables"><span class="header-section-number">10</span> Output Variables</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Variable</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Units</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">NPP</td>
+<td style="text-align: left;">Net Primary Productivity</td>
+<td style="text-align: left;">kg C ha⁻¹ yr⁻¹</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AbvGrndWood</td>
+<td style="text-align: left;">Aboveground Woody Biomass</td>
+<td style="text-align: left;">kg C ha⁻¹</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Qle</td>
+<td style="text-align: left;">Latent Heat Flux</td>
+<td style="text-align: left;">W m⁻²</td>
+</tr>
+</tbody>
+</table>
+
+
+<!-- -->
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/divine7022\.github\.io\/uncertainty\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Technical Workflow Documentation"</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "SIPNET Uncertainty Quantification Pipeline"</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Akash B V"</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> last-modified</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="an">format:</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">  html:</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">    toc: true</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">    toc-depth: 3</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">    number-sections: true</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">    code-fold: true</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="in">```{r setup}</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#| include: false</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span>opts_chunk<span class="sc">$</span><span class="fu">set</span>(<span class="at">echo =</span> <span class="cn">TRUE</span>, <span class="at">warning =</span> <span class="cn">FALSE</span>, <span class="at">message =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="fu">## Pipeline Architecture</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>This workflow implements variance-based sensitivity analysis for SIPNET following the Dietze (2017) uncertainty partitioning framework. The pipeline decomposes forecast variance into parameter, initial condition, driver, and interaction components using complementary local (OAT) and global (Sobol) methods.</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="fu">### Script Execution Order</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Phase <span class="pp">|</span> Scripts <span class="pp">|</span> Purpose <span class="pp">|</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="pp">|:------|:--------|:--------|</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Setup <span class="pp">|</span> 001–002 <span class="pp">|</span> Design point selection, PEcAn XML configuration <span class="pp">|</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Local SA <span class="pp">|</span> 011–012 <span class="pp">|</span> OAT elasticities, partial variances <span class="pp">|</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Global SA <span class="pp">|</span> 021–024 <span class="pp">|</span> Sobol $S_i$, $T_i$ with IC/driver indices <span class="pp">|</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Integration <span class="pp">|</span> 031 <span class="pp">|</span> Variance partitioning across uncertainty sources <span class="pp">|</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a><span class="fu">## Configuration</span></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>Central configuration in <span class="co">[</span><span class="ot">`000-config.yml`</span><span class="co">](000-config.yml)</span>:</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a><span class="in">```yaml</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a><span class="fu">default</span><span class="kw">:</span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">paths</span><span class="kw">:</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ccmmf_dir</span><span class="kw">:</span><span class="at"> </span><span class="st">"/projectnb2/dietzelab/ccmmf"</span></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">data_dir</span><span class="kw">:</span><span class="at"> </span><span class="st">"data"</span></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">raw_data_dir</span><span class="kw">:</span><span class="at"> </span><span class="st">"data_raw"</span></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">sites</span><span class="kw">:</span></span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">n_sample</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">sensitivity</span><span class="kw">:</span></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">sigma_levels</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="dv">-2</span><span class="kw">,</span><span class="at"> </span><span class="dv">-1</span><span class="kw">,</span><span class="at"> </span><span class="dv">1</span><span class="kw">,</span><span class="at"> </span><span class="dv">2</span><span class="kw">]</span></span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a><span class="fu">## Phase 1: Setup</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a><span class="fu">### 001_setup_design_points.R</span></span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>Selects SA sites from the 198-site master design and maps LandIQ PFT names to PEcAn conventions.</span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a>**PFT Mapping:**</span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`annual crop`</span> → <span class="in">`grass`</span></span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`woody perennial crop`</span> → <span class="in">`temperate.deciduous`</span></span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a>**Output:** <span class="in">`data_raw/sa_design_points.csv`</span></span>
+<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a><span class="fu">### 002_build_xml.R</span></span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a>Generates multisite PEcAn settings XML with ensemble paths and sensitivity configuration.</span>
+<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a>**Key settings:**</span>
+<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Ensemble size: 20 (parameters) x 10 (met)</span>
+<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Simulation period: 2016–2023</span>
+<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Sigma levels: ±1σ, ±2σ perturbations</span>
+<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a>**Output:** <span class="in">`data_raw/settings_sa.xml`</span></span>
+<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a><span class="fu">## Phase 2: Local Sensitivity Analysis</span></span>
+<span id="cb6-78"><a href="#cb6-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-79"><a href="#cb6-79" aria-hidden="true" tabindex="-1"></a><span class="fu">### 011_run_local_sensitivity.R</span></span>
+<span id="cb6-80"><a href="#cb6-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-81"><a href="#cb6-81" aria-hidden="true" tabindex="-1"></a>Executes PEcAn's OAT sensitivity workflow:</span>
+<span id="cb6-82"><a href="#cb6-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-83"><a href="#cb6-83" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span><span class="in">`runModule.run.write.configs()`</span> — Generate model configurations</span>
+<span id="cb6-84"><a href="#cb6-84" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span><span class="in">`runModule_start_model_runs()`</span> — Execute SIPNET via SGE</span>
+<span id="cb6-85"><a href="#cb6-85" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span><span class="in">`runModule.get.results()`</span> — Extract outputs</span>
+<span id="cb6-86"><a href="#cb6-86" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span><span class="in">`runModule.run.sensitivity.analysis()`</span> — Compute elasticities</span>
+<span id="cb6-87"><a href="#cb6-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-88"><a href="#cb6-88" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
+<span id="cb6-89"><a href="#cb6-89" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/011_run_local_sensitivity.R <span class="at">--settings</span> data_raw/settings_sa.xml</span>
+<span id="cb6-90"><a href="#cb6-90" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-91"><a href="#cb6-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-92"><a href="#cb6-92" aria-hidden="true" tabindex="-1"></a><span class="fu">### 012_aggregate_sensitivity.R</span></span>
+<span id="cb6-93"><a href="#cb6-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-94"><a href="#cb6-94" aria-hidden="true" tabindex="-1"></a>Aggregates site-level OAT results and analyzes environmental gradients.</span>
+<span id="cb6-95"><a href="#cb6-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-96"><a href="#cb6-96" aria-hidden="true" tabindex="-1"></a>**Computed metrics:**</span>
+<span id="cb6-97"><a href="#cb6-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-98"><a href="#cb6-98" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Metric <span class="pp">|</span> Definition <span class="pp">|</span></span>
+<span id="cb6-99"><a href="#cb6-99" aria-hidden="true" tabindex="-1"></a><span class="pp">|:-------|:-----------|</span></span>
+<span id="cb6-100"><a href="#cb6-100" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Elasticity <span class="pp">|</span> $\varepsilon_i = \frac{\partial Y}{\partial \theta_i} \cdot \frac{\theta_i}{Y}$ <span class="pp">|</span></span>
+<span id="cb6-101"><a href="#cb6-101" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Partial variance <span class="pp">|</span> $V_i = \varepsilon_i^2 \cdot \text{Var}(\theta_i)$ <span class="pp">|</span></span>
+<span id="cb6-102"><a href="#cb6-102" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Variance explained <span class="pp">|</span> $V_i / \sum_j V_j \times 100$ <span class="pp">|</span></span>
+<span id="cb6-103"><a href="#cb6-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-104"><a href="#cb6-104" aria-hidden="true" tabindex="-1"></a>**Environmental gradient analysis:** Regresses elasticity against MAT, MAP, clay, organic carbon, and TWI to identify context-dependent sensitivities.</span>
+<span id="cb6-105"><a href="#cb6-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-106"><a href="#cb6-106" aria-hidden="true" tabindex="-1"></a>**Outputs:**</span>
+<span id="cb6-107"><a href="#cb6-107" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`data/aggregated_sensitivity.csv`</span></span>
+<span id="cb6-108"><a href="#cb6-108" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`data/parameter_rankings.csv`</span></span>
+<span id="cb6-109"><a href="#cb6-109" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`data/significant_gradients.csv`</span></span>
+<span id="cb6-110"><a href="#cb6-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-111"><a href="#cb6-111" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb6-112"><a href="#cb6-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-113"><a href="#cb6-113" aria-hidden="true" tabindex="-1"></a><span class="fu">## Phase 3: Global Sensitivity Analysis</span></span>
+<span id="cb6-114"><a href="#cb6-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-115"><a href="#cb6-115" aria-hidden="true" tabindex="-1"></a><span class="fu">### 021_generate_sobol_design.R</span></span>
+<span id="cb6-116"><a href="#cb6-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-117"><a href="#cb6-117" aria-hidden="true" tabindex="-1"></a>Generates Saltelli quasi-random design matrix for variance-based SA.</span>
+<span id="cb6-118"><a href="#cb6-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-119"><a href="#cb6-119" aria-hidden="true" tabindex="-1"></a>**Design structure:**</span>
+<span id="cb6-120"><a href="#cb6-120" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>$N \times (k + 2)$ model evaluations (Saltelli scheme)</span>
+<span id="cb6-121"><a href="#cb6-121" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Continuous parameters: quantile-transformed from posterior</span>
+<span id="cb6-122"><a href="#cb6-122" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Discrete inputs (IC, met): inverse transform method</span>
+<span id="cb6-123"><a href="#cb6-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-124"><a href="#cb6-124" aria-hidden="true" tabindex="-1"></a>The design matrix includes both continuous parameters (sampled from posteriors) and discrete inputs (initial conditions, meteorology ensemble members).</span>
+<span id="cb6-125"><a href="#cb6-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-126"><a href="#cb6-126" aria-hidden="true" tabindex="-1"></a>**Dummy parameter:** Uniform(0,1) baseline for numerical noise estimation.</span>
+<span id="cb6-127"><a href="#cb6-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-128"><a href="#cb6-128" aria-hidden="true" tabindex="-1"></a>**Outputs:**</span>
+<span id="cb6-129"><a href="#cb6-129" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`data/sobol_design_matrix.csv`</span></span>
+<span id="cb6-130"><a href="#cb6-130" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`data/sobol_design_metadata.rds`</span></span>
+<span id="cb6-131"><a href="#cb6-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-132"><a href="#cb6-132" aria-hidden="true" tabindex="-1"></a><span class="fu">### 022_prepare_pecan_inputs.R</span></span>
+<span id="cb6-133"><a href="#cb6-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-134"><a href="#cb6-134" aria-hidden="true" tabindex="-1"></a>Transforms Sobol design into PEcAn-compatible structures:</span>
+<span id="cb6-135"><a href="#cb6-135" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Parses <span class="in">`pft.parameter`</span> namespacing → separate PFT lists</span>
+<span id="cb6-136"><a href="#cb6-136" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Creates <span class="in">`ensemble.samples`</span> (list of data frames per PFT)</span>
+<span id="cb6-137"><a href="#cb6-137" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Creates <span class="in">`input_design`</span> mapping sample_id → IC/met indices</span>
+<span id="cb6-138"><a href="#cb6-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-139"><a href="#cb6-139" aria-hidden="true" tabindex="-1"></a>**Outputs:**</span>
+<span id="cb6-140"><a href="#cb6-140" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`output/samples.Rdata`</span></span>
+<span id="cb6-141"><a href="#cb6-141" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`cache/input_design.rds`</span></span>
+<span id="cb6-142"><a href="#cb6-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-143"><a href="#cb6-143" aria-hidden="true" tabindex="-1"></a><span class="fu">### 023_run_global_sensitivity.R</span></span>
+<span id="cb6-144"><a href="#cb6-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-145"><a href="#cb6-145" aria-hidden="true" tabindex="-1"></a>Executes all $N(k+2)$ model runs specified by the Sobol design.</span>
+<span id="cb6-146"><a href="#cb6-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-147"><a href="#cb6-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-148"><a href="#cb6-148" aria-hidden="true" tabindex="-1"></a><span class="fu">### 024_compute_sobol_indices.R</span></span>
+<span id="cb6-149"><a href="#cb6-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-150"><a href="#cb6-150" aria-hidden="true" tabindex="-1"></a>Computes Sobol indices using <span class="in">`sensobol`</span>:</span>
+<span id="cb6-151"><a href="#cb6-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-152"><a href="#cb6-152" aria-hidden="true" tabindex="-1"></a><span class="in">```r</span></span>
+<span id="cb6-153"><a href="#cb6-153" aria-hidden="true" tabindex="-1"></a>idx <span class="ot">&lt;-</span> sensobol<span class="sc">::</span><span class="fu">sobol_indices</span>(<span class="at">Y =</span> Y, <span class="at">N =</span> N, <span class="at">params =</span> params, <span class="at">boot =</span> <span class="cn">TRUE</span>, <span class="at">R =</span> <span class="dv">500</span>)</span>
+<span id="cb6-154"><a href="#cb6-154" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-155"><a href="#cb6-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-156"><a href="#cb6-156" aria-hidden="true" tabindex="-1"></a>**Output columns:**</span>
+<span id="cb6-157"><a href="#cb6-157" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`Si_original`</span>: First-order index (main effect)</span>
+<span id="cb6-158"><a href="#cb6-158" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`Ti_original`</span>: Total-order index (main + interactions)</span>
+<span id="cb6-159"><a href="#cb6-159" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Bootstrap 95% CIs</span>
+<span id="cb6-160"><a href="#cb6-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-161"><a href="#cb6-161" aria-hidden="true" tabindex="-1"></a>**Output:** <span class="in">`data/sobol_indices.csv`</span></span>
+<span id="cb6-162"><a href="#cb6-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-163"><a href="#cb6-163" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb6-164"><a href="#cb6-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-165"><a href="#cb6-165" aria-hidden="true" tabindex="-1"></a><span class="fu">## Phase 4: Variance Decomposition</span></span>
+<span id="cb6-166"><a href="#cb6-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-167"><a href="#cb6-167" aria-hidden="true" tabindex="-1"></a><span class="fu">### 031_partition_variance.R</span></span>
+<span id="cb6-168"><a href="#cb6-168" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-169"><a href="#cb6-169" aria-hidden="true" tabindex="-1"></a>Integrates local and global SA to partition total ensemble variance.</span>
+<span id="cb6-170"><a href="#cb6-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-171"><a href="#cb6-171" aria-hidden="true" tabindex="-1"></a>**Category-level partition (from Sobol):**</span>
+<span id="cb6-172"><a href="#cb6-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-173"><a href="#cb6-173" aria-hidden="true" tabindex="-1"></a>$$V_c = \sum_{i \in c} S_i \times \text{Var}(Y_{\text{ens}})$$</span>
+<span id="cb6-174"><a href="#cb6-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-175"><a href="#cb6-175" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Category <span class="pp">|</span> Source <span class="pp">|</span></span>
+<span id="cb6-176"><a href="#cb6-176" aria-hidden="true" tabindex="-1"></a><span class="pp">|:---------|:-------|</span></span>
+<span id="cb6-177"><a href="#cb6-177" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`parameter`</span> <span class="pp">|</span> All PFT parameters <span class="pp">|</span></span>
+<span id="cb6-178"><a href="#cb6-178" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`IC`</span> <span class="pp">|</span> <span class="in">`ic_ensemble`</span> index <span class="pp">|</span></span>
+<span id="cb6-179"><a href="#cb6-179" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`driver`</span> <span class="pp">|</span> <span class="in">`met_ensemble`</span> index <span class="pp">|</span></span>
+<span id="cb6-180"><a href="#cb6-180" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`dummy`</span> <span class="pp">|</span> Numerical baseline <span class="pp">|</span></span>
+<span id="cb6-181"><a href="#cb6-181" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`interaction`</span> <span class="pp">|</span> Residual: $V_{total} - \sum V_i$ <span class="pp">|</span></span>
+<span id="cb6-182"><a href="#cb6-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-183"><a href="#cb6-183" aria-hidden="true" tabindex="-1"></a>**Parameter-level breakdown (from local SA):**</span>
+<span id="cb6-184"><a href="#cb6-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-185"><a href="#cb6-185" aria-hidden="true" tabindex="-1"></a>Uses OAT partial variances to allocate $V_{\text{parameter}}$ to individual parameters:</span>
+<span id="cb6-186"><a href="#cb6-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-187"><a href="#cb6-187" aria-hidden="true" tabindex="-1"></a>$$f_p = \frac{V_p^{OAT}}{\sum_j V_j^{OAT}}, \quad V_{\text{param},p} = f_p \times V_{\text{parameter}}$$</span>
+<span id="cb6-188"><a href="#cb6-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-189"><a href="#cb6-189" aria-hidden="true" tabindex="-1"></a>**Outputs:**</span>
+<span id="cb6-190"><a href="#cb6-190" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`data/variance_partition_site_level.csv`</span></span>
+<span id="cb6-191"><a href="#cb6-191" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`data/variance_partition_parameters.csv`</span></span>
+<span id="cb6-192"><a href="#cb6-192" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`data/variance_partition_summary.csv`</span></span>
+<span id="cb6-193"><a href="#cb6-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-194"><a href="#cb6-194" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb6-195"><a href="#cb6-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-196"><a href="#cb6-196" aria-hidden="true" tabindex="-1"></a><span class="fu">## Function Library</span></span>
+<span id="cb6-197"><a href="#cb6-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-198"><a href="#cb6-198" aria-hidden="true" tabindex="-1"></a><span class="fu">### R/local_sensitivity.R</span></span>
+<span id="cb6-199"><a href="#cb6-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-200"><a href="#cb6-200" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Function <span class="pp">|</span> Purpose <span class="pp">|</span></span>
+<span id="cb6-201"><a href="#cb6-201" aria-hidden="true" tabindex="-1"></a><span class="pp">|:---------|:--------|</span></span>
+<span id="cb6-202"><a href="#cb6-202" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`aggregate_local_sa()`</span> <span class="pp">|</span> Collect site-level OAT results, filter by site-PFT pairs <span class="pp">|</span></span>
+<span id="cb6-203"><a href="#cb6-203" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`summarize_local_sa()`</span> <span class="pp">|</span> Cross-site rankings, PFT differences, constraint priority <span class="pp">|</span></span>
+<span id="cb6-204"><a href="#cb6-204" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`analyze_environmental_gradients()`</span> <span class="pp">|</span> Regression of sensitivity vs. site covariates <span class="pp">|</span></span>
+<span id="cb6-205"><a href="#cb6-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-206"><a href="#cb6-206" aria-hidden="true" tabindex="-1"></a><span class="fu">### R/global_sensitivity.R</span></span>
+<span id="cb6-207"><a href="#cb6-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-208"><a href="#cb6-208" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Function <span class="pp">|</span> Purpose <span class="pp">|</span></span>
+<span id="cb6-209"><a href="#cb6-209" aria-hidden="true" tabindex="-1"></a><span class="pp">|:---------|:--------|</span></span>
+<span id="cb6-210"><a href="#cb6-210" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`generate_sobol_design()`</span> <span class="pp">|</span> Saltelli sampling with discrete input handling <span class="pp">|</span></span>
+<span id="cb6-211"><a href="#cb6-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-212"><a href="#cb6-212" aria-hidden="true" tabindex="-1"></a><span class="fu">### R/variance_decomposition.R</span></span>
+<span id="cb6-213"><a href="#cb6-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-214"><a href="#cb6-214" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Function <span class="pp">|</span> Purpose <span class="pp">|</span></span>
+<span id="cb6-215"><a href="#cb6-215" aria-hidden="true" tabindex="-1"></a><span class="pp">|:---------|:--------|</span></span>
+<span id="cb6-216"><a href="#cb6-216" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`calculate_ensemble_variance()`</span> <span class="pp">|</span> Extract Var(Y) from ensemble output files <span class="pp">|</span></span>
+<span id="cb6-217"><a href="#cb6-217" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`build_param_category_lookup()`</span> <span class="pp">|</span> Map parameters → categories from metadata <span class="pp">|</span></span>
+<span id="cb6-218"><a href="#cb6-218" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`partition_variance_sources()`</span> <span class="pp">|</span> Category-level variance attribution <span class="pp">|</span></span>
+<span id="cb6-219"><a href="#cb6-219" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="in">`partition_parameter_variance_local()`</span> <span class="pp">|</span> Individual parameter breakdown <span class="pp">|</span></span>
+<span id="cb6-220"><a href="#cb6-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-221"><a href="#cb6-221" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb6-222"><a href="#cb6-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-223"><a href="#cb6-223" aria-hidden="true" tabindex="-1"></a><span class="fu">## SGE Cluster Execution</span></span>
+<span id="cb6-224"><a href="#cb6-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-225"><a href="#cb6-225" aria-hidden="true" tabindex="-1"></a>Model runs are parallelized via SGE array jobs using <span class="co">[</span><span class="ot">`sge_array_launcher.sh`</span><span class="co">](scripts/sge_array_launcher.sh)</span>:</span>
+<span id="cb6-226"><a href="#cb6-226" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-227"><a href="#cb6-227" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
+<span id="cb6-228"><a href="#cb6-228" aria-hidden="true" tabindex="-1"></a><span class="co">#$ -t 1-@NJOBS@</span></span>
+<span id="cb6-229"><a href="#cb6-229" aria-hidden="true" tabindex="-1"></a><span class="co">#$ -pe omp 1</span></span>
+<span id="cb6-230"><a href="#cb6-230" aria-hidden="true" tabindex="-1"></a><span class="co">#$ -l h_rt=2:00:00</span></span>
+<span id="cb6-231"><a href="#cb6-231" aria-hidden="true" tabindex="-1"></a><span class="co">#$ -l buyin</span></span>
+<span id="cb6-232"><a href="#cb6-232" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-233"><a href="#cb6-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-234"><a href="#cb6-234" aria-hidden="true" tabindex="-1"></a>The launcher reads <span class="in">`joblist.txt`</span> (generated by PEcAn) and executes the appropriate run directory for each task ID.</span>
+<span id="cb6-235"><a href="#cb6-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-236"><a href="#cb6-236" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb6-237"><a href="#cb6-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-238"><a href="#cb6-238" aria-hidden="true" tabindex="-1"></a><span class="fu">## Execution</span></span>
+<span id="cb6-239"><a href="#cb6-239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-240"><a href="#cb6-240" aria-hidden="true" tabindex="-1"></a><span class="in">```bash</span></span>
+<span id="cb6-241"><a href="#cb6-241" aria-hidden="true" tabindex="-1"></a><span class="co"># Complete workflow</span></span>
+<span id="cb6-242"><a href="#cb6-242" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/001_setup_design_points.R</span>
+<span id="cb6-243"><a href="#cb6-243" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/002_build_xml.R</span>
+<span id="cb6-244"><a href="#cb6-244" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/011_run_local_sensitivity.R</span>
+<span id="cb6-245"><a href="#cb6-245" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/012_aggregate_sensitivity.R</span>
+<span id="cb6-246"><a href="#cb6-246" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/021_generate_sobol_design.R <span class="at">--sample-size</span> 512</span>
+<span id="cb6-247"><a href="#cb6-247" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/022_prepare_pecan_inputs.R</span>
+<span id="cb6-248"><a href="#cb6-248" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/023_run_global_sensitivity.R</span>
+<span id="cb6-249"><a href="#cb6-249" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/024_compute_sobol_indices.R</span>
+<span id="cb6-250"><a href="#cb6-250" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> scripts/031_partition_variance.R</span>
+<span id="cb6-251"><a href="#cb6-251" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb6-252"><a href="#cb6-252" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-253"><a href="#cb6-253" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb6-254"><a href="#cb6-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-255"><a href="#cb6-255" aria-hidden="true" tabindex="-1"></a><span class="fu">## Output Variables</span></span>
+<span id="cb6-256"><a href="#cb6-256" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-257"><a href="#cb6-257" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Variable <span class="pp">|</span> Description <span class="pp">|</span> Units <span class="pp">|</span></span>
+<span id="cb6-258"><a href="#cb6-258" aria-hidden="true" tabindex="-1"></a><span class="pp">|:---------|:------------|:------|</span></span>
+<span id="cb6-259"><a href="#cb6-259" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> NPP <span class="pp">|</span> Net Primary Productivity <span class="pp">|</span> kg C ha⁻¹ yr⁻¹ <span class="pp">|</span></span>
+<span id="cb6-260"><a href="#cb6-260" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> AbvGrndWood <span class="pp">|</span> Aboveground Woody Biomass <span class="pp">|</span> kg C ha⁻¹ <span class="pp">|</span></span>
+<span id="cb6-261"><a href="#cb6-261" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Qle <span class="pp">|</span> Latent Heat Flux <span class="pp">|</span> W m⁻² <span class="pp">|</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/ccmmf/uncertainty/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/ccmmf/uncertainty/blob/main/docs/workflow_documentation.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></div></div></footer></body></html>

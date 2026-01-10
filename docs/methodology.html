@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Akash B V">
+<meta name="dcterms.date" content="2026-01-10">
+
+<title>Methodology – Sensitivity Analysis</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f3e75b3cf15ab557ce2a372f1422f5e1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/methodology.html">Docs</a></li><li class="breadcrumb-item"><a href="../docs/methodology.html">Methodology</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      </a>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Home</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Overview</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Reports</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/local_sensitivity.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Local Sensitivity</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/global_sensitivity.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Global Sensitivity</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../analysis/variance_decomposition.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Variance Decomposition</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Docs</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/methodology.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Methodology</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/workflow_documentation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Technical Documentation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs/references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">References</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#sensitivity-analysis" id="toc-sensitivity-analysis" class="nav-link" data-scroll-target="#sensitivity-analysis">Sensitivity Analysis</a>
+  <ul class="collapse">
+  <li><a href="#local-sensitivity-analysis-one-at-a-time" id="toc-local-sensitivity-analysis-one-at-a-time" class="nav-link" data-scroll-target="#local-sensitivity-analysis-one-at-a-time">Local Sensitivity Analysis (One-at-a-Time)</a>
+  <ul class="collapse">
+  <li><a href="#definition" id="toc-definition" class="nav-link" data-scroll-target="#definition">Definition</a></li>
+  <li><a href="#numerical-approximation" id="toc-numerical-approximation" class="nav-link" data-scroll-target="#numerical-approximation">Numerical Approximation</a></li>
+  <li><a href="#elasticity-normalized-sensitivity" id="toc-elasticity-normalized-sensitivity" class="nav-link" data-scroll-target="#elasticity-normalized-sensitivity">Elasticity (Normalized Sensitivity)</a></li>
+  <li><a href="#variance-explained" id="toc-variance-explained" class="nav-link" data-scroll-target="#variance-explained">Variance Explained</a></li>
+  </ul></li>
+  <li><a href="#global-sensitivity-analysis-sobol-indices" id="toc-global-sensitivity-analysis-sobol-indices" class="nav-link" data-scroll-target="#global-sensitivity-analysis-sobol-indices">Global Sensitivity Analysis (Sobol Indices)</a>
+  <ul class="collapse">
+  <li><a href="#limitations-of-local-methods" id="toc-limitations-of-local-methods" class="nav-link" data-scroll-target="#limitations-of-local-methods">Limitations of Local Methods</a></li>
+  <li><a href="#variance-based-decomposition" id="toc-variance-based-decomposition" class="nav-link" data-scroll-target="#variance-based-decomposition">Variance-Based Decomposition</a></li>
+  <li><a href="#first-order-sobol-index-s_i" id="toc-first-order-sobol-index-s_i" class="nav-link" data-scroll-target="#first-order-sobol-index-s_i">First-Order Sobol Index (<span class="math inline">\(S_i\)</span>)</a></li>
+  <li><a href="#total-order-sobol-index-t_i" id="toc-total-order-sobol-index-t_i" class="nav-link" data-scroll-target="#total-order-sobol-index-t_i">Total-Order Sobol Index (<span class="math inline">\(T_i\)</span>)</a></li>
+  <li><a href="#interaction-strength" id="toc-interaction-strength" class="nav-link" data-scroll-target="#interaction-strength">Interaction Strength</a></li>
+  <li><a href="#model-additivity" id="toc-model-additivity" class="nav-link" data-scroll-target="#model-additivity">Model Additivity</a></li>
+  <li><a href="#saltelli-sampling-scheme" id="toc-saltelli-sampling-scheme" class="nav-link" data-scroll-target="#saltelli-sampling-scheme">Saltelli Sampling Scheme</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#uncertainty-propagation" id="toc-uncertainty-propagation" class="nav-link" data-scroll-target="#uncertainty-propagation">Uncertainty Propagation</a>
+  <ul class="collapse">
+  <li><a href="#the-fundamental-equation" id="toc-the-fundamental-equation" class="nav-link" data-scroll-target="#the-fundamental-equation">The Fundamental Equation</a></li>
+  <li><a href="#methods-comparison" id="toc-methods-comparison" class="nav-link" data-scroll-target="#methods-comparison">Methods Comparison</a></li>
+  <li><a href="#dynamic-forecasts" id="toc-dynamic-forecasts" class="nav-link" data-scroll-target="#dynamic-forecasts">Dynamic Forecasts</a></li>
+  </ul></li>
+  <li><a href="#variance-decomposition-framework" id="toc-variance-decomposition-framework" class="nav-link" data-scroll-target="#variance-decomposition-framework">Variance Decomposition Framework</a>
+  <ul class="collapse">
+  <li><a href="#uncertainty-sources" id="toc-uncertainty-sources" class="nav-link" data-scroll-target="#uncertainty-sources">Uncertainty Sources</a>
+  <ul class="collapse">
+  <li><a href="#parameter-uncertainty-v_textparam" id="toc-parameter-uncertainty-v_textparam" class="nav-link" data-scroll-target="#parameter-uncertainty-v_textparam">Parameter Uncertainty (<span class="math inline">\(V_{\text{Param}}\)</span>)</a></li>
+  <li><a href="#driver-uncertainty-v_textdriver" id="toc-driver-uncertainty-v_textdriver" class="nav-link" data-scroll-target="#driver-uncertainty-v_textdriver">Driver Uncertainty (<span class="math inline">\(V_{\text{Driver}}\)</span>)</a></li>
+  <li><a href="#initial-condition-uncertainty-v_textic" id="toc-initial-condition-uncertainty-v_textic" class="nav-link" data-scroll-target="#initial-condition-uncertainty-v_textic">Initial Condition Uncertainty (<span class="math inline">\(V_{\text{IC}}\)</span>)</a></li>
+  <li><a href="#process-error-v_textprocess" id="toc-process-error-v_textprocess" class="nav-link" data-scroll-target="#process-error-v_textprocess">Process Error (<span class="math inline">\(V_{\text{Process}}\)</span>)</a></li>
+  <li><a href="#interaction-variance-v_textint" id="toc-interaction-variance-v_textint" class="nav-link" data-scroll-target="#interaction-variance-v_textint">Interaction Variance (<span class="math inline">\(V_{\text{Int}}\)</span>)</a></li>
+  </ul></li>
+  <li><a href="#practical-implications" id="toc-practical-implications" class="nav-link" data-scroll-target="#practical-implications">Practical Implications</a></li>
+  </ul></li>
+  <li><a href="#factor-fixing-and-prioritization" id="toc-factor-fixing-and-prioritization" class="nav-link" data-scroll-target="#factor-fixing-and-prioritization">Factor Fixing and Prioritization</a>
+  <ul class="collapse">
+  <li><a href="#factor-prioritization" id="toc-factor-prioritization" class="nav-link" data-scroll-target="#factor-prioritization">Factor Prioritization</a></li>
+  <li><a href="#factor-fixing" id="toc-factor-fixing" class="nav-link" data-scroll-target="#factor-fixing">Factor Fixing</a></li>
+  <li><a href="#dummy-parameter-method" id="toc-dummy-parameter-method" class="nav-link" data-scroll-target="#dummy-parameter-method">Dummy Parameter Method</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/ccmmf/uncertainty/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/ccmmf/uncertainty/blob/main/docs/methodology.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs/methodology.html">Docs</a></li><li class="breadcrumb-item"><a href="../docs/methodology.html">Methodology</a></li></ol></nav>
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Methodology</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<p class="subtitle lead">Theoretical Framework for Sensitivity Analysis and Uncertainty Quantification</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Akash B V </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">January 10, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="overview" class="level1">
+<h1>Overview</h1>
+<p>This document describes the theoretical foundations and methodological approaches used in the SIPNET sensitivity analysis workflow. The framework follows established best practices in ecological forecasting (Dietze 2017) and variance-based sensitivity analysis (Saltelli et al.&nbsp;2008).</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Core Questions Addressed
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ol type="1">
+<li><strong>Sensitivity Analysis</strong>: How does a change in input <span class="math inline">\(X\)</span> translate into a change in output <span class="math inline">\(Y\)</span>?</li>
+<li><strong>Uncertainty Propagation</strong>: How does uncertainty in <span class="math inline">\(X\)</span> affect uncertainty in <span class="math inline">\(Y\)</span>?</li>
+<li><strong>Uncertainty Analysis</strong>: Which sources of uncertainty are most important?</li>
+<li><strong>Optimal Design</strong>: How do we best reduce forecast uncertainty?</li>
+</ol>
+</div>
+</div>
+<hr>
+</section>
+<section id="sensitivity-analysis" class="level1">
+<h1>Sensitivity Analysis</h1>
+<p>The goal of sensitivity analysis is to understand how changes in model inputs translate into changes in model outputs. This is fundamental to identifying which parameters most strongly control ecosystem predictions.</p>
+<section id="local-sensitivity-analysis-one-at-a-time" class="level2">
+<h2 class="anchored" data-anchor-id="local-sensitivity-analysis-one-at-a-time">Local Sensitivity Analysis (One-at-a-Time)</h2>
+<section id="definition" class="level3">
+<h3 class="anchored" data-anchor-id="definition">Definition</h3>
+<p>For a model <span class="math inline">\(Y = f(X)\)</span>, local sensitivity is defined as the partial derivative evaluated at a reference point (typically the parameter mean):</p>
+<p><span class="math display">\[
+S_i = \frac{\partial Y}{\partial X_i} \bigg|_{X = \bar{X}}
+\]</span></p>
+</section>
+<section id="numerical-approximation" class="level3">
+<h3 class="anchored" data-anchor-id="numerical-approximation">Numerical Approximation</h3>
+<p>For complex models where analytical derivatives are impractical, we use finite difference approximation:</p>
+<p><span class="math display">\[
+\frac{\partial f}{\partial x} \approx \frac{f(x + h) - f(x)}{h}
+\]</span></p>
+<p>In our implementation, we use perturbations at <span class="math inline">\(\pm 1\sigma\)</span> and <span class="math inline">\(\pm 2\sigma\)</span> from the prior distribution to capture realistic parameter variation.</p>
+</section>
+<section id="elasticity-normalized-sensitivity" class="level3">
+<h3 class="anchored" data-anchor-id="elasticity-normalized-sensitivity">Elasticity (Normalized Sensitivity)</h3>
+<p>To enable comparison across parameters with different units and scales, we compute <strong>elasticity</strong>–a dimensionless measure of proportional sensitivity:</p>
+<p><span class="math display">\[
+\varepsilon_i = \frac{\partial Y}{\partial X_i} \cdot \frac{X_i}{Y} = \frac{\partial \ln Y}{\partial \ln X_i}
+\]</span></p>
+<p><strong>Interpretation:</strong></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Elasticity</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(\varepsilon = 1\)</span></td>
+<td>10% increase in <span class="math inline">\(X\)</span> –&gt; 10% increase in <span class="math inline">\(Y\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\varepsilon = 2\)</span></td>
+<td>10% increase in <span class="math inline">\(X\)</span> –&gt; 20% increase in <span class="math inline">\(Y\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\varepsilon = -0.5\)</span></td>
+<td>10% increase in <span class="math inline">\(X\)</span> –&gt; 5% decrease in <span class="math inline">\(Y\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="variance-explained" class="level3">
+<h3 class="anchored" data-anchor-id="variance-explained">Variance Explained</h3>
+<p>Beyond sensitivity magnitude, we quantify each parameter’s contribution to output uncertainty:</p>
+<p><span class="math display">\[
+\text{VarExplained}_i = \frac{(\varepsilon_i \cdot \sigma_{X_i})^2}{\sum_j (\varepsilon_j \cdot \sigma_{X_j})^2} \times 100\%
+\]</span></p>
+<p>This metric combines sensitivity with prior uncertainty–a parameter can be important either because the model is sensitive to it, or because it is poorly constrained.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Key Insight
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A parameter can dominate forecast uncertainty either because:</p>
+<ol type="1">
+<li><strong>High sensitivity</strong>: The model responds strongly to changes in that parameter</li>
+<li><strong>High uncertainty</strong>: The parameter is poorly constrained by available data</li>
+</ol>
+<p>Effective uncertainty reduction requires targeting parameters that are <em>both</em> sensitive <em>and</em> uncertain.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="global-sensitivity-analysis-sobol-indices" class="level2">
+<h2 class="anchored" data-anchor-id="global-sensitivity-analysis-sobol-indices">Global Sensitivity Analysis (Sobol Indices)</h2>
+<section id="limitations-of-local-methods" class="level3">
+<h3 class="anchored" data-anchor-id="limitations-of-local-methods">Limitations of Local Methods</h3>
+<p>Local (OAT) sensitivity analysis has two fundamental limitations:</p>
+<ol type="1">
+<li><strong>Location dependence</strong>: Sensitivity varies across parameter space (except for linear models)</li>
+<li><strong>Interaction blindness</strong>: OAT ignores parameter interactions and non-additive effects</li>
+</ol>
+</section>
+<section id="variance-based-decomposition" class="level3">
+<h3 class="anchored" data-anchor-id="variance-based-decomposition">Variance-Based Decomposition</h3>
+<p>Global sensitivity analysis addresses these limitations by decomposing output variance into contributions from individual parameters and their interactions. For a model <span class="math inline">\(Y = f(X_1, X_2, \ldots, X_k)\)</span>, the total variance can be decomposed as:</p>
+<p><span class="math display">\[
+\text{Var}(Y) = \sum_i V_i + \sum_{i&lt;j} V_{ij} + \sum_{i&lt;j&lt;k} V_{ijk} + \cdots + V_{1,2,\ldots,k}
+\]</span></p>
+<p>where <span class="math inline">\(V_i\)</span> is the variance due to <span class="math inline">\(X_i\)</span> alone, <span class="math inline">\(V_{ij}\)</span> is the variance due to the interaction between <span class="math inline">\(X_i\)</span> and <span class="math inline">\(X_j\)</span>, and so on.</p>
+</section>
+<section id="first-order-sobol-index-s_i" class="level3">
+<h3 class="anchored" data-anchor-id="first-order-sobol-index-s_i">First-Order Sobol Index (<span class="math inline">\(S_i\)</span>)</h3>
+<p>The first-order index quantifies the <strong>main effect</strong> of parameter <span class="math inline">\(X_i\)</span>–its direct contribution to output variance, excluding all interactions:</p>
+<p><span class="math display">\[
+S_i = \frac{V_i}{\text{Var}(Y)} = \frac{\text{Var}_{X_i}[\mathbb{E}_{X_{\sim i}}(Y | X_i)]}{\text{Var}(Y)}
+\]</span></p>
+<p><strong>Interpretation</strong>: The expected reduction in output variance if <span class="math inline">\(X_i\)</span> could be fixed to its true value.</p>
+</section>
+<section id="total-order-sobol-index-t_i" class="level3">
+<h3 class="anchored" data-anchor-id="total-order-sobol-index-t_i">Total-Order Sobol Index (<span class="math inline">\(T_i\)</span>)</h3>
+<p>The total-order index captures the <strong>total effect</strong> of <span class="math inline">\(X_i\)</span>, including all interactions with other parameters:</p>
+<p><span class="math display">\[
+T_i = \frac{\mathbb{E}_{X_{\sim i}}[\text{Var}_{X_i}(Y | X_{\sim i})]}{\text{Var}(Y)} = 1 - \frac{\text{Var}_{X_{\sim i}}[\mathbb{E}_{X_i}(Y | X_{\sim i})]}{\text{Var}(Y)}
+\]</span></p>
+<p>where <span class="math inline">\(X_{\sim i}\)</span> denotes all parameters except <span class="math inline">\(X_i\)</span>.</p>
+</section>
+<section id="interaction-strength" class="level3">
+<h3 class="anchored" data-anchor-id="interaction-strength">Interaction Strength</h3>
+<p>The difference between total and first-order indices quantifies interaction strength:</p>
+<p><span class="math display">\[
+\text{Interaction}_i = T_i - S_i
+\]</span></p>
+</section>
+<section id="model-additivity" class="level3">
+<h3 class="anchored" data-anchor-id="model-additivity">Model Additivity</h3>
+<p>The sum of first-order indices indicates model linearity:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Condition</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(\sum S_i \approx 1\)</span></td>
+<td>Model is <strong>additive</strong> (linear-like, minimal interactions)</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\sum S_i \ll 1\)</span></td>
+<td>Model is <strong>non-additive</strong> (strong interactions dominate)</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\sum T_i &gt; 1\)</span></td>
+<td>Interactions are present (effects are double-counted)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="saltelli-sampling-scheme" class="level3">
+<h3 class="anchored" data-anchor-id="saltelli-sampling-scheme">Saltelli Sampling Scheme</h3>
+<p>We use Saltelli’s sampling design with Jansen estimators, which requires <span class="math inline">\(N(2k + 2)\)</span> model evaluations for <span class="math inline">\(k\)</span> parameters, providing efficient estimation of both <span class="math inline">\(S_i\)</span> and <span class="math inline">\(T_i\)</span>.</p>
+<hr>
+</section>
+</section>
+</section>
+<section id="uncertainty-propagation" class="level1">
+<h1>Uncertainty Propagation</h1>
+<p>Uncertainty propagation translates input uncertainties into output uncertainties–a fundamental requirement for ecological forecasting.</p>
+<section id="the-fundamental-equation" class="level2">
+<h2 class="anchored" data-anchor-id="the-fundamental-equation">The Fundamental Equation</h2>
+<p>The uncertainty in a prediction depends on two components:</p>
+<p><span class="math display">\[
+\text{Var}[f(X)] \approx \sum_i \sum_j \frac{\partial f}{\partial X_i} \frac{\partial f}{\partial X_j} \text{Cov}[X_i, X_j]
+\]</span></p>
+<p>For independent parameters, this simplifies to:</p>
+<p><span class="math display">\[
+\text{Var}[f(X)] \approx \sum_i \left(\frac{\partial f}{\partial X_i}\right)^2 \text{Var}[X_i]
+\]</span></p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Practical Interpretation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Uncertainty in prediction = Sensitivity² × Input Uncertainty</strong></p>
+<p>This is why both sensitivity and parameter constraint matter for forecasting.</p>
+</div>
+</div>
+</section>
+<section id="methods-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="methods-comparison">Methods Comparison</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Output</th>
+<th>Computational Cost</th>
+<th>Assumptions</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Taylor Series</strong></td>
+<td>Mean, Variance</td>
+<td>Low (analytical)</td>
+<td>Linearity, Normality</td>
+</tr>
+<tr class="even">
+<td><strong>Monte Carlo</strong></td>
+<td>Full Distribution</td>
+<td>High (many runs)</td>
+<td>None</td>
+</tr>
+<tr class="odd">
+<td><strong>Ensemble</strong></td>
+<td>Mean, Variance</td>
+<td>Medium (10-100 runs)</td>
+<td>Normality</td>
+</tr>
+<tr class="even">
+<td><strong>Emulator</strong></td>
+<td>Full Distribution</td>
+<td>Medium (build + MC)</td>
+<td>Emulator accuracy</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="dynamic-forecasts" class="level2">
+<h2 class="anchored" data-anchor-id="dynamic-forecasts">Dynamic Forecasts</h2>
+<p>For time-evolving forecasts with process model <span class="math inline">\(x_{t+1} = f(x_t) + \epsilon_t\)</span>, uncertainty propagates as:</p>
+<p><span class="math display">\[
+\text{Var}[x_{t+1}] \approx f'(x_t)^2 \cdot \text{Var}[x_t] + q
+\]</span></p>
+<p>where <span class="math inline">\(q\)</span> is process error variance. Forecast uncertainty depends on:</p>
+<ol type="1">
+<li><strong>State uncertainty</strong>: <span class="math inline">\(\text{Var}[x_t]\)</span></li>
+<li><strong>System stability</strong>: <span class="math inline">\(|f'(x_t)|\)</span> (stable if &lt; 1)</li>
+<li><strong>Process error</strong>: <span class="math inline">\(q\)</span></li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="variance-decomposition-framework" class="level1">
+<h1>Variance Decomposition Framework</h1>
+<p>Following the ecological forecasting framework (Dietze 2017), forecast variance is partitioned into distinct sources:</p>
+<p><span class="math display">\[
+\text{Var}(Y) \approx V_{\text{Parameter}} + V_{\text{Driver}} + V_{\text{IC}} + V_{\text{Process}} + V_{\text{Interaction}}
+\]</span></p>
+<section id="uncertainty-sources" class="level2">
+<h2 class="anchored" data-anchor-id="uncertainty-sources">Uncertainty Sources</h2>
+<section id="parameter-uncertainty-v_textparam" class="level3">
+<h3 class="anchored" data-anchor-id="parameter-uncertainty-v_textparam">Parameter Uncertainty (<span class="math inline">\(V_{\text{Param}}\)</span>)</h3>
+<p>Uncertainty arising from imperfect knowledge of biological traits and model parameters (e.g., <span class="math inline">\(A_{\max}\)</span>, SLA, turnover rates).</p>
+<p><strong>Reduction strategy</strong>: Field measurements, trait databases, Bayesian calibration</p>
+</section>
+<section id="driver-uncertainty-v_textdriver" class="level3">
+<h3 class="anchored" data-anchor-id="driver-uncertainty-v_textdriver">Driver Uncertainty (<span class="math inline">\(V_{\text{Driver}}\)</span>)</h3>
+<p>Uncertainty from meteorological forcing variables (temperature, precipitation, radiation).</p>
+<p><strong>Reduction strategy</strong>: Improved weather observations, ensemble meteorology</p>
+</section>
+<section id="initial-condition-uncertainty-v_textic" class="level3">
+<h3 class="anchored" data-anchor-id="initial-condition-uncertainty-v_textic">Initial Condition Uncertainty (<span class="math inline">\(V_{\text{IC}}\)</span>)</h3>
+<p>Uncertainty from the system’s starting state (soil carbon pools, biomass stocks).</p>
+<p><strong>Reduction strategy</strong>: Site inventory, remote sensing, data assimilation</p>
+</section>
+<section id="process-error-v_textprocess" class="level3">
+<h3 class="anchored" data-anchor-id="process-error-v_textprocess">Process Error (<span class="math inline">\(V_{\text{Process}}\)</span>)</h3>
+<p>Irreducible stochasticity and model structural error.</p>
+<p><strong>Reduction strategy</strong>: Model improvement, ensemble of models</p>
+</section>
+<section id="interaction-variance-v_textint" class="level3">
+<h3 class="anchored" data-anchor-id="interaction-variance-v_textint">Interaction Variance (<span class="math inline">\(V_{\text{Int}}\)</span>)</h3>
+<p>Non-additive effects arising from parameter-driver-state interactions.</p>
+<p><strong>Interpretation</strong>: Large interaction terms indicate context-dependent parameter importance.</p>
+</section>
+</section>
+<section id="practical-implications" class="level2">
+<h2 class="anchored" data-anchor-id="practical-implications">Practical Implications</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Dominant Source</th>
+<th>Research Priority</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(V_{\text{Param}}\)</span></td>
+<td>Trait measurements, meta-analysis</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(V_{\text{Driver}}\)</span></td>
+<td>Sensor networks, reanalysis products</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(V_{\text{IC}}\)</span></td>
+<td>Site inventories, data assimilation</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(V_{\text{Process}}\)</span></td>
+<td>Model structure, validation</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+</section>
+<section id="factor-fixing-and-prioritization" class="level1">
+<h1>Factor Fixing and Prioritization</h1>
+<section id="factor-prioritization" class="level2">
+<h2 class="anchored" data-anchor-id="factor-prioritization">Factor Prioritization</h2>
+<p>Parameters with high <span class="math inline">\(T_i\)</span> should be prioritized for uncertainty reduction—constraining these will most reduce forecast uncertainty.</p>
+</section>
+<section id="factor-fixing" class="level2">
+<h2 class="anchored" data-anchor-id="factor-fixing">Factor Fixing</h2>
+<p>Parameters with <span class="math inline">\(T_i\)</span> indistinguishable from zero (or from a dummy parameter) can be fixed to nominal values without information loss. This simplifies models and reduces computational cost.</p>
+</section>
+<section id="dummy-parameter-method" class="level2">
+<h2 class="anchored" data-anchor-id="dummy-parameter-method">Dummy Parameter Method</h2>
+<p>We include a “dummy” parameter that varies randomly but has no effect on model output. Its Sobol index represents numerical noise. Parameters with <span class="math inline">\(T_i\)</span> within the dummy’s confidence interval are candidates for fixing.</p>
+
+
+<!-- -->
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/divine7022\.github\.io\/uncertainty\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Methodology"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Theoretical Framework for Sensitivity Analysis and Uncertainty Quantification"</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">author:</span><span class="co"> "Akash B V"</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">date:</span><span class="co"> last-modified</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu"># Overview</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>This document describes the theoretical foundations and methodological approaches used in the SIPNET sensitivity analysis workflow. The framework follows established best practices in ecological forecasting (Dietze 2017) and variance-based sensitivity analysis (Saltelli et al. 2008).</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>::: callout-note</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">## Core Questions Addressed</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>**Sensitivity Analysis**: How does a change in input $X$ translate into a change in output $Y$?</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>**Uncertainty Propagation**: How does uncertainty in $X$ affect uncertainty in $Y$?</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ss">3.  </span>**Uncertainty Analysis**: Which sources of uncertainty are most important?</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">4.  </span>**Optimal Design**: How do we best reduce forecast uncertainty?</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu"># Sensitivity Analysis</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>The goal of sensitivity analysis is to understand how changes in model inputs translate into changes in model outputs. This is fundamental to identifying which parameters most strongly control ecosystem predictions.</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="fu">## Local Sensitivity Analysis (One-at-a-Time)</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="fu">### Definition</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>For a model $Y = f(X)$, local sensitivity is defined as the partial derivative evaluated at a reference point (typically the parameter mean):</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>S_i = \frac{\partial Y}{\partial X_i} \bigg|_{X = \bar{X}}</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="fu">### Numerical Approximation</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>For complex models where analytical derivatives are impractical, we use finite difference approximation:</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>\frac{\partial f}{\partial x} \approx \frac{f(x + h) - f(x)}{h}</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>In our implementation, we use perturbations at $\pm 1\sigma$ and $\pm 2\sigma$ from the prior distribution to capture realistic parameter variation.</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="fu">### Elasticity (Normalized Sensitivity)</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>To enable comparison across parameters with different units and scales, we compute **elasticity**--a dimensionless measure of proportional sensitivity:</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>\varepsilon_i = \frac{\partial Y}{\partial X_i} \cdot \frac{X_i}{Y} = \frac{\partial \ln Y}{\partial \ln X_i}</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>**Interpretation:**</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Elasticity           <span class="pp">|</span> Meaning                                   <span class="pp">|</span></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------------------|-------------------------------------------|</span></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\varepsilon = 1$    <span class="pp">|</span> 10% increase in $X$ --&gt; 10% increase in $Y$ <span class="pp">|</span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\varepsilon = 2$    <span class="pp">|</span> 10% increase in $X$ --&gt; 20% increase in $Y$ <span class="pp">|</span></span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\varepsilon = -0.5$ <span class="pp">|</span> 10% increase in $X$ --&gt; 5% decrease in $Y$  <span class="pp">|</span></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="fu">### Variance Explained</span></span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>Beyond sensitivity magnitude, we quantify each parameter's contribution to output uncertainty:</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>\text{VarExplained}_i = \frac{(\varepsilon_i \cdot \sigma_{X_i})^2}{\sum_j (\varepsilon_j \cdot \sigma_{X_j})^2} \times 100\%</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>This metric combines sensitivity with prior uncertainty--a parameter can be important either because the model is sensitive to it, or because it is poorly constrained.</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>::: callout-important</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a><span class="fu">## Key Insight</span></span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>A parameter can dominate forecast uncertainty either because:</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>**High sensitivity**: The model responds strongly to changes in that parameter</span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>**High uncertainty**: The parameter is poorly constrained by available data</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>Effective uncertainty reduction requires targeting parameters that are *both* sensitive *and* uncertain.</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a><span class="fu">## Global Sensitivity Analysis (Sobol Indices)</span></span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a><span class="fu">### Limitations of Local Methods</span></span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>Local (OAT) sensitivity analysis has two fundamental limitations:</span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>**Location dependence**: Sensitivity varies across parameter space (except for linear models)</span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>**Interaction blindness**: OAT ignores parameter interactions and non-additive effects</span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a><span class="fu">### Variance-Based Decomposition</span></span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>Global sensitivity analysis addresses these limitations by decomposing output variance into contributions from individual parameters and their interactions. For a model $Y = f(X_1, X_2, \ldots, X_k)$, the total variance can be decomposed as:</span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>\text{Var}(Y) = \sum_i V_i + \sum_{i&lt;j} V_{ij} + \sum_{i&lt;j&lt;k} V_{ijk} + \cdots + V_{1,2,\ldots,k}</span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>where $V_i$ is the variance due to $X_i$ alone, $V_{ij}$ is the variance due to the interaction between $X_i$ and $X_j$, and so on.</span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a><span class="fu">### First-Order Sobol Index ($S_i$)</span></span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a>The first-order index quantifies the **main effect** of parameter $X_i$--its direct contribution to output variance, excluding all interactions:</span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>S_i = \frac{V_i}{\text{Var}(Y)} = \frac{\text{Var}_{X_i}[\mathbb{E}_{X_{\sim i}}(Y | X_i)]}{\text{Var}(Y)}</span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>**Interpretation**: The expected reduction in output variance if $X_i$ could be fixed to its true value.</span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a><span class="fu">### Total-Order Sobol Index ($T_i$)</span></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a>The total-order index captures the **total effect** of $X_i$, including all interactions with other parameters:</span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a>T_i = \frac{\mathbb{E}_{X_{\sim i}}[\text{Var}_{X_i}(Y | X_{\sim i})]}{\text{Var}(Y)} = 1 - \frac{\text{Var}_{X_{\sim i}}[\mathbb{E}_{X_i}(Y | X_{\sim i})]}{\text{Var}(Y)}</span>
+<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>where $X_{\sim i}$ denotes all parameters except $X_i$.</span>
+<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a><span class="fu">### Interaction Strength</span></span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>The difference between total and first-order indices quantifies interaction strength:</span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>\text{Interaction}_i = T_i - S_i</span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a><span class="fu">### Model Additivity</span></span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>The sum of first-order indices indicates model linearity:</span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Condition <span class="pp">|</span> Interpretation <span class="pp">|</span></span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a><span class="pp">|----|----|</span></span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\sum S_i \approx 1$ <span class="pp">|</span> Model is **additive** (linear-like, minimal interactions) <span class="pp">|</span></span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\sum S_i \ll 1$ <span class="pp">|</span> Model is **non-additive** (strong interactions dominate) <span class="pp">|</span></span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $\sum T_i &gt; 1$ <span class="pp">|</span> Interactions are present (effects are double-counted) <span class="pp">|</span></span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a><span class="fu">### Saltelli Sampling Scheme</span></span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>We use Saltelli's sampling design with Jansen estimators, which requires $N(2k + 2)$ model evaluations for $k$ parameters, providing efficient estimation of both $S_i$ and $T_i$.</span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a><span class="fu"># Uncertainty Propagation</span></span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>Uncertainty propagation translates input uncertainties into output uncertainties--a fundamental requirement for ecological forecasting.</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a><span class="fu">## The Fundamental Equation</span></span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>The uncertainty in a prediction depends on two components:</span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>\text{Var}<span class="co">[</span><span class="ot">f(X)</span><span class="co">]</span> \approx \sum_i \sum_j \frac{\partial f}{\partial X_i} \frac{\partial f}{\partial X_j} \text{Cov}<span class="co">[</span><span class="ot">X_i, X_j</span><span class="co">]</span></span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>For independent parameters, this simplifies to:</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>\text{Var}<span class="co">[</span><span class="ot">f(X)</span><span class="co">]</span> \approx \sum_i \left(\frac{\partial f}{\partial X_i}\right)^2 \text{Var}<span class="co">[</span><span class="ot">X_i</span><span class="co">]</span></span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a>::: callout-tip</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a><span class="fu">## Practical Interpretation</span></span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>**Uncertainty in prediction = Sensitivity² × Input Uncertainty**</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a>This is why both sensitivity and parameter constraint matter for forecasting.</span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a><span class="fu">## Methods Comparison</span></span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Method <span class="pp">|</span> Output <span class="pp">|</span> Computational Cost <span class="pp">|</span> Assumptions <span class="pp">|</span></span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a><span class="pp">|----|----|----|----|</span></span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Taylor Series** <span class="pp">|</span> Mean, Variance <span class="pp">|</span> Low (analytical) <span class="pp">|</span> Linearity, Normality <span class="pp">|</span></span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Monte Carlo** <span class="pp">|</span> Full Distribution <span class="pp">|</span> High (many runs) <span class="pp">|</span> None <span class="pp">|</span></span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Ensemble** <span class="pp">|</span> Mean, Variance <span class="pp">|</span> Medium (10-100 runs) <span class="pp">|</span> Normality <span class="pp">|</span></span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> **Emulator** <span class="pp">|</span> Full Distribution <span class="pp">|</span> Medium (build + MC) <span class="pp">|</span> Emulator accuracy <span class="pp">|</span></span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a><span class="fu">## Dynamic Forecasts</span></span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a>For time-evolving forecasts with process model $x_{t+1} = f(x_t) + \epsilon_t$, uncertainty propagates as:</span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a>\text{Var}<span class="co">[</span><span class="ot">x_{t+1}</span><span class="co">]</span> \approx f'(x_t)^2 \cdot \text{Var}<span class="co">[</span><span class="ot">x_t</span><span class="co">]</span> + q</span>
+<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a>where $q$ is process error variance. Forecast uncertainty depends on:</span>
+<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a><span class="ss">1.  </span>**State uncertainty**: $\text{Var}<span class="co">[</span><span class="ot">x_t</span><span class="co">]</span>$</span>
+<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a><span class="ss">2.  </span>**System stability**: $|f'(x_t)|$ (stable if <span class="sc">\&lt;</span> 1)</span>
+<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a><span class="ss">3.  </span>**Process error**: $q$</span>
+<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
+<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a><span class="fu"># Variance Decomposition Framework</span></span>
+<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>Following the ecological forecasting framework (Dietze 2017), forecast variance is partitioned into distinct sources:</span>
+<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a>\text{Var}(Y) \approx V_{\text{Parameter}} + V_{\text{Driver}} + V_{\text{IC}} + V_{\text{Process}} + V_{\text{Interaction}}</span>
+<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a><span class="fu">## Uncertainty Sources</span></span>
+<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a><span class="fu">### Parameter Uncertainty ($V_{\text{Param}}$)</span></span>
+<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a>Uncertainty arising from imperfect knowledge of biological traits and model parameters (e.g., $A_{\max}$, SLA, turnover rates).</span>
+<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a>**Reduction strategy**: Field measurements, trait databases, Bayesian calibration</span>
+<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a><span class="fu">### Driver Uncertainty ($V_{\text{Driver}}$)</span></span>
+<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a>Uncertainty from meteorological forcing variables (temperature, precipitation, radiation).</span>
+<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a>**Reduction strategy**: Improved weather observations, ensemble meteorology</span>
+<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a><span class="fu">### Initial Condition Uncertainty ($V_{\text{IC}}$)</span></span>
+<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a>Uncertainty from the system's starting state (soil carbon pools, biomass stocks).</span>
+<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a>**Reduction strategy**: Site inventory, remote sensing, data assimilation</span>
+<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a><span class="fu">### Process Error ($V_{\text{Process}}$)</span></span>
+<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a>Irreducible stochasticity and model structural error.</span>
+<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a>**Reduction strategy**: Model improvement, ensemble of models</span>
+<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a><span class="fu">### Interaction Variance ($V_{\text{Int}}$)</span></span>
+<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a>Non-additive effects arising from parameter-driver-state interactions.</span>
+<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a>**Interpretation**: Large interaction terms indicate context-dependent parameter importance.</span>
+<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a><span class="fu">## Practical Implications</span></span>
+<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Dominant Source      <span class="pp">|</span> Research Priority                    <span class="pp">|</span></span>
+<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------------------|--------------------------------------|</span></span>
+<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $V_{\text{Param}}$   <span class="pp">|</span> Trait measurements, meta-analysis    <span class="pp">|</span></span>
+<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $V_{\text{Driver}}$  <span class="pp">|</span> Sensor networks, reanalysis products <span class="pp">|</span></span>
+<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $V_{\text{IC}}$      <span class="pp">|</span> Site inventories, data assimilation  <span class="pp">|</span></span>
+<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> $V_{\text{Process}}$ <span class="pp">|</span> Model structure, validation          <span class="pp">|</span></span>
+<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a>------------------------------------------------------------------------</span>
+<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a><span class="fu"># Factor Fixing and Prioritization</span></span>
+<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a><span class="fu">## Factor Prioritization</span></span>
+<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a>Parameters with high $T_i$ should be prioritized for uncertainty reduction—constraining these will most reduce forecast uncertainty.</span>
+<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a><span class="fu">## Factor Fixing</span></span>
+<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a>Parameters with $T_i$ indistinguishable from zero (or from a dummy parameter) can be fixed to nominal values without information loss. This simplifies models and reduces computational cost.</span>
+<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a><span class="fu">## Dummy Parameter Method</span></span>
+<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a>We include a "dummy" parameter that varies randomly but has no effect on model output. Its Sobol index represents numerical noise. Parameters with $T_i$ within the dummy's confidence interval are candidates for fixing.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+</div></div></div></div></div>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/ccmmf/uncertainty/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li><li><a href="https://github.com/ccmmf/uncertainty/blob/main/docs/methodology.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li></ul></div></div></div></footer></body></html>
