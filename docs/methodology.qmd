@@ -1,0 +1,285 @@
+---
+title: "Methodology"
+subtitle: "Theoretical Framework for Sensitivity Analysis and Uncertainty Quantification"
+author: "Akash B V"
+date: last-modified
+---
+
+# Overview
+
+This document describes the theoretical foundations and methodological approaches used in the SIPNET sensitivity analysis workflow. The framework follows established best practices in ecological forecasting (Dietze 2017) and variance-based sensitivity analysis (Saltelli et al. 2008).
+
+::: callout-note
+## Core Questions Addressed
+
+1.  **Sensitivity Analysis**: How does a change in input $X$ translate into a change in output $Y$?
+2.  **Uncertainty Propagation**: How does uncertainty in $X$ affect uncertainty in $Y$?
+3.  **Uncertainty Analysis**: Which sources of uncertainty are most important?
+4.  **Optimal Design**: How do we best reduce forecast uncertainty?
+:::
+
+------------------------------------------------------------------------
+
+# Sensitivity Analysis
+
+The goal of sensitivity analysis is to understand how changes in model inputs translate into changes in model outputs. This is fundamental to identifying which parameters most strongly control ecosystem predictions.
+
+## Local Sensitivity Analysis (One-at-a-Time)
+
+### Definition
+
+For a model $Y = f(X)$, local sensitivity is defined as the partial derivative evaluated at a reference point (typically the parameter mean):
+
+$$
+S_i = \frac{\partial Y}{\partial X_i} \bigg|_{X = \bar{X}}
+$$
+
+### Numerical Approximation
+
+For complex models where analytical derivatives are impractical, we use finite difference approximation:
+
+$$
+\frac{\partial f}{\partial x} \approx \frac{f(x + h) - f(x)}{h}
+$$
+
+In our implementation, we use perturbations at $\pm 1\sigma$ and $\pm 2\sigma$ from the prior distribution to capture realistic parameter variation.
+
+### Elasticity (Normalized Sensitivity)
+
+To enable comparison across parameters with different units and scales, we compute **elasticity**--a dimensionless measure of proportional sensitivity:
+
+$$
+\varepsilon_i = \frac{\partial Y}{\partial X_i} \cdot \frac{X_i}{Y} = \frac{\partial \ln Y}{\partial \ln X_i}
+$$
+
+**Interpretation:**
+
+| Elasticity           | Meaning                                      |
+|----------------------|----------------------------------------------|
+| $\varepsilon = 1$    | 10% increase in $X$ --\> 10% increase in $Y$ |
+| $\varepsilon = 2$    | 10% increase in $X$ --\> 20% increase in $Y$ |
+| $\varepsilon = -0.5$ | 10% increase in $X$ --\> 5% decrease in $Y$  |
+
+### Variance Explained
+
+Beyond sensitivity magnitude, we quantify each parameter's contribution to output uncertainty:
+
+$$
+\text{VarExplained}_i = \frac{(\varepsilon_i \cdot \sigma_{X_i})^2}{\sum_j (\varepsilon_j \cdot \sigma_{X_j})^2} \times 100\%
+$$
+
+This metric combines sensitivity with prior uncertainty--a parameter can be important either because the model is sensitive to it, or because it is poorly constrained.
+
+::: callout-important
+## Key Insight
+
+A parameter can dominate forecast uncertainty either because:
+
+1.  **High sensitivity**: The model responds strongly to changes in that parameter
+2.  **High uncertainty**: The parameter is poorly constrained by available data
+
+Effective uncertainty reduction requires targeting parameters that are *both* sensitive *and* uncertain.
+:::
+
+------------------------------------------------------------------------
+
+## Global Sensitivity Analysis (Sobol Indices)
+
+### Limitations of Local Methods
+
+Local (OAT) sensitivity analysis has two fundamental limitations:
+
+1.  **Location dependence**: Sensitivity varies across parameter space (except for linear models)
+2.  **Interaction blindness**: OAT ignores parameter interactions and non-additive effects
+
+### Variance-Based Decomposition
+
+Global sensitivity analysis addresses these limitations by decomposing output variance into contributions from individual parameters and their interactions. For a model $Y = f(X_1, X_2, \ldots, X_k)$, the total variance can be decomposed as:
+
+$$
+\text{Var}(Y) = \sum_i V_i + \sum_{i<j} V_{ij} + \sum_{i<j<k} V_{ijk} + \cdots + V_{1,2,\ldots,k}
+$$
+
+where $V_i$ is the variance due to $X_i$ alone, $V_{ij}$ is the variance due to the interaction between $X_i$ and $X_j$, and so on.
+
+### First-Order Sobol Index ($S_i$)
+
+The first-order index quantifies the **main effect** of parameter $X_i$--its direct contribution to output variance, excluding all interactions:
+
+$$
+S_i = \frac{V_i}{\text{Var}(Y)} = \frac{\text{Var}_{X_i}[\mathbb{E}_{X_{\sim i}}(Y | X_i)]}{\text{Var}(Y)}
+$$
+
+**Interpretation**: The expected reduction in output variance if $X_i$ could be fixed to its true value.
+
+### Total-Order Sobol Index ($T_i$)
+
+The total-order index captures the **total effect** of $X_i$, including all interactions with other parameters:
+
+$$
+T_i = \frac{\mathbb{E}_{X_{\sim i}}[\text{Var}_{X_i}(Y | X_{\sim i})]}{\text{Var}(Y)} = 1 - \frac{\text{Var}_{X_{\sim i}}[\mathbb{E}_{X_i}(Y | X_{\sim i})]}{\text{Var}(Y)}
+$$
+
+where $X_{\sim i}$ denotes all parameters except $X_i$.
+
+### Interaction Strength
+
+The difference between total and first-order indices quantifies interaction strength:
+
+$$
+\text{Interaction}_i = T_i - S_i
+$$
+
+### Model Additivity
+
+The sum of first-order indices indicates model linearity:
+
+| Condition | Interpretation |
+|----|----|
+| $\sum S_i \approx 1$ | Model is **additive** (linear-like, minimal interactions) |
+| $\sum S_i \ll 1$ | Model is **non-additive** (strong interactions dominate) |
+| $\sum T_i > 1$ | Interactions are present (effects are double-counted) |
+
+### Saltelli Sampling Scheme
+
+We use Saltelli's sampling design with Jansen estimators, which requires $N(2k + 2)$ model evaluations for $k$ parameters, providing efficient estimation of both $S_i$ and $T_i$.
+
+------------------------------------------------------------------------
+
+# Uncertainty Propagation
+
+Uncertainty propagation translates input uncertainties into output uncertainties--a fundamental requirement for ecological forecasting.
+
+## The Fundamental Equation
+
+The uncertainty in a prediction depends on two components:
+
+$$
+\text{Var}[f(X)] \approx \sum_i \sum_j \frac{\partial f}{\partial X_i} \frac{\partial f}{\partial X_j} \text{Cov}[X_i, X_j]
+$$
+
+For independent parameters, this simplifies to:
+
+$$
+\text{Var}[f(X)] \approx \sum_i \left(\frac{\partial f}{\partial X_i}\right)^2 \text{Var}[X_i]
+$$
+
+::: callout-tip
+## Practical Interpretation
+
+**Uncertainty in prediction = Sensitivity² × Input Uncertainty**
+
+This is why both sensitivity and parameter constraint matter for forecasting.
+:::
+
+## Methods Comparison
+
+| Method | Output | Computational Cost | Assumptions |
+|----|----|----|----|
+| **Taylor Series** | Mean, Variance | Low (analytical) | Linearity, Normality |
+| **Monte Carlo** | Full Distribution | High (many runs) | None |
+| **Ensemble** | Mean, Variance | Medium (10-100 runs) | Normality |
+| **Emulator** | Full Distribution | Medium (build + MC) | Emulator accuracy |
+
+## Dynamic Forecasts
+
+For time-evolving forecasts with process model $x_{t+1} = f(x_t) + \epsilon_t$, uncertainty propagates as:
+
+$$
+\text{Var}[x_{t+1}] \approx f'(x_t)^2 \cdot \text{Var}[x_t] + q
+$$
+
+where $q$ is process error variance. Forecast uncertainty depends on:
+
+1.  **State uncertainty**: $\text{Var}[x_t]$
+2.  **System stability**: $|f'(x_t)|$ (stable if \< 1)
+3.  **Process error**: $q$
+
+------------------------------------------------------------------------
+
+# Variance Decomposition Framework
+
+Following the ecological forecasting framework (Dietze 2017), forecast variance is partitioned into distinct sources:
+
+$$
+\text{Var}(Y) \approx V_{\text{Parameter}} + V_{\text{Driver}} + V_{\text{IC}} + V_{\text{Process}} + V_{\text{Interaction}}
+$$
+
+## Uncertainty Sources
+
+### Parameter Uncertainty ($V_{\text{Param}}$)
+
+Uncertainty arising from imperfect knowledge of biological traits and model parameters (e.g., $A_{\max}$, SLA, turnover rates).
+
+**Reduction strategy**: Field measurements, trait databases, Bayesian calibration
+
+### Driver Uncertainty ($V_{\text{Driver}}$)
+
+Uncertainty from meteorological forcing variables (temperature, precipitation, radiation).
+
+**Reduction strategy**: Improved weather observations, ensemble meteorology
+
+### Initial Condition Uncertainty ($V_{\text{IC}}$)
+
+Uncertainty from the system's starting state (soil carbon pools, biomass stocks).
+
+**Reduction strategy**: Site inventory, remote sensing, data assimilation
+
+### Process Error ($V_{\text{Process}}$)
+
+Irreducible stochasticity and model structural error.
+
+**Reduction strategy**: Model improvement, ensemble of models
+
+### Interaction Variance ($V_{\text{Int}}$)
+
+Non-additive effects arising from parameter-driver-state interactions.
+
+**Interpretation**: Large interaction terms indicate context-dependent parameter importance.
+
+## Practical Implications
+
+| Dominant Source      | Research Priority                    |
+|----------------------|--------------------------------------|
+| $V_{\text{Param}}$   | Trait measurements, meta-analysis    |
+| $V_{\text{Driver}}$  | Sensor networks, reanalysis products |
+| $V_{\text{IC}}$      | Site inventories, data assimilation  |
+| $V_{\text{Process}}$ | Model structure, validation          |
+
+------------------------------------------------------------------------
+
+# Factor Fixing and Prioritization
+
+## Factor Prioritization
+
+Parameters with high $T_i$ should be prioritized for uncertainty reduction—constraining these will most reduce forecast uncertainty.
+
+## Factor Fixing
+
+Parameters with $T_i$ indistinguishable from zero (or from a dummy parameter) can be fixed to nominal values without information loss. This simplifies models and reduces computational cost.
+
+## Dummy Parameter Method
+
+We include a "dummy" parameter that varies randomly but has no effect on model output. Its Sobol index represents numerical noise. Parameters with $T_i$ within the dummy's confidence interval are candidates for fixing.
+
+------------------------------------------------------------------------
+
+# References
+
+**Primary Framework**
+
+Dietze, M. C. (2017). *Ecological Forecasting*. Princeton University Press.
+
+**Sensitivity Analysis Methods**
+
+Saltelli, A., Ratto, M., Andres, T., Campolongo, F., Cariboni, J., Gatelli, D., Saisana, M., & Tarantola, S. (2008). *Global Sensitivity Analysis: The Primer*. Wiley.
+
+Saltelli, A., Annoni, P., Azzini, I., Campolongo, F., Ratto, M., & Tarantola, S. (2010). Variance based sensitivity analysis of model output. Design and estimator for the total sensitivity index. *Computer Physics Communications*, 181(2), 259-270.
+
+**Software**
+
+Puy, A., Lo Piano, S., Saltelli, A., & Levin, S. A. (2022). sensobol: An R Package to Compute Variance-Based Sensitivity Indices. *Journal of Statistical Software*, 102(5), 1-37.
+
+**Ecosystem Modeling**
+
+LeBauer, D. S., Wang, D., Richter, K. T., Davidson, C. C., & Dietze, M. C. (2013). Facilitating feedbacks between field measurements and ecosystem models. *Ecological Monographs*, 83(2), 133-154.

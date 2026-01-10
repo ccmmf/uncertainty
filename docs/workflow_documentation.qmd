@@ -1,0 +1,236 @@
+---
+title: "Technical Workflow Documentation"
+subtitle: "SIPNET Uncertainty Quantification Pipeline"
+author: "Akash B V"
+date: last-modified
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: true
+---
+
+```{r setup}
+#| include: false
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Pipeline Architecture
+
+This workflow implements variance-based sensitivity analysis for SIPNET following the Dietze (2017) uncertainty partitioning framework. The pipeline decomposes forecast variance into parameter, initial condition, driver, and interaction components using complementary local (OAT) and global (Sobol) methods.
+
+### Script Execution Order
+
+| Phase       | Scripts | Purpose                                          |
+|:------------|:--------|:-------------------------------------------------|
+| Setup       | 001–002 | Design point selection, PEcAn XML configuration  |
+| Local SA    | 011–012 | OAT elasticities, partial variances              |
+| Global SA   | 021–024 | Sobol $S_i$, $T_i$ with IC/driver indices        |
+| Integration | 031     | Variance partitioning across uncertainty sources |
+
+------------------------------------------------------------------------
+
+## Configuration
+
+Central configuration in [`000-config.yml`](000-config.yml):
+
+``` yaml
+default:
+  paths:
+    ccmmf_dir: "/projectnb2/dietzelab/ccmmf"
+    data_dir: "data"
+    raw_data_dir: "data_raw"
+  sites:
+    n_sample: 100
+  sensitivity:
+    sigma_levels: [-2, -1, 1, 2]
+```
+
+------------------------------------------------------------------------
+
+## Phase 1: Setup
+
+### 001_setup_design_points.R
+
+Selects SA sites from the 198-site master design and maps LandIQ PFT names to PEcAn conventions.
+
+**PFT Mapping:** - `annual crop` → `grass` - `woody perennial crop` → `temperate.deciduous`
+
+**Output:** `data_raw/sa_design_points.csv`
+
+### 002_build_xml.R
+
+Generates multisite PEcAn settings XML with ensemble paths and sensitivity configuration.
+
+**Key settings:** - Ensemble size: 20 (parameters) x 10 (met) - Simulation period: 2016–2023 - Sigma levels: ±1σ, ±2σ perturbations
+
+**Output:** `data_raw/settings_sa.xml`
+
+------------------------------------------------------------------------
+
+## Phase 2: Local Sensitivity Analysis
+
+### 011_run_local_sensitivity.R
+
+Executes PEcAn's OAT sensitivity workflow:
+
+1.  `runModule.run.write.configs()` — Generate model configurations
+2.  `runModule_start_model_runs()` — Execute SIPNET via SGE
+3.  `runModule.get.results()` — Extract outputs
+4.  `runModule.run.sensitivity.analysis()` — Compute elasticities
+
+``` bash
+Rscript scripts/011_run_local_sensitivity.R --settings data_raw/settings_sa.xml
+```
+
+### 012_aggregate_sensitivity.R
+
+Aggregates site-level OAT results and analyzes environmental gradients.
+
+**Computed metrics:**
+
+| Metric | Definition |
+|:---|:---|
+| Elasticity | $\varepsilon_i = \frac{\partial Y}{\partial \theta_i} \cdot \frac{\theta_i}{Y}$ |
+| Partial variance | $V_i = \varepsilon_i^2 \cdot \text{Var}(\theta_i)$ |
+| Variance explained | $V_i / \sum_j V_j \times 100$ |
+
+**Environmental gradient analysis:** Regresses elasticity against MAT, MAP, clay, organic carbon, and TWI to identify context-dependent sensitivities.
+
+**Outputs:** - `data/aggregated_sensitivity.csv` - `data/parameter_rankings.csv` - `data/significant_gradients.csv`
+
+------------------------------------------------------------------------
+
+## Phase 3: Global Sensitivity Analysis
+
+### 021_generate_sobol_design.R
+
+Generates Saltelli quasi-random design matrix for variance-based SA.
+
+**Design structure:** - $N \times (k + 2)$ model evaluations (Saltelli scheme) - Continuous parameters: quantile-transformed from posterior - Discrete inputs (IC, met): inverse transform method
+
+The design matrix includes both continuous parameters (sampled from posteriors) and discrete inputs (initial conditions, meteorology ensemble members).
+
+**Dummy parameter:** Uniform(0,1) baseline for numerical noise estimation.
+
+**Outputs:** - `data/sobol_design_matrix.csv` - `data/sobol_design_metadata.rds`
+
+### 022_prepare_pecan_inputs.R
+
+Transforms Sobol design into PEcAn-compatible structures: - Parses `pft.parameter` namespacing → separate PFT lists - Creates `ensemble.samples` (list of data frames per PFT) - Creates `input_design` mapping sample_id → IC/met indices
+
+**Outputs:** - `output/samples.Rdata` - `cache/input_design.rds`
+
+### 023_run_global_sensitivity.R
+
+Executes all $N(k+2)$ model runs specified by the Sobol design.
+
+### 024_compute_sobol_indices.R
+
+Computes Sobol indices using `sensobol`:
+
+``` r
+idx <- sensobol::sobol_indices(Y = Y, N = N, params = params, boot = TRUE, R = 500)
+```
+
+**Output columns:** - `Si_original`: First-order index (main effect) - `Ti_original`: Total-order index (main + interactions) - Bootstrap 95% CIs
+
+**Output:** `data/sobol_indices.csv`
+
+------------------------------------------------------------------------
+
+## Phase 4: Variance Decomposition
+
+### 031_partition_variance.R
+
+Integrates local and global SA to partition total ensemble variance.
+
+**Category-level partition (from Sobol):**
+
+$$V_c = \sum_{i \in c} S_i \times \text{Var}(Y_{\text{ens}})$$
+
+| Category      | Source                           |
+|:--------------|:---------------------------------|
+| `parameter`   | All PFT parameters               |
+| `IC`          | `ic_ensemble` index              |
+| `driver`      | `met_ensemble` index             |
+| `dummy`       | Numerical baseline               |
+| `interaction` | Residual: $V_{total} - \sum V_i$ |
+
+**Parameter-level breakdown (from local SA):**
+
+Uses OAT partial variances to allocate $V_{\text{parameter}}$ to individual parameters:
+
+$$f_p = \frac{V_p^{OAT}}{\sum_j V_j^{OAT}}, \quad V_{\text{param},p} = f_p \times V_{\text{parameter}}$$
+
+**Outputs:** - `data/variance_partition_site_level.csv` - `data/variance_partition_parameters.csv` - `data/variance_partition_summary.csv`
+
+------------------------------------------------------------------------
+
+## Function Library
+
+### R/local_sensitivity.R
+
+| Function | Purpose |
+|:---|:---|
+| `aggregate_local_sa()` | Collect site-level OAT results, filter by site-PFT pairs |
+| `summarize_local_sa()` | Cross-site rankings, PFT differences, constraint priority |
+| `analyze_environmental_gradients()` | Regression of sensitivity vs. site covariates |
+
+### R/global_sensitivity.R
+
+| Function                  | Purpose                                        |
+|:--------------------------|:-----------------------------------------------|
+| `generate_sobol_design()` | Saltelli sampling with discrete input handling |
+
+### R/variance_decomposition.R
+
+| Function | Purpose |
+|:---|:---|
+| `calculate_ensemble_variance()` | Extract Var(Y) from ensemble output files |
+| `build_param_category_lookup()` | Map parameters → categories from metadata |
+| `partition_variance_sources()` | Category-level variance attribution |
+| `partition_parameter_variance_local()` | Individual parameter breakdown |
+
+------------------------------------------------------------------------
+
+## SGE Cluster Execution
+
+Model runs are parallelized via SGE array jobs using [`sge_array_launcher.sh`](scripts/sge_array_launcher.sh):
+
+``` bash
+#$ -t 1-@NJOBS@
+#$ -pe omp 1
+#$ -l h_rt=2:00:00
+#$ -l buyin
+```
+
+The launcher reads `joblist.txt` (generated by PEcAn) and executes the appropriate run directory for each task ID.
+
+------------------------------------------------------------------------
+
+## Execution
+
+``` bash
+# Complete workflow
+Rscript scripts/001_setup_design_points.R
+Rscript scripts/002_build_xml.R
+Rscript scripts/011_run_local_sensitivity.R
+Rscript scripts/012_aggregate_sensitivity.R
+Rscript scripts/021_generate_sobol_design.R --sample-size 512
+Rscript scripts/022_prepare_pecan_inputs.R
+Rscript scripts/023_run_global_sensitivity.R
+Rscript scripts/024_compute_sobol_indices.R
+Rscript scripts/031_partition_variance.R
+```
+
+------------------------------------------------------------------------
+
+## Output Variables
+
+| Variable    | Description               | Units          |
+|:------------|:--------------------------|:---------------|
+| NPP         | Net Primary Productivity  | kg C ha⁻¹ yr⁻¹ |
+| AbvGrndWood | Aboveground Woody Biomass | kg C ha⁻¹      |
+| Qle         | Latent Heat Flux          | W m⁻²          |
