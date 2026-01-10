@@ -96,7 +96,7 @@ param_partition <- read_csv(file.path(data_dir, "variance_partition_parameters.c
 ensemble_var <- read_csv(file.path(data_dir, "ensemble_variance.csv"), show_col_types = FALSE)
 
 # 4. Site covariates (For Gradient analysis)
-site_covariates <- read_csv(here::here(cfg$paths$ccmmf_dir, "data/site_covariates.csv"), show_col_types = FALSE)
+site_covariates <- read_csv(here::here("data_raw/site_covariates.csv"), show_col_types = FALSE)
 
 # Theme setup
 theme_set(theme_bw(base_size = 12))
