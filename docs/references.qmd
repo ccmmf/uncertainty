@@ -1,0 +1,11 @@
+---
+title: "References"
+---
+
+## Methods
+
+Dietze, M. C. (2017). Ecological Forecasting. Princeton University Press.
+
+Saltelli, A., et al. (2010). Variance based sensitivity analysis. Computer Physics Communications.
+
+Puy, A., et al. (2022). sensobol: R Package for Sobol Indices. Journal of Statistical Software.
