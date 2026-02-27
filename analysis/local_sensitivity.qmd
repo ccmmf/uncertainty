@@ -44,7 +44,6 @@ The approach follows the PEcAn uncertainty analysis framework (LeBauer et al., 2
 library(readr)
 library(dplyr)
 library(ggplot2)
-library(DT)
 library(here)
 library(config)
 library(knitr)
@@ -86,7 +85,6 @@ site_covariates <- readr::read_csv(
   show_col_types = FALSE
 )
 
-plots_dir <- here::here(cfg$paths$data_dir, "plots")
 sa_variables <- unique(aggregated_results$response_var)
 gradient_vars <- cfg$sensitivity$gradient_vars %||% c("MAT", "MAP", "clay", "ocd", "twi")
 n_sites <- dplyr::n_distinct(aggregated_results$site_id)
@@ -203,11 +201,6 @@ rank_data <- aggregated_results |>
 
 ggplot(rank_data, aes(x = reorder(parameter, median_abs), y = median_elast)) +
   geom_hline(yintercept = 0, color = "grey70", linewidth = 0.3) +
-  geom_errorbarh(
-    aes(xmin = reorder(parameter, median_abs), xmax = reorder(parameter, median_abs),
-        y = q25, yend = q75),
-    height = 0
-  ) +
   geom_errorbar(
     aes(ymin = q25, ymax = q75),
     width = 0.3, color = "grey50"
