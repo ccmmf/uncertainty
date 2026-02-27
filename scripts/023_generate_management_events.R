@@ -173,7 +173,7 @@ for (i in seq_len(n_samples)) {
     event_config    = cfg$event_config %||% list()
   )
 
-  # write JSON (validated by PEcAn.data.land::validate_events_json)
+  # write events JSON for this sample
   json_path <- file.path(output_dir, sprintf("events_sample_%d.json", i))
   jsonlite::write_json(
     list(sample_events),  # write.events.SIPNET expects array of site objects

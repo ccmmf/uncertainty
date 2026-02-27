@@ -72,6 +72,7 @@ library(tidyr)
 library(stringr)
 library(knitr)
 library(scales)
+library(config)
 
 cfg <- config::get(file = here::here("000-config.yml"))
 

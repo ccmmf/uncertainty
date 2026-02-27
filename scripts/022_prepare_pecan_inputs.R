@@ -34,7 +34,14 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = opts))
 
 # config
 cfg <- yaml::read_yaml(args$config)
-settings <- PEcAn.settings::read.settings(cfg$settings_xml)
+settings_xml <- cfg$default$settings_xml
+if (is.null(settings_xml) || !file.exists(settings_xml)) {
+  PEcAn.logger::logger.severe(
+    "Settings XML not found: ", settings_xml,
+    ".Check 'settings_xml' in ", args$config
+  )
+}
+settings <- PEcAn.settings::read.settings(settings_xml)
 
 samples_outfile <- file.path(settings$outdir, "samples.Rdata")
 design_outfile <- "data/input_design.csv"

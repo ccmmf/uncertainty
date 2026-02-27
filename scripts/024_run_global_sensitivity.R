@@ -51,7 +51,10 @@ if (!dir.exists(settings$outdir)) {
 EVENTS_DIR <- cfg$events_dir %||% "data/events"
 
 # ensemble$size = 1: each sample in input_design is a full run;
-# PEcAn iterates over rows of input_design, not ensemble$size
+# PEcAn iterates over rows of input_design, not ensemble$size.
+# This in-memory modification is sufficient because the mutated `settings`
+# object is passed into runModule.run.write.configs(), and then persisted
+# to pecan.CONFIGS.xml via PEcAn.settings::write.settings() after CONFIG.
 settings$ensemble$size <- 1
 
 input_design <- readRDS("cache/input_design.rds")

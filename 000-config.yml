@@ -1,4 +1,4 @@
-# Default configuration for CCMMF Phase 4 workflows
+# Configuration for uncertainty quantification pipeline
 default:
   flags:
     production: false
@@ -7,31 +7,26 @@ default:
     data_dir: "data"
     raw_data_dir: "data_raw"
     cache_dir: "cache"
-    pecan_outdir: "ccmmf_dir/modelout/ccmmf_phase_2b_mixed_pfts_20250701"
-    master_design_points: "ccmmf_dir/data/design_points.csv"
+    pecan_outdir: "/projectnb2/dietzelab/ccmmf/modelout/ccmmf_phase_2b_mixed_pfts_20250701"
+    master_design_points: "/projectnb2/dietzelab/ccmmf/data/design_points.csv"
+  settings_xml: "data_raw/settings_sa.xml"
   pecan_xml_template: "data_raw/template.xml"
   sites:
     design_points_file: "data_raw/sa_design_points.csv"
     n_sample: 10
   sensitivity:
-    sigma_levels: [-2, -1, 1, 2] # [-3, -2, -1, 1, 2, 3] # Standard
-  # Or use [-2, -1, 1, 2] for faster runs
-  # ensemble:
-  #   size: 20
-  #   n_met: 10
-  # run:
-  #   start_date: "2016-01-01"
-  #   end_date: "2023-12-31"
+    sigma_levels: [-2, -1, 1, 2]
   projection:
     ca_albers_crs: 3310
-  # management uncertainty (023)
+  # Management uncertainty (023)
+  events_baseline_url: "https://raw.githubusercontent.com/ccmmf/scenarios/main/data/events_baseline.json"
   start_year: 2016
   end_year: 2023
   site_id: "1000025731"
-  # crop identity -> N rate mapping (021 + 023)
+  # Crop identity -> N rate mapping (021 + 023)
   crop_lookup:
-    landiq_parquet: "ccmmf_dir/LandIQ-harmonized-v3/crops_all_years.parq"
-    pft_table_csv: "ccmmf_dir/cadwr-landuse/data/CARB_PFTs_table.csv"
-    crosswalk_csv: "ccmmf_dir/management/fertilization/crop_type_crosswalk.csv"
+    landiq_parquet: "/projectnb2/dietzelab/ccmmf/LandIQ-harmonized-v3/crops_all_years.parq"
+    pft_table_csv: "/projectnb2/dietzelab/ccmmf/cadwr-landuse/data/CARB_PFTs_table.csv"
+    crosswalk_csv: "/projectnb2/dietzelab/ccmmf/management/fertilization/crop_type_crosswalk.csv"
     landiq_year: 2023
     landiq_season: 2

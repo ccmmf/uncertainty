@@ -36,8 +36,14 @@ args <- optparse::parse_args(optparse::OptionParser(option_list = opts))
 
 cfg <- yaml::read_yaml(args$config)
 
-settings_xml <- args$settings %||% cfg$settings_xml
-if (is.null(settings_xml) || !file.exists(settings_xml)) {
+settings_xml <- args$settings %||% cfg$default$settings_xml
+if (is.null(settings_xml)) {
+  PEcAn.logger::logger.severe(
+    "Settings XML not specified. Set 'settings_xml' in ", args$config,
+    " or pass --settings on the command line."
+  )
+}
+if (!file.exists(settings_xml)) {
   PEcAn.logger::logger.severe("Settings XML not found: ", settings_xml)
 }
 
@@ -209,17 +215,14 @@ PEcAn.logger::logger.info("Added 3 management parameters (N fert + compost + C:N
 
 # build and save per-site crop mapping for downstream use by 023
 source("R/crop_lookup.R")
+crop_cfg <- cfg$default$crop_lookup
 site_crop_info <- get_site_crop_info(
-  design_points_csv = cfg$sites$design_points_file %||%
-    "data_raw/design_points_198.csv",
-  landiq_parquet = cfg$crop_lookup$landiq_parquet %||%
-    "/projectnb2/dietzelab/ccmmf/LandIQ-harmonized-v3/crops_all_years.parq",
-  pft_table_csv = cfg$crop_lookup$pft_table_csv %||%
-    "/projectnb2/dietzelab/abv1/ccmmf/cadwr-landuse/data/CARB_PFTs_table.csv",
-  crosswalk_csv = cfg$crop_lookup$crosswalk_csv %||%
-    "/projectnb2/dietzelab/ccmmf/management/fertilization/crop_type_crosswalk.csv",
-  year   = as.integer(cfg$crop_lookup$landiq_year %||% 2023L), # (most recent)
-  season = as.integer(cfg$crop_lookup$landiq_season %||% 2L)
+  design_points_csv = cfg$default$sites$design_points_file,
+  landiq_parquet    = crop_cfg$landiq_parquet,
+  pft_table_csv     = crop_cfg$pft_table_csv,
+  crosswalk_csv     = crop_cfg$crosswalk_csv,
+  year              = as.integer(crop_cfg$landiq_year),
+  season            = as.integer(crop_cfg$landiq_season)
   # NB crop identity is assumed constant across simulation years --
   # this is a simplification for annual rotations.
   # TODO use per-year LandIQ when rotation data is available

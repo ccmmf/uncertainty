@@ -29,6 +29,13 @@ get_site_crop_info <- function(design_points_csv,
   dp <- readr::read_csv(design_points_csv, show_col_types = FALSE)
   dp$uid_padded <- sprintf("%07d", as.integer(dp$UniqueID))
 
+  if (!requireNamespace("arrow", quietly = TRUE)) {
+    PEcAn.logger::logger.severe(
+      "Package 'arrow' is required to read LandIQ parquet files. ",
+      "Install with: install.packages('arrow')"
+    )
+  }
+
   crops <- arrow::read_parquet(landiq_parquet) |>
     dplyr::filter(.data$year == .env$year, .data$season == .env$season) |>
     dplyr::select("UniqueID", "CLASS", "SUBCLASS")

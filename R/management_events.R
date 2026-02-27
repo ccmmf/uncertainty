@@ -75,6 +75,7 @@ build_sample_events <- function(mgmt_row,
 #' @param events List of event lists.
 #' @return Named list of lists, keyed by event_type.
 split_events_by_type <- function(events) {
+  if (length(events) == 0) return(list())
   types <- vapply(events, \(e) e$event_type, character(1))
   split(events, types)
 }
