@@ -217,7 +217,7 @@ PEcAn.logger::logger.info("Added 3 management parameters (N fert + compost + C:N
 source("R/crop_lookup.R")
 crop_cfg <- cfg$default$crop_lookup
 site_crop_info <- get_site_crop_info(
-  design_points_csv = cfg$default$sites$design_points_file,
+  design_points_csv = cfg$default$paths$design_points,
   landiq_parquet    = crop_cfg$landiq_parquet,
   pft_table_csv     = crop_cfg$pft_table_csv,
   crosswalk_csv     = crop_cfg$crosswalk_csv,

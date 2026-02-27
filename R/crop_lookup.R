@@ -6,7 +6,7 @@
 
 #' Resolve per-site crop identity with N and compost ranges
 #'
-#' @param design_points_csv Path to design_points_198.csv
+#' @param design_points_csv Path to design_points.csv
 #' @param landiq_parquet Path to LandIQ crops_all_years.parq
 #' @param pft_table_csv Path to CARB_PFTs_table.csv
 #' @param crosswalk_csv Path to crop_type_crosswalk.csv

@@ -8,11 +8,10 @@ default:
     raw_data_dir: "data_raw"
     cache_dir: "cache"
     pecan_outdir: "/projectnb2/dietzelab/ccmmf/modelout/ccmmf_phase_2b_mixed_pfts_20250701"
-    master_design_points: "/projectnb2/dietzelab/ccmmf/data/design_points.csv"
+    design_points: "/projectnb2/dietzelab/ccmmf/data/design_points.csv"
   settings_xml: "data_raw/settings_sa.xml"
   pecan_xml_template: "data_raw/template.xml"
   sites:
-    design_points_file: "data_raw/sa_design_points.csv"
     n_sample: 10
   sensitivity:
     sigma_levels: [-2, -1, 1, 2]
@@ -30,3 +29,4 @@ default:
     crosswalk_csv: "/projectnb2/dietzelab/ccmmf/management/fertilization/crop_type_crosswalk.csv"
     landiq_year: 2023
     landiq_season: 2
+  
