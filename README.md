@@ -1,6 +1,6 @@
 # Uncertainty Analysis
 
-Uncertainty and sensitivity analysis of crop model outputs, including local/global sensitivity, variance decomposition, and CSV-driven design p
+Uncertainty and sensitivity analysis of crop model outputs, including local/global sensitivity, variance decomposition, and CSV-driven design points integrated with model templates.
 Three-phase pipeline: local SA, global SA, and variance decomposition.
 
 ## Quick Start
