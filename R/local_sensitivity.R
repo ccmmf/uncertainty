@@ -267,33 +267,38 @@ summarize_local_sa <- function(aggregated_results) {
   parameter_rankings <- aggregated_results |>
     dplyr::group_by(parameter, response_var) |>
     dplyr::summarize(
-      # Mean absolute elasticity (primary metric for sensitivity)
+      # absolute elasticity for ranking importance
       mean_abs_elasticity = mean(abs(elasticity), na.rm = TRUE),
       median_abs_elasticity = median(abs(elasticity), na.rm = TRUE),
-      
-      # Spread measures
+
+      # signed (untransformed) elasticity for plotting and regression
+      # direction matters: positive = synergistic, negative = antagonistic
+      mean_elasticity = mean(elasticity, na.rm = TRUE),
+      median_elasticity = median(elasticity, na.rm = TRUE),
+      q25_elasticity = quantile(elasticity, 0.25, na.rm = TRUE),
+      q75_elasticity = quantile(elasticity, 0.75, na.rm = TRUE),
+
+      # spread
       sd_elasticity = sd(elasticity, na.rm = TRUE),
       iqr_elasticity = IQR(elasticity, na.rm = TRUE),
-      
-      # Variance explained
+
+      # variance explained
       mean_variance_explained = mean(variance_explained, na.rm = TRUE),
       median_variance_explained = median(variance_explained, na.rm = TRUE),
-      
-      # Prior uncertainty (CV from posterior distributions)
+
+      # prior uncertainty (CV from posterior distributions)
       mean_cv = mean(coefficient_of_variation, na.rm = TRUE),
-      
-      # Sample size
+
+      # sample size
       n_sites = dplyr::n(),
-      n_sites_significant = sum(variance_explained > 5),  # >5% threshold
-      
+      n_sites_significant = sum(variance_explained > 5),
+
       .groups = "drop"
     ) |>
-    # Calculate constraint priority score
-    # High elasticity + high CV = high priority for constraint
+    # high elasticity + high CV = high priority for data collection
     dplyr::mutate(
       constraint_priority = mean_abs_elasticity * mean_cv
     ) |>
-    # Sort by sensitivity within each response variable
     dplyr::arrange(response_var, dplyr::desc(mean_abs_elasticity))
   
   # ---------------------------------------------------------------------------

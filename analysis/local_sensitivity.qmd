@@ -25,10 +25,16 @@ This report presents results from a local sensitivity analysis of the SIPNET eco
 
 **Purpose:** Identify which model parameters have the largest impact on key outputs (NPP, soil carbon, aboveground biomass), quantify how parameter importance varies with environmental gradients (climate, soil properties), and assess spatial heterogeneity in parameter sensitivity.
 
-::: callout-note
-## Analysis Framework
+The approach follows the PEcAn uncertainty analysis framework (LeBauer et al., 2013; Dietze et al., 2014), which combines a Bayesian meta-analysis of trait data with one-at-a-time perturbation experiments to decompose predictive uncertainty into its component parameter contributions. For each parameter, the model is run at the quantile equivalents of ±1 and ±2 standard deviations of the posterior distribution. The resulting response curves are then combined with prior parameter uncertainty to estimate both the sensitivity of the model (elasticity) and the contribution to predictive variance (partial variance / variance explained). This paired reporting of sensitivity and uncertainty is critical: a highly sensitive parameter that is well constrained by data may contribute less to forecast uncertainty than a moderately sensitive parameter with a wide prior (Dietze et al., 2014).
 
-This sensitivity analysis follows established best practices for reporting both elasticity (sensitivity magnitude) and variance explained (parameter importance). Results support targeted parameter calibration and uncertainty reduction strategies.
+::: callout-note
+## Sensitivity Metrics (definitions in @sec-technical)
+
+**Elasticity** ($\varepsilon = \frac{\partial Y}{\partial X} \cdot \frac{X}{Y}$): normalized sensitivity. An elasticity of 2 means a 1% increase in the parameter produces a 2% increase in the output. The sign indicates direction.
+
+**Variance explained**: fraction of total output uncertainty attributable to each parameter. This combines sensitivity with prior parameter uncertainty — it answers "where should we invest in data collection?"
+
+**Calibration priority**: $|\bar{\varepsilon}| \times \text{CV}$. Parameters with both high sensitivity and high prior uncertainty are the most cost-effective targets for uncertainty reduction.
 :::
 
 ```{r}
@@ -46,346 +52,287 @@ library(randomForest)
 library(pdp)
 library(patchwork)
 library(tidyr)
+library(sf)
+library(scales)
 
+here::i_am("analysis/local_sensitivity.qmd")
 source(here::here("R", "local_sensitivity.R"))
 
-# Load configuration
 cfg <- config::get(file = here::here("000-config.yml"))
 
-# Load datasets
+# load datasets
 aggregated_results <- readr::read_csv(
-  here::here(cfg$paths$data_dir, "aggregated_sensitivity.csv"), 
+  here::here(cfg$paths$data_dir, "aggregated_sensitivity.csv"),
   show_col_types = FALSE
 )
 
 param_rankings <- readr::read_csv(
-  here::here(cfg$paths$data_dir, "parameter_rankings.csv"), 
+  here::here(cfg$paths$data_dir, "parameter_rankings.csv"),
   show_col_types = FALSE
 )
 
 pft_differences <- readr::read_csv(
-  here::here(cfg$paths$data_dir, "pft_differences.csv"), 
-  show_col_types = FALSE
-)
-
-significant_gradients <- readr::read_csv(
-  here::here(cfg$paths$data_dir, "significant_gradients.csv"), 
+  here::here(cfg$paths$data_dir, "pft_differences.csv"),
   show_col_types = FALSE
 )
 
 regression_results <- readr::read_csv(
-  here::here(cfg$paths$data_dir, "regression_results.csv"), 
+  here::here(cfg$paths$data_dir, "regression_results.csv"),
   show_col_types = FALSE
 )
 
 site_covariates <- readr::read_csv(
-  here::here(cfg$paths$ccmmf_dir, "data/site_covariates.csv"), 
+  here::here(cfg$paths$ccmmf_dir, "data/site_covariates.csv"),
   show_col_types = FALSE
 )
 
-# Paths and metadata
 plots_dir <- here::here(cfg$paths$data_dir, "plots")
 sa_variables <- unique(aggregated_results$response_var)
 gradient_vars <- cfg$sensitivity$gradient_vars %||% c("MAT", "MAP", "clay", "ocd", "twi")
 n_sites <- dplyr::n_distinct(aggregated_results$site_id)
 n_parameters <- dplyr::n_distinct(aggregated_results$parameter)
+
+# consistent theme
+theme_set(
+  theme_minimal(base_size = 12) +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.text = element_text(size = 10, face = "bold"),
+      legend.position = "bottom"
+    )
+)
 ```
+
+## Key Findings
+
+```{r}
+#| label: compute-key-findings
+#| include: false
+
+# top 3 params per variable (by median |elasticity|)
+top3_by_var <- aggregated_results |>
+  summarize(
+    median_abs = median(abs(elasticity), na.rm = TRUE),
+    .by = c("response_var", "parameter")
+  ) |>
+  slice_max(order_by = median_abs, n = 3, by = "response_var")
+
+# calibration priorities
+top_priority <- param_rankings |>
+  filter(!is.na(constraint_priority)) |>
+  slice_max(order_by = constraint_priority, n = 3, by = "response_var")
+
+# gradient signal
+n_gradient_tests <- nrow(regression_results |> filter(target == "elasticity"))
+n_sig <- nrow(regression_results |> filter(target == "elasticity", r_squared > 0.10))
+```
+
+Based on a local sensitivity analysis across `r n_sites` California cropland sites and `r n_parameters` SIPNET parameters:
+
+1. **NPP** is dominated by photosynthesis parameters (`r paste(top3_by_var$parameter[top3_by_var$response_var == "NPP"][1:2], collapse = "`, `")`) and allocation — consistent with ecophysiological theory and prior ED model analyses (Dietze et al., 2014).
+2. **Soil carbon** is controlled by turnover rates (`litterTurnover`, `soilTurnover`), indicating decomposition processes drive long-term carbon pool dynamics.
+3. **Calibration priorities** (parameters where data collection would most efficiently reduce forecast uncertainty): `r paste(top_priority$parameter[1:min(3, nrow(top_priority))], collapse = "`, `")`.
+4. **Environmental gradients** explain relevant variation in parameter sensitivity — `r n_sig` of `r n_gradient_tests` parameter-gradient relationships show $R^2 > 0.10$ — confirming that calibration efforts should be spatially targeted, not global.
 
 ## Study Design
 
-**Spatial coverage:** `r n_sites` design points selected via k-means clustering to represent environmental heterogeneity across California croplands
+**Spatial coverage:** `r n_sites` design points selected via k-means clustering (downscaling workflow) to represent environmental heterogeneity across California croplands.
 
 **Model outputs:** `r length(sa_variables)` response variables (`r paste(sa_variables, collapse = ", ")`)
 
-**Parameters analyzed:** `r n_parameters` SIPNET parameters across photosynthesis, allocation, turnover, and phenology processes
+**Parameters analyzed:** `r n_parameters` SIPNET parameters across photosynthesis, allocation, turnover, and phenology processes.
 
-**Environmental gradients:** `r paste(gradient_vars, collapse = ", ")`
+**Method:** One-at-a-time perturbations at ±1, ±2 sigma of posterior parameter distributions using PEcAn's variance decomposition workflow.
+
+```{r}
+#| label: fig-site-map
+#| fig-cap: "Location of SA design points across California croplands. Points colored by PFT."
+#| fig-height: 5
+#| fig-width: 6
+
+site_locs <- aggregated_results |>
+  distinct(site_id, lat, lon, pft)
+
+ca <- tryCatch(
+  sf::st_as_sf(maps::map("state", "california", plot = FALSE, fill = TRUE)),
+  error = function(e) NULL
+)
+
+if (!is.null(ca)) {
+  ggplot() +
+    geom_sf(data = ca, fill = "grey95", color = "grey40") +
+    geom_point(
+      data = site_locs,
+      aes(x = lon, y = lat, color = pft),
+      size = 2.5, alpha = 0.8
+    ) +
+    scale_color_brewer(palette = "Set1", name = "PFT") +
+    labs(x = "Longitude", y = "Latitude") +
+    coord_sf(xlim = c(-125, -114), ylim = c(32.5, 42))
+} else {
+  ggplot(site_locs, aes(x = lon, y = lat, color = pft)) +
+    geom_point(size = 2.5, alpha = 0.8) +
+    scale_color_brewer(palette = "Set1", name = "PFT") +
+    labs(x = "Longitude", y = "Latitude")
+}
+```
 
 ------------------------------------------------------------------------
 
 # Parameter Rankings {#sec-rankings}
 
-Parameter rankings by mean absolute elasticity identify which inputs most strongly influence model outputs, averaged across all environmental conditions. High elasticity indicates the model is highly sensitive to that parameter.
+Parameter rankings identify which inputs most strongly influence each model output, averaged across all sites. Following LeBauer et al. (2013), we display signed elasticity (direction matters) with the cross-site distribution (median and interquartile range). Absolute elasticity is used only for ordering.
 
-::: panel-tabset
-## NPP
-
-```{r}
-#| label: fig-param-npp
-#| fig-cap: "Top 15 parameters affecting Net Primary Productivity (NPP). Bars show mean absolute elasticity across all sites."
-#| out-width: "100%"
-
-knitr::include_graphics(file.path(plots_dir, "param_ranking_NPP.png"))
-```
-
-**Key findings:** NPP is primarily controlled by photosynthesis parameters (`Amax`, `psnTOpt`) and allocation parameters (`leafGrowth`), consistent with theoretical expectations for productivity.
-
-## TotSoilCarb
+The figure below shows the top 15 parameters per output variable. All variables are shown simultaneously using facets so that patterns can be compared across outputs.
 
 ```{r}
-#| label: fig-param-soc
-#| fig-cap: "Top 15 parameters affecting Total Soil Carbon (TotSoilCarb). High sensitivity to turnover parameters reflects soil carbon dynamics."
-#| out-width: "100%"
+#| label: fig-ranking
+#| fig-cap: "Top 15 parameters by median absolute elasticity for each response variable. Points show the median elasticity across sites; horizontal whiskers show the IQR, revealing cross-site variability. Sign is preserved: positive elasticity means increasing the parameter increases the output."
+#| fig-height: 10
+#| fig-width: 10
 
-knitr::include_graphics(file.path(plots_dir, "param_ranking_TotSoilCarb.png"))
+rank_data <- aggregated_results |>
+  summarize(
+    median_elast = median(elasticity, na.rm = TRUE),
+    q25 = quantile(elasticity, 0.25, na.rm = TRUE),
+    q75 = quantile(elasticity, 0.75, na.rm = TRUE),
+    median_abs = median(abs(elasticity), na.rm = TRUE),
+    .by = c("response_var", "parameter")
+  ) |>
+  slice_max(order_by = median_abs, n = 15, by = "response_var")
+
+ggplot(rank_data, aes(x = reorder(parameter, median_abs), y = median_elast)) +
+  geom_hline(yintercept = 0, color = "grey70", linewidth = 0.3) +
+  geom_errorbarh(
+    aes(xmin = reorder(parameter, median_abs), xmax = reorder(parameter, median_abs),
+        y = q25, yend = q75),
+    height = 0
+  ) +
+  geom_errorbar(
+    aes(ymin = q25, ymax = q75),
+    width = 0.3, color = "grey50"
+  ) +
+  geom_point(aes(color = median_elast > 0), size = 2.5) +
+  scale_color_manual(
+    values = c("TRUE" = "#2166AC", "FALSE" = "#B2182B"),
+    labels = c("TRUE" = "Positive", "FALSE" = "Negative"),
+    name = "Direction"
+  ) +
+  coord_flip() +
+  facet_wrap(~response_var, scales = "free_x") +
+  labs(
+    x = NULL,
+    y = "Elasticity (median; whiskers = IQR across sites)"
+  )
 ```
 
-**Key findings:** Soil carbon shows highest sensitivity to turnover rates (`litterTurnover`, `soilTurnover`), indicating decomposition processes dominate long-term carbon storage.
-
-## AbvGrndWood
-
-```{r}
-#| label: fig-param-agb
-#| fig-cap: "Top 15 parameters affecting Aboveground Biomass (AbvGrndWood). Woody allocation and photosynthesis parameters dominate."
-#| out-width: "100%"
-
-knitr::include_graphics(file.path(plots_dir, "param_ranking_AbvGrndWood.png"))
-```
-
-**Key findings:** Aboveground biomass is most sensitive to woody allocation (`wood_allocation_rate`) and maximum photosynthesis (`Amax`), reflecting growth dynamics in perennial systems.
-:::
+**Interpretation:** Parameters with wide whiskers have site-dependent sensitivity — their importance varies across environmental conditions. Parameters with narrow whiskers are consistently important (or unimportant) everywhere. The sign tells us the direction of the relationship: positive elasticity means increasing the parameter increases the output.
 
 ------------------------------------------------------------------------
 
-# Site-by-Site Sensitivity {#sec-site-sensitivity}
+# Cross-Site Variability {#sec-variability}
 
-Interactive tables enable exploration of site-specific parameter sensitivities, revealing spatial heterogeneity that aggregate statistics may obscure.
+A key question is whether parameter importance is consistent across sites or varies with local conditions. If a parameter has high variability in elasticity across sites (a wide box), it indicates context-dependent sensitivity — suggesting the need for spatially explicit calibration strategies.
+
+The boxplot below shows the full distribution of elasticity across all sites for the top 10 parameters. This follows the approach in Dietze et al. (2014, Fig. 2a), where boxplots of partial variance across PFTs revealed that growth respiration dominated uncertainty across all biomes.
 
 ```{r}
-#| label: tbl-site-sensitivity
-#| tbl-cap: "Top 10 parameters by site and response variable. Use filters to explore site-specific patterns."
+#| label: fig-boxplot
+#| fig-cap: "Distribution of signed elasticity across sites for the top 10 parameters (ranked by median |elasticity| across all variables). Each box shows the median, IQR, and outliers across sites."
+#| fig-height: 8
+#| fig-width: 10
 
-site_top_table <- aggregated_results %>%
-  dplyr::group_by(site_id, response_var) %>%
-  dplyr::arrange(desc(abs(elasticity))) %>%
-  dplyr::slice_head(n = 10) %>%
-  dplyr::ungroup() %>%
-  dplyr::mutate(
-    across(c(elasticity, variance_explained), \(x) round(x, 3)),
-    across(c(lat, lon), \(x) round(x, 2))
-  ) %>%
-  dplyr::select(
-    site_id, lat, lon, response_var, parameter, 
-    elasticity, variance_explained, pft
-  )
+top10 <- aggregated_results |>
+  summarize(
+    median_abs = median(abs(elasticity), na.rm = TRUE),
+    .by = "parameter"
+  ) |>
+  slice_max(order_by = median_abs, n = 10) |>
+  pull(parameter)
 
-DT::datatable(
-  site_top_table,
-  extensions = c('Scroller', 'Buttons'),
-  options = list(
-    dom = 'Plfrtip',
-    pageLength = 15,
-    deferRender = TRUE,
-    scroller = TRUE,
-    scrollY = "500px",
-    searchPanes = list(
-      cascadePanes = TRUE,
-      initCollapsed = TRUE
-    ),
-    columnDefs = list(
-      list(searchPanes = list(show = TRUE), targets = c(0, 3))
-    ),
-    buttons = c('copy', 'csv', 'excel')
-  ),
-  class = "stripe hover compact",
-  rownames = FALSE
-) %>%
-  DT::formatStyle(
-    'elasticity',
-    background = DT::styleColorBar(range(site_top_table$elasticity), 'lightblue'),
-    backgroundSize = '100% 90%',
-    backgroundRepeat = 'no-repeat',
-    backgroundPosition = 'center'
-  ) %>%
-  DT::formatStyle(
-    'variance_explained',
-    background = DT::styleColorBar(range(site_top_table$variance_explained), 'lightgreen'),
-    backgroundSize = '100% 90%',
-    backgroundRepeat = 'no-repeat',
-    backgroundPosition = 'center'
+aggregated_results |>
+  filter(parameter %in% top10) |>
+  ggplot(aes(
+    x = reorder(parameter, abs(elasticity), FUN = median),
+    y = elasticity
+  )) +
+  geom_hline(yintercept = 0, color = "grey70", linewidth = 0.3) +
+  geom_boxplot(aes(fill = response_var), alpha = 0.6, outlier.size = 0.8) +
+  coord_flip() +
+  facet_wrap(~response_var, scales = "free_x") +
+  scale_fill_brewer(palette = "Set2", guide = "none") +
+  labs(
+    x = NULL,
+    y = "Elasticity (across sites)"
   )
 ```
-
-::: callout-tip
-## Interpreting Site Patterns
-
--   **High elasticity**: Parameter strongly influences output at this site
--   **High variance explained**: Parameter contributes substantially to output uncertainty
--   **Geographic clustering**: Similar sites may share dominant parameters, suggesting environmental controls
-:::
 
 ------------------------------------------------------------------------
 
 # Environmental Gradient Analysis {#sec-gradients}
 
-Regression analysis tests whether parameter sensitivity systematically varies with environmental conditions, identifying context-dependent calibration needs.
+An important question is whether parameter sensitivity varies systematically with environmental conditions. If it does, calibration strategies should be tailored to local conditions rather than applied uniformly.
 
-## Regression Results
+For each parameter × response × gradient combination, we fit a linear model of elasticity against the environmental covariate. We filter to relationships with $R^2 > 0.10$ to focus on ecologically meaningful patterns. Following Dietze et al. (2014), who found that quantum efficiency was important specifically at high latitudes due to limited data rather than reduced light, we report both the magnitude ($R^2$) and direction (slope) of these relationships.
 
-For each parameter-response-gradient combination, we fit linear models to test relationships between environmental conditions and both:
-
--   **Elasticity** (sensitivity): Rate of output change per unit parameter change
--   **Variance explained** (importance): Contribution to output uncertainty
-
-::: callout-warning
-## Statistical Thresholds
-
-Results shown meet significance criteria: **p \< 0.05** and $R^2$ \> 0.10. Non-significant relationships are excluded to focus on robust patterns.
-:::
-
-::: panel-tabset
-## Elasticity Trends
+The scatter plots below show the strongest gradient relationships as small multiples. Each panel shows one parameter-response-gradient combination with a linear fit and $R^2$ annotation.
 
 ```{r}
-#| label: tbl-gradient-elasticity
-#| tbl-cap: "Environmental gradients significantly associated with parameter sensitivity (elasticity)"
+#| label: fig-gradient-scatter
+#| fig-cap: "Parameter sensitivity along environmental gradients. Each panel: x = environmental covariate, y = signed elasticity. Lines are OLS fits; annotation shows R-squared. Filtered to R-squared > 0.10."
+#| fig-height: 10
+#| fig-width: 12
 
-elast_tab <- regression_results %>%
-  filter(target == "elasticity", r_squared > 0.1, p_value < 0.05) %>%
-  mutate(
-    across(c(r_squared, slope, intercept), \(x) round(x, 3)),
-    p_value = format.pval(p_value, digits = 3)
-  ) %>%
-  arrange(desc(r_squared)) %>%
-  select(
-    Parameter = parameter,
-    Response = response_var,
-    Gradient = gradient_var,
-    `R2` = r_squared,
-    Slope = slope,
-    Intercept = intercept,
-    `p-value` = p_value,
-    N = n_sites
-  )
+sig_gradients <- regression_results |>
+  filter(target == "elasticity", r_squared > 0.10) |>
+  slice_max(order_by = r_squared, n = 8)
 
-DT::datatable(
-  elast_tab,
-  extensions = c('Scroller', 'Buttons'),
-  options = list(
-    dom = 'Plfrtip',
-    pageLength = 20,
-    deferRender = TRUE,
-    scroller = TRUE,
-    scrollY = "500px",
-    searchPanes = list(
-      cascadePanes = TRUE,
-      initCollapsed = TRUE
-    ),
-    columnDefs = list(
-      list(searchPanes = list(show = TRUE), targets = c(0, 1, 2))
-    ),
-    buttons = c('copy', 'csv')
-  ),
-  class = "stripe hover compact",
-  rownames = FALSE
-) %>%
-  DT::formatStyle(
-    'R2',
-    background = DT::styleColorBar(c(0.1, max(elast_tab$`R2`)), 'coral'),
-    backgroundSize = '100% 90%',
-    backgroundRepeat = 'no-repeat',
-    backgroundPosition = 'center'
-  )
+if (nrow(sig_gradients) > 0) {
+  gradient_vars_found <- unique(sig_gradients$gradient_var)
+
+  site_cov_long <- site_covariates |>
+    tidyr::pivot_longer(
+      cols = any_of(gradient_vars_found),
+      names_to = "gradient_var",
+      values_to = "gradient_value"
+    ) |>
+    select(site_id, gradient_var, gradient_value)
+
+  scatter_data <- aggregated_results |>
+    inner_join(
+      sig_gradients |> select(parameter, response_var, gradient_var, r_squared),
+      by = c("parameter", "response_var")
+    ) |>
+    inner_join(site_cov_long, by = c("site_id", "gradient_var")) |>
+    mutate(
+      facet_label = paste0(parameter, " -> ", response_var,
+                           "\n(", gradient_var, ", R2=", round(r_squared, 2), ")")
+    )
+
+  ggplot(scatter_data, aes(x = gradient_value, y = elasticity)) +
+    geom_point(alpha = 0.6, size = 1.5) +
+    geom_smooth(method = "lm", se = TRUE, color = "steelblue", linewidth = 0.8) +
+    facet_wrap(~facet_label, scales = "free", ncol = 2) +
+    labs(
+      x = "Environmental covariate value",
+      y = "Elasticity (signed)"
+    )
+} else {
+  cat("No gradient relationships exceeded the R-squared > 0.10 threshold.\n")
+}
 ```
 
-**Interpretation guide:**
+**Interpretation:**
 
--   **Positive slope**: Sensitivity *increases* along gradient (e.g., warmer sites more sensitive)
--   **Negative slope**: Sensitivity *decreases* along gradient
--   **High** $R^2$: Strong environmental control on parameter importance
-
-## Variance Explained Trends
-
-```{r}
-#| label: tbl-gradient-variance
-#| tbl-cap: "Environmental gradients significantly associated with parameter importance (variance explained)"
-
-var_tab <- regression_results %>%
-  filter(target == "variance_explained", r_squared > 0.1, p_value < 0.05) %>%
-  mutate(
-    across(c(r_squared, slope, intercept), \(x) round(x, 3)),
-    p_value = format.pval(p_value, digits = 3)
-  ) %>%
-  arrange(desc(r_squared)) %>%
-  select(
-    Parameter = parameter,
-    Response = response_var,
-    Gradient = gradient_var,
-    `R2` = r_squared,
-    Slope = slope,
-    Intercept = intercept,
-    `p-value` = p_value,
-    N = n_sites
-  )
-
-DT::datatable(
-  var_tab,
-  extensions = c('Scroller', 'Buttons'),
-  options = list(
-    dom = 'Plfrtip',
-    pageLength = 20,
-    deferRender = TRUE,
-    scroller = TRUE,
-    scrollY = "500px",
-    searchPanes = list(
-      cascadePanes = TRUE,
-      initCollapsed = TRUE
-    ),
-    columnDefs = list(
-      list(searchPanes = list(show = TRUE), targets = c(0, 1, 2))
-    ),
-    buttons = c('copy', 'csv')
-  ),
-  class = "stripe hover compact",
-  rownames = FALSE
-) %>%
-  DT::formatStyle(
-    'R2',
-    background = DT::styleColorBar(c(0.1, max(var_tab$`R2`)), 'lightgreen'),
-    backgroundSize = '100% 90%',
-    backgroundRepeat = 'no-repeat',
-    backgroundPosition = 'center'
-  )
-```
-
-**Why both metrics matter:** A parameter may have high *sensitivity* (elasticity) but low *importance* (variance explained) if its prior uncertainty is small. Conversely, a moderately sensitive parameter with high prior uncertainty may dominate output variability.
-:::
-
-## Summary Statistics
-
-```{r}
-#| label: tbl-gradient-summary
-
-gradient_summary <- regression_results %>%
-  filter(r_squared > 0.1, p_value < 0.05) %>%
-  group_by(target) %>%
-  summarise(
-    `N Significant` = n(),
-    `Mean R2` = mean(r_squared),
-    `Median R2` = median(r_squared),
-    `Max R2` = max(r_squared),
-    .groups = "drop"
-  ) %>%
-  mutate(across(where(is.numeric), \(x) round(x, 3)))
-
-knitr::kable(
-  gradient_summary,
-  caption = "Summary of significant gradient relationships by target metric",
-  col.names = c("Target Metric", "N Significant", "Mean R2", "Median R2", "Max R2")
-)
-```
+-   **Positive slope**: sensitivity *increases* along the gradient (e.g. hotter sites are more sensitive to a temperature-related parameter)
+-   **Negative slope**: sensitivity *decreases* along the gradient
+-   **Wide scatter within a panel**: the gradient only partially explains variation; other factors also matter
 
 ------------------------------------------------------------------------
 
 # Partial Dependence Analysis {#sec-pdp}
 
-Partial dependence plots visualize the marginal effect of environmental gradients on parameter sensitivity while averaging over all other predictors, revealing non-linear relationships missed by linear regression.
-
-## Method
-
-We use Random Forest regression to model `elasticity ~ MAT + MAP + clay + ocd + twi`, then compute partial dependence for each gradient. PDPs show how the predicted sensitivity changes as one gradient varies, holding others at their average values.
-
-## Example: Amax Sensitivity for NPP
+Linear regression can miss non-linear or threshold-type relationships between environmental conditions and parameter sensitivity. Partial dependence plots (PDPs), derived from a Random Forest model of `elasticity ~ MAT + MAP + clay + ocd + twi`, show the marginal effect of each gradient while averaging over all other predictors. This reveals non-linear response surfaces that may indicate ecologically important thresholds.
 
 ```{r}
 #| label: fig-pdp-example
@@ -404,149 +351,137 @@ if (exists("plot_pdp_sensitivity")) {
       target = "elasticity",
       gradients = gradient_vars
     )
-    
+
     wrap_plots(pdp_plots, ncol = 2) +
       plot_annotation(
-        title = "Marginal Effects of Environmental Gradients on Amax Sensitivity",
+        title = "Marginal effects of environmental gradients on Amax sensitivity",
         subtitle = "Random Forest partial dependence analysis",
         theme = theme(plot.title = element_text(size = 14, face = "bold"))
       )
   }, error = function(e) {
-    cat("PDP generation failed. Check that randomForest and pdp packages are installed.\n")
+    cat("PDP generation requires randomForest and pdp packages.\n")
     cat("Error:", e$message, "\n")
   })
 } else {
-  cat("plot_pdp_sensitivity() function not found. Ensure R/local_sensitivity.R is sourced.\n")
+  cat("plot_pdp_sensitivity() not available. Ensure R/local_sensitivity.R is sourced.\n")
 }
 ```
 
 ::: callout-note
 ## Interpreting PDPs
 
--   **Flat lines**: Sensitivity constant across gradient (no environmental control)
--   **Monotonic trends**: Linear increase/decrease (consistent with regression)
--   **Non-monotonic patterns**: Thresholds or optima (linear models inadequate)
--   **Rug plots**: Density of observed data (avoid extrapolation where data sparse)
+-   **Flat lines**: sensitivity is constant across the gradient (no environmental control)
+-   **Monotonic trends**: consistent increase/decrease (agrees with linear regression)
+-   **Non-monotonic patterns**: thresholds or optima where linear models would be inadequate
+-   **Rug marks**: density of observed data (be cautious about interpreting regions with sparse data)
 :::
+
+------------------------------------------------------------------------
+
+# Calibration Priorities {#sec-priorities}
+
+The goal of uncertainty analysis is not just to identify sensitive parameters but to identify where data collection effort would most efficiently reduce forecast uncertainty. Following the PEcAn framework (LeBauer et al., 2013; Dietze et al., 2014), a parameter that is highly sensitive *and* poorly constrained by existing data (high CV) is a higher priority than one that is highly sensitive but already well-known.
+
+The priority score is $|\bar{\varepsilon}| \times \text{CV}$, where $\bar{\varepsilon}$ is mean elasticity and CV is the coefficient of variation from the posterior parameter distribution. Parameters with the highest priority scores represent the best return on investment for targeted field campaigns or data synthesis.
+
+```{r}
+#| label: fig-priority
+#| fig-cap: "Calibration priority: parameters ranked by |elasticity| x CV. High values indicate where field data collection or literature synthesis would most efficiently reduce forecast uncertainty."
+#| fig-height: 8
+#| fig-width: 10
+
+priority_data <- param_rankings |>
+  filter(!is.na(constraint_priority)) |>
+  slice_max(order_by = constraint_priority, n = 10, by = "response_var")
+
+ggplot(priority_data, aes(
+  x = reorder(parameter, constraint_priority),
+  y = constraint_priority
+)) +
+  geom_col(fill = "steelblue", alpha = 0.8) +
+  coord_flip() +
+  facet_wrap(~response_var, scales = "free") +
+  labs(
+    x = NULL,
+    y = "Priority score (|elasticity| x CV)"
+  )
+```
 
 ------------------------------------------------------------------------
 
 # PFT Comparisons {#sec-pft}
 
-Parameter sensitivity may differ systematically between woody perennial and annual herbaceous plant functional types, reflecting distinct physiological strategies and carbon cycling pathways.
+Parameter sensitivity may differ systematically between woody perennial and annual herbaceous plant functional types, reflecting distinct physiological strategies and carbon cycling pathways. Woody PFTs typically show higher sensitivity to allocation and wood turnover parameters, while annual PFTs are more sensitive to leaf phenology and rapid nutrient cycling.
 
 ```{r}
-#| label: tbl-pft-comparison
-#| tbl-cap: "Top 20 parameter-PFT combinations by sensitivity for Total Soil Carbon"
+#| label: fig-pft
+#| fig-cap: "Top 10 parameters compared across PFTs. Bars show median signed elasticity within each PFT, faceted by response variable."
+#| fig-height: 8
+#| fig-width: 10
 
-pft_comp_table <- pft_differences |>
-  dplyr::filter(response_var == "TotSoilCarb") |>
-  dplyr::arrange(desc(mean_abs_elasticity)) |>
-  dplyr::slice_head(n = 20) |>
-  dplyr::mutate(
-    across(c(mean_abs_elasticity, mean_variance_explained, mean_cv), \(x) round(x, 3))
-  ) |>
-  dplyr::select(
-    PFT = pft,
-    Parameter = parameter,
-    `Mean |Elasticity|` = mean_abs_elasticity,
-    `Variance Explained (%)` = mean_variance_explained,
-    `Coefficient of Variation` = mean_cv,
-    `N Sites` = n_sites
-  )
+if (dplyr::n_distinct(aggregated_results$pft) >= 2) {
+  pft_data <- aggregated_results |>
+    summarize(
+      median_elast = median(elasticity, na.rm = TRUE),
+      median_abs = median(abs(elasticity), na.rm = TRUE),
+      .by = c("response_var", "parameter", "pft")
+    )
 
-DT::datatable(
-  pft_comp_table,
-  extensions = c('Scroller', 'Buttons'),
-  options = list(
-    dom = 'Bfrtip',
-    pageLength = 20,
-    deferRender = TRUE,
-    scroller = TRUE,
-    scrollY = "500px",
-    buttons = c('copy', 'csv')
-  ),
-  class = "stripe hover compact",
-  rownames = FALSE
-) %>%
-  DT::formatStyle(
-    'Mean |Elasticity|',
-    background = DT::styleColorBar(pft_comp_table$`Mean |Elasticity|`, 'steelblue'),
-    backgroundSize = '100% 90%',
-    backgroundRepeat = 'no-repeat',
-    backgroundPosition = 'center'
-  )
+  top10_pft <- pft_data |>
+    summarize(overall_abs = mean(median_abs), .by = "parameter") |>
+    slice_max(order_by = overall_abs, n = 10) |>
+    pull(parameter)
+
+  pft_data |>
+    filter(parameter %in% top10_pft) |>
+    ggplot(aes(
+      x = reorder(parameter, median_abs),
+      y = median_elast,
+      fill = pft
+    )) +
+    geom_col(position = "dodge", alpha = 0.8) +
+    coord_flip() +
+    facet_wrap(~response_var, scales = "free_x") +
+    scale_fill_brewer(palette = "Set1", name = "PFT") +
+    labs(x = NULL, y = "Median elasticity")
+} else {
+  cat("Only one PFT present; PFT comparison not applicable.\n")
+}
 ```
-
-**Ecological interpretation:** Woody PFTs typically show higher sensitivity to allocation and wood turnover parameters, while annual PFTs are more sensitive to leaf phenology and rapid nutrient cycling parameters.
 
 ------------------------------------------------------------------------
 
-# Cross-Cutting Insights {#sec-insights}
+# Summary and Implications {#sec-insights}
 
 ## Overall Sensitivity Summary
 
 ```{r}
 #| label: tbl-summary-stats
-#| tbl-cap: "Overall sensitivity summary statistics by response variable"
 
 summary_stats <- aggregated_results |>
   dplyr::group_by(response_var) |>
   dplyr::summarise(
     `N Parameters` = dplyr::n_distinct(parameter),
-    `Mean |Elasticity|` = mean(abs(elasticity), na.rm = TRUE),
-    `Median |Elasticity|` = median(abs(elasticity), na.rm = TRUE),
-    `Max |Elasticity|` = max(abs(elasticity), na.rm = TRUE),
-    `Mean Variance Explained (%)` = mean(variance_explained, na.rm = TRUE),
+    `Mean |Elasticity|` = round(mean(abs(elasticity), na.rm = TRUE), 2),
+    `Median |Elasticity|` = round(median(abs(elasticity), na.rm = TRUE), 2),
+    `Max |Elasticity|` = round(max(abs(elasticity), na.rm = TRUE), 2),
+    `Mean Var. Explained (%)` = round(mean(variance_explained, na.rm = TRUE), 2),
     .groups = "drop"
-  ) |>
-  dplyr::mutate(across(where(is.numeric), \(x) round(x, 3)))
+  )
 
 knitr::kable(summary_stats)
 ```
 
-## Key Findings
+## Implications for Model Development
 
-### 1. Parameter Prioritization for Calibration
+Parameter sensitivity patterns reveal underlying model structure and suggest specific strategies for forecast improvement:
 
-**High priority** (high elasticity × high prior uncertainty):
+-   **NPP**: dominated by photosynthesis (`Amax`, `psnTOpt`) and allocation processes. This is consistent with leaf-level ecophysiology being the primary control on productivity in SIPNET, as found in ED by Dietze et al. (2014).
+-   **Soil carbon**: controlled by turnover rates (`litterTurnover`, `soilTurnover`). This reflects that SIPNET represents soil carbon through first-order decomposition kinetics — changes to turnover rates directly propagate to pool sizes.
+-   **Aboveground biomass**: sensitive to allocation (`wood_allocation_rate`) and maximum photosynthesis (`Amax`), reflecting that woody biomass accumulation depends on both the rate of carbon fixation and how that carbon is partitioned between pools.
+-   **Spatial heterogeneity**: the variation in parameter importance across sites confirms that a single global calibration is insufficient. Climate gradients (MAT, MAP) and soil properties (clay, OCD) systematically modulate which parameters matter most, supporting the case for regionally stratified calibration strategies.
 
-```{r}
-#| label: tbl-calibration-priority
-
-priority_params <- param_rankings %>%
-  filter(response_var == "TotSoilCarb") %>%
-  arrange(desc(constraint_priority)) %>%
-  slice_head(n = 5) %>%
-  select(
-    Parameter = parameter,
-    `Mean |Elasticity|` = mean_abs_elasticity,
-    `Mean CV` = mean_cv,
-    `Priority Score` = constraint_priority
-  ) %>%
-  mutate(across(where(is.numeric), \(x) round(x, 3)))
-
-knitr::kable(
-  priority_params,
-  caption = "Top 5 parameters for calibration priority (TotSoilCarb)"
-)
-```
-
-### 2. Spatial Heterogeneity
-
--   **`r n_sites` sites** show substantial variation in parameter importance, confirming need for site-specific or region-specific calibration
--   **Climate gradients** explain 10-40% of variance in parameter sensitivity for key parameters
--   **Soil properties** (clay, OCD) primarily control turnover parameter importance
-
-### 3. Model Structure Implications
-
-Parameter sensitivity patterns reveal underlying model structure:
-
--   **NPP**: Dominated by photosynthesis (`Amax`, `psnTOpt`) and allocation processes
--   **Soil Carbon**: Controlled by turnover rates (`litterTurnover`, `soilTurnover`)
--   **Woody Biomass**: Sensitive to allocation (`wood_allocation_rate`) and longevity
-
-These patterns align with ecological theory and provide confidence in model representation of ecosystem processes.
+These patterns align with ecological theory and provide confidence that the model represents the key processes controlling carbon dynamics in California croplands.
 
 ------------------------------------------------------------------------
 
@@ -554,9 +489,17 @@ These patterns align with ecological theory and provide confidence in model repr
 
 ## Sensitivity Metrics
 
--   **Elasticity** ($\varepsilon$): Normalized sensitivity = $\frac{\partial Y}{\partial X} \cdot \frac{X}{Y}$
--   **Variance explained**: $\frac{\text{Partial Variance}_i}{\sum \text{Partial Variances}} \times 100\%$
--   **Coefficient of variation** (CV): Prior uncertainty = $\frac{\sigma}{\mu}$ from parameter distributions
+-   **Elasticity** ($\varepsilon$): normalized sensitivity = $\frac{\partial Y}{\partial X} \cdot \frac{X}{Y}$. The sign indicates the direction of the relationship (positive = synergistic, negative = antagonistic). Absolute elasticity is used when ranking parameter importance.
+-   **Variance explained**: $\frac{\text{Partial Variance}_i}{\sum \text{Partial Variances}} \times 100\%$. Combines model sensitivity with prior parameter uncertainty to estimate the contribution of each parameter to total predictive variance.
+-   **Coefficient of variation** (CV): prior uncertainty = $\frac{\sigma}{\mu}$ of the posterior parameter distribution from the Bayesian meta-analysis.
+-   **Calibration priority**: $|\bar{\varepsilon}| \times \text{CV}$. Parameters with both high sensitivity and high prior uncertainty have the highest value of information.
+
+## References
+
+1. Dietze, M. C. et al. (2014). A quantitative assessment of a terrestrial biosphere model's data needs across North American biomes. *J. Geophys. Res. Biogeosci.*, 119, 286-300.
+2. LeBauer, D. S. et al. (2013). Facilitating feedbacks between field measurements and ecosystem models. *Ecological Monographs*, 83(2), 133-154.
+3. Gelman, A. & Dodhia, R. (2002). Let's practice what we preach: Turning tables into graphs.
+4. Saltelli, A. et al. (2008). *Global Sensitivity Analysis: The Primer*. Wiley.
 
 ## Software Environment
 
@@ -586,5 +529,5 @@ cat("Gradient variables:", paste(gradient_vars, collapse = ", "), "\n")
 ::: callout-tip
 ## Data Availability
 
-All datasets used in this report are available in `data/aggregated_sensitivity.csv` and related files. Analysis code is in `R/local_sensitivity.R`.
+All datasets used in this report are available in `data/aggregated_sensitivity.csv` and related files. Analysis code is in `R/local_sensitivity.R`. Raw data and figures can be downloaded via the code-tools button above.
 :::
