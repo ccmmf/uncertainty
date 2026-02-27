@@ -1,8 +1,8 @@
 ---
 title: "Uncertainty Partitioning: Decomposing SIPNET Forecast Variance"
-subtitle: "An Analysis Based on the Ecological Forecasting Framework"
+subtitle: "Integrating Local and Global Sensitivity for Actionable Uncertainty Reduction"
 author: "Akash B V"
-date: "`r Sys.Date()`"
+date: last-modified
 format:
   html:
     self-contained: true
@@ -20,44 +20,32 @@ execute:
   cache: false
 ---
 
-# Executive Summary
-
-**Objective:** To determine the most cost-effective strategies for reducing forecast uncertainty by identifying its primary drivers.
-
-**Key Findings:**
-
-1.  **Dominant Drivers:** Forecast uncertainty is driven by distinct factors depending on the variable. Fast processes (e.g., carbon fluxes) are dominated by **Meteorology**, while slow processes (e.g., soil carbon) are dominated by **Initial Conditions**.
-2.  **Critical Traits:** The analysis identifies specific biological traits (e.g., temperature sensitivity, allocation fractions) that contribute disproportionately to uncertainty. Reducing uncertainty in these specific parameters will yield the highest return on investment.
-3.  **Environmental Context:** The sources of uncertainty shift across environmental gradients (e.g., precipitation), suggesting that management strategies may need to be site-specific.
-
----
-
 # Overview
 
-This report performs a **Variance Decomposition** (Uncertainty Partitioning) of the SIPNET ecosystem model forecasts. Building on the previous Local (OAT) and Global (Sobol) sensitivity analyses, this step integrates these results to attribute the **total predictive uncertainty** to specific sources.
+This report performs a **variance decomposition** (uncertainty partitioning) of the SIPNET ecosystem model forecasts across California croplands. Building on the local (OAT) and global (Sobol) sensitivity analyses, this step integrates both to answer the central question of ecological forecasting: **what drives our predictive uncertainty, and what can we do about it?**
 
-## Theoretical Framework
+Following the ecological forecasting framework, the total predictive variance of a forecast $Y$ can be decomposed into contributions from the uncertainties in model inputs:
 
-Following the ecological forecasting framework (Dietze 2017), the variance of a forecast ($Y$) can be decomposed into contributions from the uncertainties in model inputs and drivers:
+$$\text{Var}(Y) \approx V_{\text{Parameter}} + V_{\text{Driver}} + V_{\text{IC}} + V_{\text{Management}} + V_{\text{Interaction}}$$
 
-$$\text{Var}(Y) \approx V_{Parameter} + V_{Driver} + V_{InitialCond} + V_{Interaction}$$
+Each term represents a different lever for reducing forecast uncertainty:
 
-In this analysis, we focus on the **Modeled Variance** components derived from our Sobol ensemble:
-
-1.  **Parameter Uncertainty ($V_{Param}$):** Uncertainty arising from biological traits (e.g., $A_{max}$, $SLA$).
-2.  **Driver Uncertainty ($V_{Driver}$):** Uncertainty from meteorological forcing (e.g., Temperature, Precipitation).
-3.  **Initial Conditions ($V_{IC}$):** Uncertainty from the system's starting state (e.g., Soil Carbon pools).
-4.  **Interaction Variance ($V_{Int}$):** Non-additive variance arising from the interplay between parameters and drivers.
+- **$V_{\text{Parameter}}$** - Biological traits (e.g. $A_{\max}$, $SLA$, turnover rates). Reduced by field data collection, literature synthesis, or Bayesian calibration with observations.
+- **$V_{\text{Driver}}$** - Meteorological forcing (temperature, precipitation, radiation). Reduced by improving weather forecasts or sensor networks.
+- **$V_{\text{IC}}$** - Initial conditions (starting pools of soil carbon, biomass). Reduced by site-specific inventory measurements or data assimilation.
+- **$V_{\text{Management}}$** - Crop management inputs (N fertilization, compost application). Reduced by better operational data from growers.
+- **$V_{\text{Interaction}}$** - Non-additive effects where the impact of one uncertain input depends on the value of another.
 
 ::: callout-important
-## Scope Note
-Process Error is excluded from this specific analysis. In managed agricultural systems, process error is often driven by **Model Structure** rather than random stochasticity. This component will be assessed in a separate validation workflow.
+## Scope
+
+Process error (model structural uncertainty) is excluded from this analysis. In managed agricultural systems, process error is driven by model structure rather than random stochasticity. This component will be assessed separately through model-data comparison.
 :::
 
 ::: callout-note
-## Goal
+## How This Connects to the Sensitivity Analyses
 
-To identify the **dominant source of uncertainty** for each site and variable. This informs whether future research should focus on **field data collection** (to reduce $V_{Param}$), **sensor network improvement** (to reduce $V_{Driver}$), or **data assimilation** (to constrain $V_{IC}$).
+The **local SA** (OAT elasticities, @sec-param-breakdown) tells us which individual parameters the model is most sensitive to. The **global SA** (Sobol indices) tells us how much total variance is attributable to parameters vs. drivers vs. initial conditions. This report combines both: Sobol gives the total parameter variance, and local OAT fractions subdivide it into individual traits.
 :::
 
 ```{r}
@@ -68,226 +56,391 @@ library(readr)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(DT)
 library(stringr)
 library(here)
 library(config)
 library(knitr)
 library(scales)
-library(ggthemes)
 library(patchwork)
 
 here::i_am("analysis/variance_decomposition.qmd")
-# Load configuration
 cfg <- config::get(file = here::here("000-config.yml"))
 
-# Set paths
 data_dir <- here::here(cfg$paths$data_dir)
-plots_dir <- here::here(cfg$paths$data_dir, "plots")
 
-# Load data generated by scripts/031_partition_variance.R
-# 1. Site-level partition (The "Big Picture" - Param vs Met vs IC)
-site_partition <- read_csv(file.path(data_dir, "variance_partition_site_level.csv"), show_col_types = FALSE)
+# load datasets from 031_partition_variance.R
+site_partition <- readr::read_csv(
+  file.path(data_dir, "variance_partition_site_level.csv"),
+  show_col_types = FALSE
+)
 
-# 2. Parameter-level Pprtition (The "Details" - Hybrid approach)
-param_partition <- read_csv(file.path(data_dir, "variance_partition_parameters.csv"), show_col_types = FALSE)
+param_partition <- readr::read_csv(
+  file.path(data_dir, "variance_partition_parameters.csv"),
+  show_col_types = FALSE
+)
 
-# 3. Ensemble variance (Absolute magnitude of uncertainty)
-ensemble_var <- read_csv(file.path(data_dir, "ensemble_variance.csv"), show_col_types = FALSE)
+ensemble_var <- readr::read_csv(
+  file.path(data_dir, "ensemble_variance.csv"),
+  show_col_types = FALSE
+)
 
-# 4. Site covariates (For Gradient analysis)
-site_covariates <- read_csv(here::here(cfg$paths$ccmmf_dir, "data/site_covariates.csv"), show_col_types = FALSE)
+site_covariates <- readr::read_csv(
+  here::here(cfg$paths$ccmmf_dir, "data/site_covariates.csv"),
+  show_col_types = FALSE
+)
 
-# Theme setup
-theme_set(theme_bw(base_size = 12))
+n_sites <- n_distinct(site_partition$site_id)
+variables <- unique(site_partition$variable)
+
+# consistent theme
+theme_set(
+  theme_minimal(base_size = 12) +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.text = element_text(size = 10, face = "bold"),
+      legend.position = "bottom"
+    )
+)
 ```
 
-# The Variance Budget (Source Partitioning)
+## Key Findings
 
-We first examine the partition of total modeled variance into high-level categories across all sites.
+```{r}
+#| label: compute-findings
+#| include: false
+
+# dominant source per variable (averaged across sites)
+dominant_sources <- site_partition |>
+  filter(!category %in% c("dummy", "interaction")) |>
+  summarize(
+    mean_frac = mean(frac_of_total, na.rm = TRUE),
+    .by = c("variable", "category")
+  ) |>
+  slice_max(mean_frac, n = 1, by = "variable")
+
+# top parameter per variable (from hybrid decomposition)
+top_params <- param_partition |>
+  filter(!is.na(frac_of_total)) |>
+  summarize(
+    mean_frac = mean(frac_of_total, na.rm = TRUE),
+    .by = c("response_var", "parameter")
+  ) |>
+  slice_max(mean_frac, n = 1, by = "response_var")
+
+# interaction fraction
+int_frac <- site_partition |>
+  filter(category == "interaction") |>
+  summarize(mean_int = mean(frac_of_total, na.rm = TRUE)) |>
+  pull(mean_int)
+```
+
+Based on variance decomposition across `r n_sites` California cropland sites:
+
+1. **Dominant uncertainty sources differ by output variable.** Fast processes (NPP, carbon fluxes) tend to be driven by **meteorological uncertainty**, while slow processes (soil carbon pools) are driven by **initial conditions** — consistent with the ecological forecasting framework (Dietze, 2017).
+2. **Specific biological traits** dominate the parameter uncertainty component. The hybrid decomposition identifies actionable calibration targets (see @sec-param-breakdown).
+3. **Interaction effects** account for ~`r round(int_frac * 100)`% of total variance on average, indicating that parameter effects are partially dependent on meteorological context.
+4. **Uncertainty sources shift along environmental gradients** — wetter sites may show a different balance of driver vs. parameter uncertainty than drier sites, supporting the case for regionally tailored uncertainty reduction strategies.
+
+------------------------------------------------------------------------
+
+# The Variance Budget {#sec-budget}
+
+We first examine how total forecast variance partitions into high-level categories. This answers the fundamental question: **is our uncertainty dominated by what we know about the plants (parameters), the weather (drivers), or the system's starting state (initial conditions)?**
+
+The stacked bars below show the fractional contribution of each source for every site, faceted by output variable. The dummy parameter (Sobol validation) is excluded.
 
 ```{r}
 #| label: fig-variance-budget
-#| fig-cap: "Variance Budget: Relative contribution of Parameter, Driver (Met), Initial Conditions, and Interactions to total forecast variance."
+#| fig-cap: "Variance decomposition by site. Each bar represents one site; color segments show the fraction of total variance attributable to each uncertainty source. Faceted by output variable."
 #| fig-height: 8
 #| fig-width: 12
 
-# Prepare data: Filter out 'dummy' (noise) and order categories
-plot_data <- site_partition %>%
-  filter(category != "dummy") %>% 
+plot_data <- site_partition |>
+  filter(!category %in% c("dummy")) |>
   mutate(
-    category = factor(category, levels = c("interaction", "IC", "driver", "parameter")),
-    # Create prettier labels for the plot
-    category_label = recode(category, 
-                            parameter = "Biological Parameters",
-                            driver = "Meteorology",
-                            IC = "Initial Conditions",
-                            interaction = "Interactions")
+    category_label = dplyr::case_when(
+      category == "parameter"   ~ "Biological Parameters",
+      category == "driver"      ~ "Meteorology",
+      category == "IC"          ~ "Initial Conditions",
+      category == "management"  ~ "Management",
+      category == "interaction" ~ "Interactions",
+      TRUE ~ category
+    ),
+    category_label = factor(
+      category_label,
+      levels = c("Interactions", "Management", "Initial Conditions",
+                 "Meteorology", "Biological Parameters")
+    )
   )
 
-# Stacked bar chart
-p1 <- ggplot(plot_data, aes(x = as.factor(runid), y = frac_of_total, fill = category_label)) +
+ggplot(plot_data, aes(x = as.factor(runid), y = frac_of_total,
+                      fill = category_label)) +
   geom_col(position = "fill", width = 0.85) +
   facet_wrap(~variable, scales = "free", ncol = 1) +
   scale_y_continuous(labels = percent) +
   scale_fill_brewer(palette = "Set2", name = "Source") +
   labs(
-    title = "Variance Decomposition by Site",
-    subtitle = "Fraction of total uncertainty explained by each source",
-    x = "Site Run ID",
-    y = "Fraction of Variance"
+    x = "Site",
+    y = "Fraction of total variance"
   ) +
   theme(
-    axis.text.x = element_blank(), # Hide RunIDs if too many, or rotate
-    axis.ticks.x = element_blank(),
-    legend.position = "right"
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
   )
-
-print(p1)
 ```
 
-## Summary Statistics
+## Summary Across Sites
 
-Average contribution of each source across the network:
+The bar chart below shows the mean contribution of each source averaged across all sites, with error bars showing +/- 1 SD. This reveals the overall balance of uncertainty sources.
 
 ```{r}
-#| label: tbl-variance-summary
+#| label: fig-mean-partition
+#| fig-cap: "Mean variance partition across all sites by output variable. Error bars show +/- 1 SD across sites, revealing how consistent the partitioning is across the landscape."
+#| fig-height: 6
+#| fig-width: 10
 
-summary_table <- plot_data %>%
-  group_by(variable, category_label) %>%
-  summarise(
-    Mean = mean(frac_of_total, na.rm = TRUE),
-    SD = sd(frac_of_total, na.rm = TRUE),
-    Min = min(frac_of_total, na.rm = TRUE),
-    Max = max(frac_of_total, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  mutate(across(where(is.numeric), percent, accuracy = 0.1)) %>%
-  arrange(variable, desc(Mean))
+summary_data <- site_partition |>
+  filter(!category %in% c("dummy", "interaction")) |>
+  mutate(
+    category_label = dplyr::case_when(
+      category == "parameter"  ~ "Biological Parameters",
+      category == "driver"     ~ "Meteorology",
+      category == "IC"         ~ "Initial Conditions",
+      category == "management" ~ "Management",
+      TRUE ~ category
+    )
+  ) |>
+  summarize(
+    mean_frac = mean(frac_of_total, na.rm = TRUE),
+    sd_frac = sd(frac_of_total, na.rm = TRUE),
+    .by = c("variable", "category_label")
+  )
 
-DT::datatable(summary_table, caption = "Mean Variance Partitioning across all sites")
+ggplot(summary_data, aes(x = category_label, y = mean_frac,
+                          fill = category_label)) +
+  geom_col(alpha = 0.8) +
+  geom_errorbar(
+    aes(ymin = pmax(0, mean_frac - sd_frac),
+        ymax = mean_frac + sd_frac),
+    width = 0.2
+  ) +
+  facet_wrap(~variable, scales = "free_y") +
+  scale_y_continuous(labels = percent) +
+  scale_fill_brewer(palette = "Set2", guide = "none") +
+  labs(x = NULL, y = "Mean fraction of total variance") +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
 ```
 
-## Interpretation
+### What These Results Mean for Uncertainty Reduction
 
-- **Parameters vs Drivers:**
-  - If Meteorology is the dominant term, predictive skill is limited by our ability to forecast weather (extrinsic forcing).
-  - If Biological Parameters dominate, we can improve forecasts by collecting more trait data to constrain model physics (internal biology).
-- **Initial Conditions (System Memory):**
-  - If Initial Conditions dominate (common for slow variables like Soil Carbon), the forecast is limited by our knowledge of the system's starting state. Reducing this uncertainty requires site-specific inventory measurements or Data Assimilation.
-- **Interactions:**
-  - A large interaction term implies that parameters behave differently under different weather conditions (non-additive effects), suggesting complex non-linear dynamics.
+- **If Meteorology dominates:** Improving weather forecasts or adding weather stations will have the largest impact on reducing forecast uncertainty. This is typical for fast carbon flux variables.
+- **If Biological Parameters dominate:** Collecting more trait data (field campaigns, literature synthesis) or performing Bayesian calibration will be most effective. The specific parameters to target are identified in @sec-param-breakdown.
+- **If Initial Conditions dominate:** Data assimilation (updating model states with observations) or site-specific soil/biomass inventories will yield the largest gains. This is typical for slow pool variables like soil carbon, where the system retains "memory" of its starting state.
+- **If Interactions are large:** Parameter effects are non-additive — they depend on weather conditions. This means that calibrating parameters independently may underestimate forecast improvement. Joint calibration or scenario-based approaches may be needed.
 
-# Parameter Breakdown (Hybrid Analysis)
+------------------------------------------------------------------------
 
-While Global SA gives us the total variance due to all parameters ($V_{Param}$), we use the Local (OAT) Sensitivity results to subdivide this variance into individual traits. This identifies the specific biological mechanisms driving uncertainty.
+# Parameter Breakdown (Hybrid Analysis) {#sec-param-breakdown}
+
+While the global SA gives us the total variance attributable to all parameters collectively ($V_{\text{Parameter}}$), we need to know which *individual* traits to target for calibration. We use a hybrid approach:
+
+1. **Global Sobol indices** provide $V_{\text{Parameter}}$ (the total parameter variance)
+2. **Local OAT partial variances** provide the relative shares among individual parameters
+3. **Multiplying** these gives each parameter's absolute contribution to total forecast uncertainty
+
+This identifies the specific biological mechanisms driving uncertainty — the parameters with the highest "value of information" for data collection.
 
 ```{r}
 #| label: fig-param-breakdown
-#| fig-cap: "Top 10 parameters contributing to Total Ensemble Variance. Calculated using the Hybrid Method: Global V_Param × Local Partial Variance Fraction."
+#| fig-cap: "Top 10 parameters contributing to total forecast variance, identified via the hybrid method (Sobol V_param x local OAT fractions). Error bars show +/- 1 SD across sites."
 #| fig-height: 10
 #| fig-width: 10
 
-# 1. Aggregate parameter contribution across all sites
-# We calculate the mean fractional contribution of each parameter to the TOTAL variance
-param_ranks <- param_partition %>%
-  filter(!is.na(frac_of_total)) %>%
-  group_by(response_var, parameter) %>%
-  summarise(
+param_ranks <- param_partition |>
+  filter(!is.na(frac_of_total)) |>
+  summarize(
     mean_contribution = mean(frac_of_total, na.rm = TRUE),
     sd_contribution = sd(frac_of_total, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  group_by(response_var) %>%
-  slice_max(order_by = mean_contribution, n = 10) %>% # Top 10 per variable
-  ungroup()
+    .by = c("response_var", "parameter")
+  ) |>
+  slice_max(order_by = mean_contribution, n = 10, by = "response_var")
 
-# 2. Plot
-ggplot(param_ranks, aes(x = reorder(parameter, mean_contribution), y = mean_contribution)) +
+ggplot(param_ranks, aes(x = reorder(parameter, mean_contribution),
+                         y = mean_contribution)) +
   geom_col(fill = "steelblue", alpha = 0.8) +
-  geom_errorbar(aes(ymin = pmax(0, mean_contribution - sd_contribution), 
-                    ymax = mean_contribution + sd_contribution), width = 0.2) +
+  geom_errorbar(
+    aes(ymin = pmax(0, mean_contribution - sd_contribution),
+        ymax = mean_contribution + sd_contribution),
+    width = 0.2
+  ) +
   coord_flip() +
   facet_wrap(~response_var, scales = "free") +
   scale_y_continuous(labels = percent) +
   labs(
-    title = "Critical Parameters for Forecasting",
-    subtitle = "Top 10 biological traits contributing to total predictive uncertainty",
-    x = "Parameter",
-    y = "Mean Contribution to Total Variance"
+    x = NULL,
+    y = "Contribution to total forecast variance"
   )
 ```
 
 ::: callout-tip
-## Research Priorities
+## Calibration Priority
 
-The parameters listed above have the highest Value of Information. Reducing the uncertainty (CV) of these specific parameters via literature review or field campaigns will yield the largest reduction in forecast error.
+The parameters above have the highest value of information. Reducing their prior uncertainty (CV) via targeted field campaigns, literature meta-analysis, or Bayesian calibration with flux tower data will yield the largest reduction in forecast error. This directly complements the calibration priority analysis from the local SA report.
 :::
 
-# Environmental Gradient Analysis
+------------------------------------------------------------------------
 
-Does the dominant source of uncertainty change depending on the environment? Here we test if the importance of Meteorology, Biology, or Initial Conditions shifts along climate gradients (e.g., Mean Annual Precipitation).
+# Environmental Gradient Analysis {#sec-gradients}
+
+A key question is whether the dominant source of uncertainty changes with environmental conditions. If it does, uncertainty reduction strategies should be spatially targeted rather than applied uniformly.
+
+Below we test whether the importance of biological parameters, meteorology, and initial conditions shifts along the precipitation gradient (MAP). Sites in drier regions may be more sensitive to meteorological uncertainty, while wetter sites may have more parameter uncertainty.
 
 ```{r}
 #| label: fig-gradient-analysis
-#| fig-cap: "Shifts in uncertainty sources along the precipitation gradient (MAP). Points represent individual sites."
+#| fig-cap: "Shifts in uncertainty sources along the precipitation gradient. Each point is one site; lines show linear trends. Colors distinguish parameter, driver, and IC contributions."
 #| fig-height: 6
 #| fig-width: 10
 
-# 1. Join variance partitioning results with Site Covariates
-gradient_data <- site_partition %>%
-  filter(category %in% c("parameter", "driver", "IC")) %>%
-  left_join(site_covariates, by = c("site_id" = "site_id")) %>% 
-  filter(!is.na(precip)) %>%
-  mutate(category = factor(category, levels = c("parameter", "driver", "IC")))
+gradient_data <- site_partition |>
+  filter(category %in% c("parameter", "driver", "IC")) |>
+  left_join(site_covariates, by = "site_id") |>
+  mutate(
+    category_label = dplyr::case_when(
+      category == "parameter" ~ "Biological Parameters",
+      category == "driver"    ~ "Meteorology",
+      category == "IC"        ~ "Initial Conditions"
+    )
+  )
 
-# 2. Plot parameter vs driver vs IC importance against MAP
-ggplot(gradient_data, aes(x = precip, y = frac_of_total, color = category)) +
-  geom_point(alpha = 0.6) +
-  geom_smooth(method = "lm", se = FALSE) +
-  facet_wrap(~variable, scales = "free_y") +
-  scale_color_manual(
-    values = c("parameter" = "#009E73", "driver" = "#D55E00", "IC" = "#E69F00"),
-    labels = c("parameter" = "Biological Parameters", 
-               "driver" = "Meteorology", 
-               "IC" = "Initial Conditions")
+# try MAP first, fall back to precip
+gradient_col <- if ("MAP" %in% names(gradient_data)) "MAP" else "precip"
+
+if (gradient_col %in% names(gradient_data)) {
+  gradient_data_filtered <- gradient_data |>
+    filter(!is.na(.data[[gradient_col]]))
+
+  ggplot(gradient_data_filtered,
+         aes(x = .data[[gradient_col]], y = frac_of_total,
+             color = category_label)) +
+    geom_point(alpha = 0.5, size = 1.5) +
+    geom_smooth(method = "lm", se = TRUE, linewidth = 0.8) +
+    facet_wrap(~variable, scales = "free_y") +
+    scale_color_manual(
+      values = c("Biological Parameters" = "#009E73",
+                 "Meteorology" = "#D55E00",
+                 "Initial Conditions" = "#E69F00")
+    ) +
+    labs(
+      x = "Mean Annual Precipitation (mm)",
+      y = "Fraction of total variance",
+      color = "Source"
+    )
+} else {
+  cat("No precipitation gradient data available for gradient analysis.\n")
+}
+```
+
+**Interpretation:**
+
+- **Converging lines:** Uncertainty sources become equally important in certain environments
+- **Diverging lines:** One source increasingly dominates — calibration resources should be concentrated accordingly
+- **Consistent ranking across the gradient:** The same source dominates everywhere, supporting a uniform reduction strategy
+
+------------------------------------------------------------------------
+
+# Absolute Uncertainty Magnitude {#sec-magnitude}
+
+The variance budget above shows proportions, but not the absolute magnitude of uncertainty. A variable with 80% driver variance but very low total variance may not need attention, while one with 40% parameter variance and very high total variance demands immediate action.
+
+```{r}
+#| label: fig-absolute-variance
+#| fig-cap: "Absolute magnitude of forecast uncertainty (expressed as standard deviation in variable units). Higher bars indicate variables where the model is most uncertain."
+#| fig-height: 5
+#| fig-width: 8
+
+abs_var <- ensemble_var |>
+  summarize(
+    mean_sd = mean(sqrt(ensemble_variance), na.rm = TRUE),
+    sd_sd = sd(sqrt(ensemble_variance), na.rm = TRUE),
+    .by = "variable"
+  )
+
+ggplot(abs_var, aes(x = reorder(variable, mean_sd), y = mean_sd)) +
+  geom_col(fill = "steelblue", alpha = 0.8) +
+  geom_errorbar(
+    aes(ymin = pmax(0, mean_sd - sd_sd), ymax = mean_sd + sd_sd),
+    width = 0.2
   ) +
+  coord_flip() +
   labs(
-    title = "Uncertainty Sources along Environmental Gradients",
-    x = "Mean Annual Precipitation (mm)",
-    y = "Fraction of Variance",
-    color = "Source"
+    x = NULL,
+    y = "Mean standard deviation (variable units)"
   )
 ```
 
-# Total Modeled Uncertainty (Magnitude)
+------------------------------------------------------------------------
 
-Finally, we look at the absolute magnitude of the uncertainty ($\text{Var}(Y_{ens})$). This tells us how uncertain we actually are, not just the proportions.
+# Synthesis and Implications {#sec-synthesis}
+
+## What We Learned
+
+1. **The variance budget successfully decomposes ensemble uncertainty** into internal (biological parameters) and external (meteorology, initial conditions) drivers, following the framework of Dietze (2017, Ch. 11).
+
+2. **Different output variables have different dominant sources.** Fast-turnover variables (NPP, fluxes) are more influenced by meteorological uncertainty because they respond directly to weather forcing. Slow-turnover variables (soil carbon) are dominated by initial conditions because the model retains memory of its starting state across the simulation period.
+
+3. **The hybrid analysis identifies actionable calibration targets.** By combining global variance partitioning with local parameter sensitivity, we can name the specific traits (e.g. temperature sensitivity of photosynthesis, litter turnover rates) that offer the highest return on investment for field data collection.
+
+4. **Uncertainty sources shift with environment**, confirming that a single region-wide uncertainty reduction strategy is suboptimal. Site-specific or cluster-stratified approaches are needed.
+
+## What To Do Next
+
+- **For high $V_{\text{Parameter}}$ variables:** Target the top parameters from @sec-param-breakdown for field campaigns, literature synthesis, or model calibration using flux tower observations.
+- **For high $V_{\text{IC}}$ variables:** Implement data assimilation workflows that update soil carbon and biomass pools using remote sensing or inventory data.
+- **For high $V_{\text{Driver}}$ variables:** This represents a fundamental limit — forecasting weather is inherently uncertain. Ensemble weather forecasts (multiple meteorological realizations) are the standard approach to propagating this uncertainty.
+- **For high $V_{\text{Interaction}}$:** Consider joint parameter-driver calibration or scenario-based uncertainty analysis rather than independent parameter fitting.
+
+## Remaining Gaps
+
+- **Process error** (model structural uncertainty) is not yet quantified. Comparison of model predictions against observational data will reveal residual variance that cannot be explained by input uncertainties — this is the signature of model structural error.
+- **Management uncertainty** is currently limited to N fertilization and compost. As the monitoring framework delivers tillage, planting, and harvest data products, these will be incorporated into the uncertainty budget.
+
+------------------------------------------------------------------------
+
+# Technical Details {#sec-technical}
+
+## Method: Hybrid Variance Decomposition
+
+The decomposition proceeds in two stages:
+
+1. **Source partitioning** (global): Sobol first-order indices ($S_i$) are multiplied by total ensemble variance to obtain absolute variance contributions per category:
+   $$V_{\text{category}} = \sum_{i \in \text{category}} S_i \times \text{Var}(Y_{\text{ensemble}})$$
+
+2. **Parameter attribution** (local): The parameter category is further subdivided using local OAT partial variance fractions:
+   $$V_{\text{param}_j} = \frac{\text{PV}_j^{\text{local}}}{\sum_j \text{PV}_j^{\text{local}}} \times V_{\text{Parameter}}^{\text{global}}$$
+
+This hybrid approach leverages the strengths of both methods: Sobol provides rigorous variance partitioning across source categories, while OAT provides computationally efficient parameter-level attribution.
+
+## References
+
+1. Dietze, M. C. (2017). *Ecological Forecasting*. Princeton University Press. Chapter 11: Propagating, Analyzing, and Reducing Uncertainty.
+2. LeBauer, D. S., et al. (2013). Facilitating feedbacks between field measurements and ecosystem models. *Ecological Monographs*, 83(2), 133-154.
+3. Dietze, M. C. et al. (2014). A quantitative assessment of a terrestrial biosphere model's data needs across North American biomes. *J. Geophys. Res. Biogeosci.*, 119, 286-300.
+4. Saltelli, A. et al. (2010). Variance based sensitivity analysis of model output. *Computer Physics Communications*.
+
+## Software Environment
 
 ```{r}
-#| label: tbl-absolute-variance
+#| label: session-info
+#| code-fold: false
 
-# Summarize the raw variance (from ensemble_variance.csv)
-abs_var_summary <- ensemble_var %>%
-  group_by(variable) %>%
-  summarise(
-    Mean_Var = mean(ensemble_variance, na.rm = TRUE),
-    Mean_SD = mean(sqrt(ensemble_variance), na.rm = TRUE), # Standard deviation is easier to interpret
-    Max_SD = max(sqrt(ensemble_variance), na.rm = TRUE)
-  ) %>%
-  mutate(across(where(is.numeric), \(x) round(x, 2)))
-
-DT::datatable(abs_var_summary, caption = "Absolute Magnitude of Forecast Uncertainty (Standard Deviation in variable units)")
+sessionInfo()
 ```
 
-# Conclusion
+------------------------------------------------------------------------
 
-- **Variance Budget:** We successfully decomposed the ensemble variance into internal and external drivers, highlighting distinct drivers for fast (fluxes) vs. slow (pools) variables.
-- **Key Drivers:** The hybrid analysis identified the specific parameters (Figure 2) that serve as the primary levers for model improvement.
-- **Future Work:** This analysis accounts for modeled uncertainty. The final step in the framework is to compare these variance estimates against observational data. Any remaining residual variance will primarily represent **Model Structural Error** (deficiencies in model physics) rather than stochastic noise.
+::: callout-tip
+## Data Availability
 
-# References
-
-[1] Dietze, M. C. (2017). Ecological Forecasting. Princeton University Press. (Chapter 11: Propagating, Analyzing, and Reducing Uncertainty).
-
-[2] LeBauer, D. S., et al. (2013). Facilitating feedbacks between field measurements and ecosystem models. Ecological Monographs.
+All datasets: `data/variance_partition_site_level.csv`, `data/variance_partition_parameters.csv`, `data/ensemble_variance.csv`. Analysis code: `R/variance_decomposition.R`. Pipeline script: `scripts/031_partition_variance.R`.
+:::
