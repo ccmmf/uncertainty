@@ -1,149 +1,234 @@
-#' Generate Sobol Design Matrix for Global Sensitivity Analysis
+#' Generate Sobol design matrix for global sensitivity analysis
 #'
 #' Creates Saltelli-style sampling matrices for variance-based sensitivity
 #' analysis using the sensobol package.
-#' 
-#' @description
-#' This function generates a Sobol' quasi-random sequence for all uncertain 
-#' inputs, including both continuous parameters and discrete 
-#' drivers (Initial Conditions and Meteorology).
-#' 
-#' Discrete inputs (IC, Met) are handled by sampling them continuously on 
-#' the interval [0, 1] within the Sobol design and then discretizing them 
-#' using the inverse transform method (floor + qunif). This allows their 
+#'
+#' This function generates a Sobol' quasi-random sequence for all uncertain
+#' inputs, including continuous parameters (PFT traits, management rates),
+#' discrete drivers (Initial Conditions and Meteorology), and a dummy
+#' parameter for Sobol validation.
+#'
+#' Discrete inputs (IC, Met) are handled by sampling them continuously on
+#' the interval [0, 1] within the Sobol design and then discretizing them
+#' using the inverse transform method (floor + qunif). This allows their
 #' variance contributions (Si, Ti) to be calculated alongside parameters.
 #'
-#' @param N Base sample size for Sobol matrices. Total runs = N × (k + 2)
-#'   where k is the number of parameters. Recommended: 512-1024 for convergence.
+#' @param N Base sample size for Sobol matrices. Total runs = N * (k + 2)
+#'   where k is the number of parameters. Recommended: 512-1024 for convergence
 #' @param params Named list of parameter prior specifications. Each element
 #'   should contain: `distn` (distribution name), `parama` (first parameter),
-#'   `paramb` (second parameter). Typically loaded from PEcAn posterior files.
-#' @param ic_range Integer vector of available IC ensemble IDs. Should match
-#'   the number of IC files in settings XML (e.g. 1:20, 1:100).
-#' @param met_range Integer vector of available met ensemble IDs. Should match
-#'   the number of met files in settings XML (e.g. 1:10).
+#'   `paramb` (second parameter). For truncnorm: also `paramc` (lower bound)
+#'   and `paramd` (upper bound). Management parameters should be prefixed
+#'   with "mgmt." to distinguish them from PFT parameters.
+#' @param ic_size Integer, number of IC ensemble members (default 100).
+#' @param met_size Integer, number of met ensemble members (default 10).
 #'
-#' @return Data frame with N*(k + 2) rows and columns:
+#' @return tibble with N * (k + 2) rows and columns:
+#'   - `sample_id`: unique integer per row
+#'   - One column per entry in `params` (PFT traits, mgmt.*, dummy)
+#'   - `ic_ensemble`: integer IC ensemble index
+#'   - `met_ensemble`: integer met ensemble index
 #'
 #' @export
 generate_sobol_design <- function(N = 512,
-                                   params,
-                                   ic_range = 1:100,
-                                   met_range = 1:10) {
+                                  params,
+                                  ic_size = 100L,
+                                  met_size = 10L) {
 
-  # -----------------------------------------------------------------------
-  # Dependency check
-  # -----------------------------------------------------------------------
   if (!requireNamespace("sensobol", quietly = TRUE)) {
-    PEcAn.logger::logger.severe("Package 'sensobol' is required. Install with: install.packages('sensobol')")
+    PEcAn.logger::logger.severe(
+      "Package 'sensobol' is required. Install with: install.packages('sensobol')"
+    )
   }
 
-  # -----------------------------------------------------------------------
-  # Input validation
-  # -----------------------------------------------------------------------
   if (!is.list(params) || length(params) == 0) {
     PEcAn.logger::logger.severe("'params' must be a non-empty named list")
   }
-
   if (N < 1 || N != floor(N)) {
     PEcAn.logger::logger.severe("'N' must be a positive integer")
   }
-
-  if (length(ic_range) == 0 || length(met_range) == 0) {
-    PEcAn.logger::logger.severe("'ic_range' and 'met_range' must be non-empty vectors")
+  if (ic_size < 1 || met_size < 1) {
+    PEcAn.logger::logger.severe("'ic_size' and 'met_size' must be >= 1")
   }
 
-  # -----------------------------------------------------------------------
-  # Setup
-  # -----------------------------------------------------------------------
   set.seed(42)
 
-  # We treat IC and Met as parameters so sensobol can calculate their indices.
-  pft_param_names <- names(params)
-  
-  # Add IC and Met to the parameter list for matrix generation
-  all_param_names <- c(pft_param_names, "ic_ensemble", "met_ensemble")
-  k <- length(all_param_names)
-  # Saltelli sampling = N * (k + 2)
-  total_runs <- N * (k + 2)
+  # ic and met are included in the sobol matrix so sensobol can compute
+  # their first-order and total-order indices alongside continuous params
+  continuous_params <- names(params)
+  all_params <- c(continuous_params, "ic_ensemble", "met_ensemble")
 
-  # -----------------------------------------------------------------------
-  # Generate Sobol matrices for ALL parameters (continuous + discrete)
-  # -----------------------------------------------------------------------
-  # creates A, B, and AB_i matrices following Saltelli, required for variance decomposition
-  # Output: matrix with N*(k+2) rows, k columns, values in [0, 1]
-
+  # saltelli design: A, B, and k AB_i matrices -> N * (k + 2) rows
   mat <- sensobol::sobol_matrices(
     N = N,
-    params = all_param_names,
-    type = "QRN",        # Quasi-random Sobol sequence (space-filling)
-    order = "first",     # Compute first-order + total-order indices
-    matrices = c("A", "B", "AB") # Saltelli design
-  )
+    params = all_params,
+    type = "QRN", # quasi-random sobol sequence (space-filling)
+    order = "first", # compute first-order + total-order indices
+    matrices = c("A", "B", "AB") # saltelli design
+  ) 
 
-  design <- as.data.frame(mat)
+  design <- tibble::as_tibble(as.data.frame(mat))
 
-  # -----------------------------------------------------------------------
-  # Scale parameters from [0,1] to prior distributions
-  # -----------------------------------------------------------------------
-
-  for (param_name in pft_param_names) {
+  # scale continuous params from [0,1] to prior distributions
+  for (param_name in continuous_params) {
     prior <- params[[param_name]]
-    x <- design[[param_name]]  # Values in [0, 1]
 
-    # Validate prior structure
     if (is.null(prior$distn) || is.null(prior$parama)) {
-      PEcAn.logger::logger.severe(sprintf("Parameter '%s' missing 'distn' or 'parama'", param_name))
+      PEcAn.logger::logger.severe(
+        "Parameter '", param_name, "' missing 'distn' or 'parama'"
+      )
     }
 
-    # Apply quantile transformation
+    x <- design[[param_name]]
+
     design[[param_name]] <- switch(
       prior$distn,
-      "norm"    = qnorm(x, mean = prior$parama, sd = prior$paramb),
-      "lnorm"   = qlnorm(x, meanlog = prior$parama, sdlog = prior$paramb),
-      "unif"    = qunif(x, min = prior$parama, max = prior$paramb),
-      "exp"     = qexp(x, rate = prior$parama),
-      "gamma"   = qgamma(x, shape = prior$parama, rate = prior$paramb),
-      "beta"    = qbeta(x, shape1 = prior$parama, shape2 = prior$paramb),
-      "weibull" = qweibull(x, shape = prior$parama, scale = prior$paramb),
+      "norm"      = stats::qnorm(x, mean = prior$parama, sd = prior$paramb),
+      "lnorm"     = stats::qlnorm(x, meanlog = prior$parama, sdlog = prior$paramb),
+      "unif"      = stats::qunif(x, min = prior$parama, max = prior$paramb),
+      "exp"       = stats::qexp(x, rate = prior$parama),
+      "gamma"     = stats::qgamma(x, shape = prior$parama, rate = prior$paramb),
+      "beta"      = stats::qbeta(x, shape1 = prior$parama, shape2 = prior$paramb),
+      "weibull"   = stats::qweibull(x, shape = prior$parama, scale = prior$paramb),
+      "truncnorm" = truncnorm::qtruncnorm(
+        x,
+        a = prior$paramc, b = prior$paramd,
+        mean = prior$parama, sd = prior$paramb
+      ),
       {
-        # Fallback
-        PEcAn.logger::logger.warn(sprintf("Unknown dist '%s' for '%s'. Using unif.", prior$distn, param_name))
+        PEcAn.logger::logger.warn(
+          "Unknown distribution '", prior$distn, "' for '", param_name,
+          "'. Falling back to uniform."
+        )
         paramb <- if (is.null(prior$paramb)) prior$parama + 1 else prior$paramb
-        qunif(x, min = prior$parama, max = paramb)
+        stats::qunif(x, min = prior$parama, max = paramb)
       }
     )
   }
 
-  # -----------------------------------------------------------------------
-  # Transform IC and Met (Discrete Uniform)
-  # -----------------------------------------------------------------------
-  # This follows the method in sensobol documentation for discrete uniform.
-  # We map the continuous [0,1] Sobol sample to the integer indices.
-  # Example: If met_range is 1:10, we sample uniform(1, 11) and floor it.
-  
-  ic_min <- min(ic_range)
-  ic_max <- max(ic_range)
-  # We add +1 to max inside qunif because floor() truncates. 
-  # floor(qunif(0.99, 1, 11)) -> floor(10.9) -> 10.
-  design$ic_ensemble <- floor(stats::qunif(design$ic_ensemble, min = ic_min, max = ic_max + 1))
+  # discretize ic and met from [0,1] to integer indices {1, ..., size}
+  design[["ic_ensemble"]] <- floor(
+    stats::qunif(design[["ic_ensemble"]], min = 1, max = ic_size + 1)
+  )
+  design[["ic_ensemble"]] <- pmin(design[["ic_ensemble"]], ic_size)
 
-  met_min <- min(met_range)
-  met_max <- max(met_range)
-  design$met_ensemble <- floor(stats::qunif(design$met_ensemble, min = met_min, max = met_max + 1))
+  design[["met_ensemble"]] <- floor(
+    stats::qunif(design[["met_ensemble"]], min = 1, max = met_size + 1)
+  )
+  design[["met_ensemble"]] <- pmin(design[["met_ensemble"]], met_size)
 
-  # Ensure we didn't go out of bounds
-  design$ic_ensemble[design$ic_ensemble > ic_max] <- ic_max
-  design$met_ensemble[design$met_ensemble > met_max] <- met_max
-  
-  # -----------------------------------------------------------------------
-  # Add Metadata columns
-  # -----------------------------------------------------------------------
-  # sample_id is strictly necessary to map results back to rows later
-  design$sample_id <- seq_len(nrow(design))
-  
-  # Reorder columns: ID, Params, IC, Met
-  design <- design[, c("sample_id", pft_param_names, "ic_ensemble", "met_ensemble")]
+  design[["sample_id"]] <- seq_len(nrow(design))
 
-  return(design)
+  # reorder: id first, then continuous params, then drivers
+  design[, c("sample_id", continuous_params, "ic_ensemble", "met_ensemble")]
 }
+
+
+#' Compute Sobol sensitivity indices from ensemble output files
+#'
+#' Loads PEcAn ensemble output Rdata files for each site and variable,
+#' then calls sensobol::sobol_indices() to compute first-order and
+#' total-order indices with bootstrapped confidence intervals.
+#'
+#' @param output_dir Path to the directory containing ensemble.output.*.Rdata files.
+#' @param run_ids Character vector of run IDs (site identifiers from the
+#'   ensemble output filenames).
+#' @param params Character vector of all parameter names (including
+#'   ic_ensemble and met_ensemble) in the Sobol design.
+#' @param N Integer base sample size used to generate the Sobol matrices.
+#' @param R Integer number of bootstrap replicates for confidence intervals.
+#'
+#' @return tibble in wide format with columns: runid, variable,
+#'   parameters, and pivoted Si/Ti estimates with confidence intervals.
+compute_sobol_indices <- function(output_dir,
+                                  run_ids,
+                                  params,
+                                  N,
+                                  R = 500L) {
+
+  expected_len <- N * (length(params) + 2L)
+  all_files <- list.files(
+    output_dir,
+    "^ensemble\\.output.*\\.Rdata$",
+    full.names = TRUE
+  )
+
+  if (length(all_files) == 0) {
+    PEcAn.logger::logger.severe("No ensemble.output.*.Rdata found in ", output_dir)
+  }
+
+  results_all_sites <- list()
+
+  for (rid in run_ids) {
+    site_files <- grep(
+      paste0("ensemble\\.output\\.", rid),
+      all_files,
+      value = TRUE
+    )
+    if (length(site_files) == 0) next
+
+    # variable name is the 4th token in the dotted filename
+    vars <- unique(vapply(
+      strsplit(basename(site_files), "\\."),
+      \(x) x[4],
+      character(1)
+    ))
+
+    site_results <- list()
+
+    for (v in vars) {
+      vf <- site_files[
+        vapply(strsplit(basename(site_files), "\\."), \(x) x[4] == v, logical(1))
+      ]
+      if (length(vf) != 1) {
+        PEcAn.logger::logger.warn(sprintf(
+          "variable %s for runid %s has %d files -- skipping", v, rid, length(vf)
+        ))
+        next
+      }
+
+      env <- new.env(parent = emptyenv())
+      load(vf, envir = env)
+      Y <- as.numeric(unlist(env$ensemble.output))
+
+      if (length(Y) != expected_len) {
+        PEcAn.logger::logger.severe(sprintf(
+          "variable %s for runid %s has %d values (expected %d)",
+          v, rid, length(Y), expected_len
+        ))
+      }
+
+      idx <- sensobol::sobol_indices(
+        Y = Y,
+        N = N,
+        params = params,
+        boot = TRUE,
+        R = R
+      )
+
+      df <- tibble::as_tibble(idx$results)
+      df$variable <- v
+      df$runid <- rid
+      site_results[[v]] <- df
+    }
+
+    results_all_sites[[rid]] <- dplyr::bind_rows(site_results)
+  }
+
+  long <- dplyr::bind_rows(results_all_sites)
+
+  # pivot to wide format (Si/Ti with confidence intervals)
+  long |>
+    dplyr::select(
+      "runid", "variable", "parameters", "sensitivity",
+      "original", "low.ci", "high.ci", "bias", "std.error"
+    ) |>
+    tidyr::pivot_wider(
+      names_from = "sensitivity",
+      values_from = c("original", "low.ci", "high.ci", "bias", "std.error"),
+      names_glue = "{sensitivity}_{.value}"
+    ) |>
+    dplyr::arrange(.data$runid, .data$variable, .data$parameters)
+}
+
+.data <- rlang::.data
