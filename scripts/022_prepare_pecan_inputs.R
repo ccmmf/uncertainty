@@ -159,11 +159,12 @@ for (pft_name in names(ensemble.samples)) {
   }
 }
 
-# build input_design (maps sample_id to IC/met ensemble indices)
+# build input_design (maps sample_id to IC/met/events ensemble indices)
 input_design <- tibble::tibble(
-  param       = sobol_design$sample_id,
+  param        = sobol_design$sample_id,
   poolinitcond = sobol_design$ic_ensemble,
-  met         = sobol_design$met_ensemble
+  met          = sobol_design$met_ensemble,
+  events       = sobol_design$sample_id
 )
 
 # save samples.Rdata (format expected by run.write.configs)
