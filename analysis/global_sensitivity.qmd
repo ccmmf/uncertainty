@@ -80,7 +80,7 @@ sobol_indices <- readr::read_csv(
   here::here(cfg$paths$data_dir, "sobol_indices.csv"),
   show_col_types = FALSE
 )
-metadata <- readRDS(here::here(cfg$paths$data_dir, "sobol_design_metadata.rds"))
+metadata <- readRDS(here::here(cfg$paths$data_dir, "sobol_design_matrix_metadata.rds"))
 
 N <- metadata$N
 k <- metadata$k
@@ -202,10 +202,10 @@ dummy_vals <- sobol_summary |>
 
 Based on a Sobol analysis with `r N` base samples and `r total_runs` total runs across `r n_sites` sites:
 
-- **Top parameters**: `r top3$Label[1]`, `r top3$Label[2]`, and `r top3$Label[3]` explain the most output variance ($T_i$ = `r round(top3$median_Ti[1], 2)`, `r round(top3$median_Ti[2], 2)`, `r round(top3$median_Ti[3], 2)`)
-- **Biological parameters** account for ~`r round(bio_frac * 100)`% of explained variance; meteorological and initial condition drivers explain the rest
-- **Model additivity** ($\sum S_i$) averages `r round(mean(additivity$mean_sum), 2)` -- values near 1 indicate additive behavior, values $\ll 1$ indicate parameter interactions dominate
-- **Noise floor**: the dummy parameter's median $T_i$ = `r round(dummy_vals, 4)`, providing a rigorous threshold for identifying non-influential inputs
+-   **Top parameters**: `r top3$Label[1]`, `r top3$Label[2]`, and `r top3$Label[3]` explain the most output variance ($T_i$ = `r round(top3$median_Ti[1], 2)`, `r round(top3$median_Ti[2], 2)`, `r round(top3$median_Ti[3], 2)`)
+-   **Biological parameters** account for \~`r round(bio_frac * 100)`% of explained variance; meteorological and initial condition drivers explain the rest
+-   **Model additivity** ($\sum S_i$) averages `r round(mean(additivity$mean_sum), 2)` -- values near 1 indicate additive behavior, values $\ll 1$ indicate parameter interactions dominate
+-   **Noise floor**: the dummy parameter's median $T_i$ = `r round(dummy_vals, 4)`, providing a rigorous threshold for identifying non-influential inputs
 
 # Variance Decomposition (Source Partitioning) {#sec-variance-partition}
 
@@ -348,8 +348,8 @@ The dashed red line marks the noise floor (median dummy $T_i$).
 ```{r}
 #| label: fig-screening
 #| fig-cap: "Factor screening: parameters below the noise line (dashed red) can be fixed. Dot = median Ti across sites; whisker = IQR."
-#| fig-height: 7
-#| fig-width: 9
+#| fig-height: 16
+#| fig-width: 12
 
 dummy_thresholds <- sobol_summary |>
   filter(Category == "Control (Noise)") |>
@@ -377,7 +377,8 @@ ggplot(screening, aes(x = reorder(Label, median_Ti), y = median_Ti)) +
     x = NULL,
     y = "Total-order index (Ti)",
     color = "Source"
-  )
+  ) +
+  theme(axis.text.y = element_text(size = 8))
 ```
 
 ```{r}
@@ -431,10 +432,10 @@ ggplot(additivity_site, aes(x = variable, y = Sum_Si)) +
 
 # References
 
-1. Puy, A., et al. (2022). sensobol: An R Package to Compute Variance-Based Sensitivity Indices. *Journal of Statistical Software*, 102(5).
+1.  Puy, A., et al. (2022). sensobol: An R Package to Compute Variance-Based Sensitivity Indices. *Journal of Statistical Software*, 102(5).
 
-2. Saltelli, A., et al. (2010). Variance based sensitivity analysis of model output. *Computer Physics Communications*.
+2.  Saltelli, A., et al. (2010). Variance based sensitivity analysis of model output. *Computer Physics Communications*.
 
-3. Dietze, M. (2017). *Ecological Forecasting*. Princeton University Press.
+3.  Dietze, M. (2017). *Ecological Forecasting*. Princeton University Press.
 
-4. Gelman, A. & Dodhia, R. (2002). Let's practice what we preach: Turning tables into graphs.
+4.  Gelman, A. & Dodhia, R. (2002). Let's practice what we preach: Turning tables into graphs.
