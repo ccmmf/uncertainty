@@ -67,7 +67,7 @@ build_sample_events <- function(mgmt_row,
   event_dates <- as.Date(vapply(all_events, `[[`, character(1), "date"))
   all_events <- all_events[order(event_dates)]
 
-  list(site_id = site_id, events = all_events)
+  list(pecan_events_version = "0.1.0", site_id = site_id, events = all_events)
 }
 
 
@@ -227,4 +227,25 @@ build_harvest_events <- function(harvest_doy, harvest_fraction, years) {
       frac_below_removed_0to1 = 0.0
     )
   })
+}
+
+
+#' Flatten anchor site events from pecanFormat JSON into a flat event list
+#'
+#' anchors_events_pecanFormat.json is keyed by event type:
+#' \code{list(tillage = [...], harvest = [...], irrigation = [...], ...)}.
+#' \code{build_sample_events()} expects a flat list of all events.
+#' This function merges management event sublists into one flat list,
+#' excluding phenology (which lacks event_type/date fields and maps to
+#' SIPNET parameters rather than events).
+#'
+#' @param site_data Named list of event-type lists for one site
+#' @return Flat list of event lists, suitable for build_sample_events().
+flatten_anchor_events <- function(site_data) {
+  mgmt_types <- c("tillage", "planting", "harvest", "irrigation")
+  events <- list()
+  for (etype in intersect(names(site_data), mgmt_types)) {
+    events <- c(events, site_data[[etype]])
+  }
+  events
 }
