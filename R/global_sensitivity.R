@@ -90,6 +90,7 @@ generate_sobol_design <- function(N = 512,
       "gamma"     = stats::qgamma(x, shape = prior$parama, rate = prior$paramb),
       "beta"      = stats::qbeta(x, shape1 = prior$parama, shape2 = prior$paramb),
       "weibull"   = stats::qweibull(x, shape = prior$parama, scale = prior$paramb),
+      "pois"      = stats::qpois(x, lambda = prior$parama),
       "truncnorm" = truncnorm::qtruncnorm(
         x,
         a = prior$paramc, b = prior$paramd,
