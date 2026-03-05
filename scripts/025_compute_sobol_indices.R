@@ -43,7 +43,7 @@ if (!dir.exists(dirname(output_csv))) {
 }
 
 # --- load metadata ---
-metadata <- readRDS("data/sobol_design_metadata.rds")
+metadata <- readRDS("data/sobol_design_matrix_metadata.rds")
 
 N <- metadata$N
 
