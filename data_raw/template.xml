@@ -58,7 +58,7 @@
  <model>
   <id>99000000003</id>
   <type>SIPNET</type>
-  <revision>git</revision>
+  <revision>2.0</revision>
   <delete.raw>FALSE</delete.raw>
   <binary>sipnet</binary>
  </model>
@@ -87,8 +87,13 @@
   <name>localhost</name>
   <outdir>output/out</outdir>
   <rundir>output/run</rundir>
-  <qsub>qsub -V -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash</qsub>
-  <qsub.jobid>Your job ([0-9]+) .*</qsub.jobid>
+  <qsub>qsub -V -cwd -N @NAME@ -o @STDOUT@ -e @STDERR@ -S /bin/bash</qsub>
+  <qsub.jobid>Your job-array ([0-9]+).*</qsub.jobid>
   <qstat>qstat -j @JOBID@ || echo DONE</qstat>
- </host>
+    <modellauncher>
+      <binary>./scripts/sge_array_launcher.sh</binary>
+      <qsub.extra>-t 1-@NJOBS@</qsub.extra>
+      <Njobmax>14000</Njobmax>
+    </modellauncher>
+  </host>
 </pecan>
