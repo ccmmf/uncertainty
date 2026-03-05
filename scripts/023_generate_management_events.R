@@ -1,17 +1,22 @@
 #!/usr/bin/env Rscript
-# Generate per-sample management events from Sobol design matrix
+# Generate per-site x per-sample management events from Sobol design matrix.
 #
-# For each row in the Sobol design, maps quantile-based management
-# parameters to crop-specific physical values per site, then builds
-# PEcAn events JSON and converts to SIPNET events.in format via
-# PEcAn.SIPNET::write.events.SIPNET()
+# Maps quantile-based management parameters to physical values per site,
+# builds PEcAn events JSON, converts to SIPNET events.in via
+# PEcAn.SIPNET::write.events.SIPNET().
 #
-# current scope: N fertilizer + compost
-# other management events (tillage, planting, harvest, irrigation) pass
-# through from the baseline calendar unchanged - they will be activated
-# when the monitoring framework delivers the required remote sensing data products
+# For anchor sites (with monitoring data from MF team),
+# site-specific harvest, tillage, irrigation, and planting events replace
+# the generic baseline calendar.
 #
-# outputs: data/events/*.json, data/events/*.in, data/events/events_path_mapping.csv
+# For non-anchor sites, the generic baseline calendar is used for all
+# events except fertilization (which is always Sobol-varied).
+#
+# Supports --start/--end for SGE array parallelism:
+#   Rscript scripts/023_generate_management_events.R --start 1 --end 500
+#
+# Outputs: data/events/events_sample_{n}_{site_id}.in,
+#          data/events/events_path_mapping.csv
 
 library(readr, include.only = c("read_csv", "write_csv"))
 library(yaml, include.only = "read_yaml")
@@ -37,19 +42,29 @@ opts <- list(
   optparse::make_option(c("-f", "--force"),
     action = "store_true", default = FALSE,
     help = "Overwrite existing output"
+  ),
+  optparse::make_option("--start",
+    type = "integer", default = 1L,
+    help = "First sample index to process [default: %default]"
+  ),
+  optparse::make_option("--end",
+    type = "integer", default = -1L,
+    help = "Last sample index (-1 = all) [default: %default]"
   )
 )
 
 args <- optparse::parse_args(optparse::OptionParser(option_list = opts))
 
 # --- config ---
-cfg <- yaml::read_yaml(args$config)
+cfg_raw <- yaml::read_yaml(args$config)
+cfg <- cfg_raw$default %||% cfg_raw
 
 output_dir <- args[["output-dir"]]
+is_chunk <- (args$start > 1L || args$end > 0L)
 mapping_file <- file.path(output_dir, "events_path_mapping.csv")
 
-# skip-if-exists guard
-if (!args$force && file.exists(mapping_file)) {
+# skip guard only for full runs (chunks always run)
+if (!is_chunk && !args$force && file.exists(mapping_file)) {
   PEcAn.logger::logger.info(
     "Output exists: ", mapping_file, ". Use --force to regenerate. Skipping."
   )
@@ -87,6 +102,14 @@ if (!file.exists(site_crop_path)) {
 }
 site_crops <- readr::read_csv(site_crop_path, show_col_types = FALSE)
 
+# filter to sites actually being simulated (sa_design_points.csv)
+# site_crop_mapping may have more rows (e.g. 198) than the active design (e.g. 20)
+sa_dp_path <- file.path(dirname(design_path), "..", "data_raw", "sa_design_points.csv")
+if (file.exists(sa_dp_path)) {
+  sa_dp <- readr::read_csv(sa_dp_path, show_col_types = FALSE)
+  site_crops <- site_crops[site_crops$site_id %in% sa_dp$site_id, ]
+}
+
 PEcAn.logger::logger.info(
   "Loaded site-crop mapping: ", nrow(site_crops), " sites, ",
   sum(site_crops$lookup_source == "crop_specific"), " crop-specific"
@@ -104,10 +127,29 @@ baseline_raw <- tryCatch(
 )
 baseline_events <- if (!is.null(baseline_raw$events)) baseline_raw$events else baseline_raw
 
+# --- load anchor site events (monitoring framework) ---
+# site keyed JSON with per type events for 17 anchor sites (defered scaling up).
+# For anchor sites, these replace the generic baseline for tillage,
+# harvest, irrigation, and planting
+anchor_json_path <- cfg$anchor_events_json %||% NULL
+anchor_events <- list()
+if (!is.null(anchor_json_path) && file.exists(anchor_json_path)) {
+  anchor_events <- jsonlite::read_json(anchor_json_path)
+  PEcAn.logger::logger.info(
+    "Loaded anchor site events: ", length(anchor_events), " sites from ",
+    anchor_json_path
+  )
+} else {
+  PEcAn.logger::logger.info(
+    "No anchor events JSON configured; using baseline for all sites"
+  )
+}
+anchor_site_ids <- names(anchor_events)
+
+# year range
 start_year <- as.integer(cfg$start_year %||% 2016L)
 end_year <- as.integer(cfg$end_year %||% 2023L)
 years <- seq(start_year, end_year)
-site_id <- cfg$site_id
 
 # --- identify mgmt columns in the design ---
 mgmt_cols <- grep("^mgmt\\.", names(sobol_design), value = TRUE)
@@ -115,42 +157,57 @@ PEcAn.logger::logger.info(
   "Management columns: ", paste(mgmt_cols, collapse = ", ")
 )
 
-# --- management ranges from site-crop mapping ---
+# --- compost ranges (same for all sites -- cow manure statewide) ---
 # compost C and C:N ranges come from PEcAn.data.land::look_up_ca_compost_amendment()
 # via R/crop_lookup.R -> site_crop_mapping.csv
-site_info_row <- site_crops[1, ]
-compost_c_min_g_m2 <- site_info_row$compost_c_min_g_m2
-compost_c_max_g_m2 <- site_info_row$compost_c_max_g_m2
-compost_cn_min <- site_info_row$compost_cn_min
-compost_cn_max <- site_info_row$compost_cn_max
+# NB compost material is the same for all sites (cow manure), so row 1 is fine
+compost_row <- site_crops[1, ]
+compost_c_min_g_m2 <- compost_row$compost_c_min_g_m2
+compost_c_max_g_m2 <- compost_row$compost_c_max_g_m2
+compost_cn_min <- compost_row$compost_cn_min
+compost_cn_max <- compost_row$compost_cn_max
 
 PEcAn.logger::logger.info(
-  "Compost: ", site_info_row$compost_material,
+  "Compost: ", compost_row$compost_material,
   " (C: ", round(compost_c_min_g_m2, 1), "-",
   round(compost_c_max_g_m2, 1), " g/m2",
   ", C:N: ", compost_cn_min, "-", compost_cn_max, ")"
 )
 
-# --- generate per-sample events ---
-n_samples <- nrow(sobol_design)
-events_in_paths <- character(n_samples)
+# --- all site IDs from the mapping ---
+all_site_ids <- site_crops$site_id
+n_sites <- length(all_site_ids)
 
-for (i in seq_len(n_samples)) {
+PEcAn.logger::logger.info(
+  "Generating events for ", n_sites, " sites (",
+  sum(all_site_ids %in% anchor_site_ids), " anchor, ",
+  n_sites - sum(all_site_ids %in% anchor_site_ids), " baseline)"
+)
+
+# --- sample range (supports SGE array chunking) ---
+n_samples <- nrow(sobol_design)
+i_start <- max(1L, args$start)
+i_end <- if (args$end < 0L) n_samples else min(args$end, n_samples)
+n_chunk <- i_end - i_start + 1L
+
+PEcAn.logger::logger.info(
+  "Processing samples ", i_start, "-", i_end, " of ", n_samples,
+  " (", n_chunk, " samples x ", n_sites, " sites = ",
+  n_chunk * n_sites, " events files)"
+)
+
+# --- main loop: per-sample x per-site ---
+mapping_rows <- vector("list", n_chunk * n_sites)
+row_idx <- 0L
+
+for (i in i_start:i_end) {
   n_quantile <- sobol_design[i, "mgmt.n_quantile", drop = TRUE]
   compost_quantile <- sobol_design[i, "mgmt.compost_quantile", drop = TRUE]
   cn_quantile <- sobol_design[i, "mgmt.cn_quantile", drop = TRUE]
 
-  # map N quantile to crop-specific rate.
-  # all sites share the same quantile, but each crop's [min, max] N range differs.
-  # TODO extend to per-site mapping when MF delivers site-level data
-  site_info <- site_crops[1, ]
-
-  # inverse CDF of Uniform(min, max) -> value = min + q * (max - min)
-  n_rate_g_m2 <- site_info$min_n_g_m2 +
-    n_quantile * (site_info$max_n_g_m2 - site_info$min_n_g_m2)
-  n_rate_kg_m2 <- PEcAn.utils::ud_convert(n_rate_g_m2, "g/m^2", "kg/m^2")
-
   # map compost quantile to material-specific C range (g/m2 -> kg/m2)
+  # NB compost is site-independent (cow manure statewide), so compute once per sample
+
   org_c_g_m2 <- compost_c_min_g_m2 +
     compost_quantile * (compost_c_max_g_m2 - compost_c_min_g_m2)
   org_c_kg_m2 <- PEcAn.utils::ud_convert(org_c_g_m2, "g/m^2", "kg/m^2")
@@ -158,57 +215,88 @@ for (i in seq_len(n_samples)) {
   # map C:N quantile to material-specific C:N range
   cn_ratio <- compost_cn_min + cn_quantile * (compost_cn_max - compost_cn_min)
 
-  mgmt_row <- list(
-    mgmt.nh4_n_kg_m2 = n_rate_kg_m2,
-    mgmt.org_c_kg_m2 = org_c_kg_m2,
-    mgmt.cn_ratio    = cn_ratio
-  )
+  for (site_id in all_site_ids) {
+    # --- per-site N rate, use this site's own crop-specific [min, max] range ---
+    site_info <- site_crops[site_crops$site_id == site_id, ]
 
-  # build PEcAn schema events JSON for this sample
-  sample_events <- build_sample_events(
-    mgmt_row        = mgmt_row,
-    baseline_events = baseline_events,
-    years           = years,
-    site_id         = site_id,
-    event_config    = cfg$event_config %||% list()
-  )
+    n_rate_g_m2 <- site_info$min_n_g_m2 +
+      n_quantile * (site_info$max_n_g_m2 - site_info$min_n_g_m2)
+    n_rate_kg_m2 <- PEcAn.utils::ud_convert(n_rate_g_m2, "g/m^2", "kg/m^2")
 
-  # write events JSON for this sample
-  json_path <- file.path(output_dir, sprintf("events_sample_%d.json", i))
-  jsonlite::write_json(
-    list(sample_events),  # write.events.SIPNET expects array of site objects
-    json_path,
-    auto_unbox = TRUE,
-    pretty = TRUE
-  )
+    mgmt_row <- list(
+      mgmt.nh4_n_kg_m2 = n_rate_kg_m2,
+      mgmt.org_c_kg_m2 = org_c_kg_m2,
+      mgmt.cn_ratio    = cn_ratio
+    )
 
-  # convert JSON -> SIPNET events.in via PEcAn.SIPNET::write.events.SIPNET
-  # writes events-{site_id}.in in the output dir
-  PEcAn.SIPNET::write.events.SIPNET(json_path, output_dir)
+    # select baseline, anchor sites use monitoring data,
+    # other sites use the generic baseline calendar
+    if (site_id %in% anchor_site_ids) {
+      site_baseline <- flatten_anchor_events(anchor_events[[site_id]])
+    } else {
+      site_baseline <- baseline_events
+    }
 
-  # rename to per-sample filename
-  sipnet_src <- file.path(output_dir, sprintf("events-%s.in", site_id))
-  sipnet_dst <- file.path(output_dir, sprintf("events_sample_%d.in", i))
-  file.rename(sipnet_src, sipnet_dst)
+    # build PEcAn schema events JSON for this sample x site
+    sample_events <- build_sample_events(
+      mgmt_row        = mgmt_row,
+      baseline_events = site_baseline,
+      years           = years,
+      site_id         = site_id,
+      event_config    = cfg$event_config %||% list()
+    )
 
-  events_in_paths[i] <- sipnet_dst
+    # write events JSON for this sample x site
+    json_path <- file.path(
+      output_dir, sprintf("events_sample_%d_%s.json", i, site_id)
+    )
+    jsonlite::write_json(
+      list(sample_events),  # write.events.SIPNET expects array of site objects
+      json_path,
+      auto_unbox = TRUE,
+      pretty = TRUE
+    )
 
-  if (i %% 500 == 0 || i == n_samples) {
-    PEcAn.logger::logger.info(sprintf("  Generated %d / %d events files", i, n_samples))
+    # write.events.SIPNET outputs a fixed name (events-{site_id}.in),
+    # so use a per-sample scratch dir to avoid collisions under parallelism
+    scratch <- file.path(output_dir, sprintf(".scratch_%d_%s", i, site_id))
+    dir.create(scratch, showWarnings = FALSE)
+    PEcAn.SIPNET::write.events.SIPNET(json_path, scratch)
+
+    sipnet_src <- file.path(scratch, sprintf("events-%s.in", site_id))
+    sipnet_dst <- file.path(
+      output_dir, sprintf("events_sample_%d_%s.in", i, site_id)
+    )
+    file.rename(sipnet_src, sipnet_dst)
+    unlink(scratch, recursive = TRUE)
+
+    # clean up JSON (only .in needed downstream)
+    file.remove(json_path)
+
+    row_idx <- row_idx + 1L
+    mapping_rows[[row_idx]] <- list(
+      sample_id      = sobol_design$sample_id[i],
+      site_id        = site_id,
+      events_in_path = sipnet_dst
+    )
+  }
+
+  if (i %% 100 == 0 || i == i_end) {
+    PEcAn.logger::logger.info(sprintf(
+      "  Generated sample %d / %d (%d sites each)", i, i_end, n_sites
+    ))
   }
 }
 
 # --- write events path mapping ---
-mapping <- tibble::tibble(
-  sample_id      = sobol_design$sample_id,
-  events_in_path = events_in_paths
-)
-readr::write_csv(mapping, mapping_file)
+# chunk mode: write a fragment; the .sh wrapper concatenates them
+mapping <- dplyr::bind_rows(mapping_rows[seq_len(row_idx)])
 
-PEcAn.logger::logger.info(
-  "Wrote ", n_samples, " events files and mapping to ", mapping_file
-)
-
-# TODO(multi-site management): when per-site management data is available,
-#   generate per-site x per-sample events and register via setEnsemblePaths.
-#   Currently ALL sites share the same management calendar.
+if (is_chunk) {
+  chunk_csv <- file.path(
+    output_dir, sprintf("mapping_chunk_%d_%d.csv", i_start, i_end)
+  )
+  readr::write_csv(mapping, chunk_csv)
+} else {
+  readr::write_csv(mapping, mapping_file)
+}
