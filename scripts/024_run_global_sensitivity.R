@@ -57,6 +57,8 @@ EVENTS_DIR <- cfg$events_dir %||% "data/events"
 # to pecan.CONFIGS.xml via PEcAn.settings::write.settings() after CONFIG.
 settings$ensemble$size <- 1
 
+settings$sensitivity.analysis <- NULL
+
 input_design <- readRDS("cache/input_design.rds")
 
 status_file <- file.path(settings$outdir, "STATUS")
@@ -73,7 +75,7 @@ settings <- PEcAn.settings::setEnsemblePaths(
   n_reps = n_samples,
   input_type = "events",
   path = events_path,
-  path_template = "{path}/events_sample_{n}.in"
+  path_template = "{path}/events_sample_{n}_{id}.in"
 )
 
 PEcAn.logger::logger.info(
