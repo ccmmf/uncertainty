@@ -156,9 +156,8 @@ analyze_environmental_gradients <- function(
     dplyr::left_join(env_covariates, by = "site_id") |>
     dplyr::filter(dplyr::if_all(dplyr::all_of(gradient_vars), ~!is.na(.x)))
 
-  analysis_data <- analysis_data |>
-    dplyr::mutate(elasticity = abs(elasticity))
-
+  # Use signed elasticity for regression -- direction matters.
+  # Absolute elasticity is only used for ranking (in summarize_local_sa).
   # Stack for both elasticity and variance explained targeting
   target_metrics <- c("elasticity", "variance_explained")
   
