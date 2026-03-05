@@ -1,17 +1,17 @@
 # Uncertainty Analysis
 
-Uncertainty and sensitivity analysis of crop model outputs, including local/global sensitivity, variance decomposition, and CSV-driven design points integrated with model templates.
+Uncertainty and sensitivity analysis for SIPNET ecosystem model.
 Three-phase pipeline: local SA, global SA, and variance decomposition.
 
 ## Quick Start
 
 ```bash
 # full pipeline (each step has skip-if-exists guards)
-bash scripts/run_pipeline.sh
+bash tools/run_pipeline.sh
 
 # or run phases individually
-bash scripts/run_local_sa.sh
-bash scripts/run_global_sa.sh
+bash tools/run_local_sa.sh
+bash tools/run_global_sa.sh
 Rscript scripts/031_partition_variance.R
 ```
 
@@ -60,7 +60,7 @@ Rscript scripts/031_partition_variance.R
 │   ├── global_sensitivity.qmd
 │   ├── local_sensitivity.qmd
 │   └── variance_decomposition.qmd
-├── data_raw/   
+├── data_raw/
 │   ├── sa_design_points.csv
 │   └── template.xml
 ├── scripts/
@@ -74,7 +74,13 @@ Rscript scripts/031_partition_variance.R
 │   ├── 024_run_global_sensitivity.R
 │   ├── 025_compute_sobol_indices.R
 │   ├── 031_partition_variance.R
-│   └── 032_hierarchical_variance.R
+│   ├── 032_hierarchical_variance.R
+│   └── sge_array_launcher.sh
+├── tools/
+│   ├── run_pipeline.sh
+│   ├── run_local_sa.sh
+│   ├── run_global_sa.sh
+│   └── 023_submit_events_array.sh
 ├── docs/
 ├── tests/
 └── reports/
