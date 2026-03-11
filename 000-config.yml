@@ -19,6 +19,8 @@ default:
     ca_albers_crs: 3310
   # Management uncertainty (023)
   events_baseline_url: "https://raw.githubusercontent.com/ccmmf/scenarios/main/data/events_baseline.json"
+  # Anchor site management events (17 sites)
+  anchor_events_json: "/projectnb/dietzelab/ccmmf/management/event_files/anchors_events_pecanFormat.json"
   start_year: 2016
   end_year: 2023
   site_id: "1000025731"
