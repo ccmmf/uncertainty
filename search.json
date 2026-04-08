@@ -1,10 +1,248 @@
 [
   {
-    "objectID": "docs/references.html",
-    "href": "docs/references.html",
-    "title": "References",
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Sensitivity Analysis Workflow",
     "section": "",
-    "text": "Dietze, M. C. (2017). Ecological Forecasting. Princeton University Press.\nSaltelli, A., et al. (2010). Variance based sensitivity analysis. Computer Physics Communications.\nPuy, A., et al. (2022). sensobol: R Package for Sobol Indices. Journal of Statistical Software."
+    "text": "Warning\n\n\n\nThis proof of concept is untested and subject to change. Interpret results as illustrative."
+  },
+  {
+    "objectID": "index.html#overview",
+    "href": "index.html#overview",
+    "title": "Sensitivity Analysis Workflow",
+    "section": "Overview",
+    "text": "Overview\nThis workflow performs sensitivity analysis and uncertainty partitioning for the SIPNET ecosystem model to identify the primary drivers of forecast uncertainty for California croplands.\nKey components:\n\nLocal Sensitivity Analysis: One-at-a-time (OAT) parameter perturbations\nGlobal Sensitivity Analysis: Variance-based Sobol indices\nVariance Decomposition: Attribution of uncertainty to parameters, drivers, and initial conditions\n\nConfiguration: see 000-config.yml for paths, variables, and workflow settings."
+  },
+  {
+    "objectID": "index.html#quick-start",
+    "href": "index.html#quick-start",
+    "title": "Sensitivity Analysis Workflow",
+    "section": "Quick Start",
+    "text": "Quick Start\nmodule load R/4.4.0 gdal proj geos sqlite udunits quarto\nexport CCMMF_DIR=/projectnb/dietzelab/ccmmf\ngit clone https://github.com/ccmmf/uncertainty.git\ncd uncertainty\nR -e 'renv::restore()'\nSee full details in the Technical Documentation."
+  },
+  {
+    "objectID": "index.html#running-the-workflow",
+    "href": "index.html#running-the-workflow",
+    "title": "Sensitivity Analysis Workflow",
+    "section": "Running the Workflow",
+    "text": "Running the Workflow\n# 1. Setup design points\nRscript scripts/001_setup_design_points.R\nRscript scripts/002_build_xml.R\n\n# 2. Local sensitivity\nRscript scripts/011_run_local_sensitivity.R\nRscript scripts/012_aggregate_sensitivity.R\n\n# 3. Global sensitivity  \nRscript scripts/021_generate_sobol_design.R\nRscript scripts/023_run_global_sensitivity.R\nRscript scripts/024_compute_sobol_indices.R\n\n# 4. Variance decomposition\nRscript scripts/031_partition_variance.R"
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html",
+    "href": "analysis/global_sensitivity.html",
+    "title": "Global Sensitivity Analysis Using Sobol Indices",
+    "section": "",
+    "text": "This report presents results from a variance-based global sensitivity analysis of the SIPNET ecosystem model using Sobol indices. Unlike local sensitivity analysis (which measures rates of change at baseline conditions), variance-based methods decompose output variance into contributions from individual parameters and their interactions.\n\n\n\n\n\n\nWhy Sobol Indices?\n\n\n\nSobol indices provide a rigorous framework for:\n\nQuantifying parameter importance via variance decomposition\nDetecting interactions between parameters (non-additive effects)\nFactor prioritization (which parameters to constrain for uncertainty reduction)\nFactor fixing (which parameters can be fixed without loss of information)\n\n\n\n\n\nSobol indices are normalized variance contributions:\n\\[\nS_i = \\frac{V_i}{\\text{VAR}(y)} \\quad \\text{(First-order index)}\n\\tag{1}\\]\n\\[\nT_i = 1 - \\frac{\\text{VAR}_{x_{\\sim i}}[\\mathbb{E}_{x_i}(y | x_{\\sim i})]}{\\text{VAR}(y)} = \\frac{\\mathbb{E}_{x_{\\sim i}}[\\text{VAR}_{x_i}(y | x_{\\sim i})]}{\\text{VAR}(y)} \\quad \\text{(Total-order index)}\n\\tag{2}\\]\nwhere \\(x_{\\sim i}\\) denotes all-parameters-but-\\(x_i\\).\n\n\n\n\\(S_i\\): Direct effect of \\(x_i\\) on output variance (excluding interactions)\n\\(T_i\\): Total effect of \\(x_i\\) including all interactions with other parameters\n\\(T_i - S_i\\): Interaction strength (purely higher-order effects)\n\\(\\sum S_i \\approx 1\\): Model is additive (linear-like behavior)\n\\(\\sum S_i \\ll 1\\): Model is non-additive (interactions dominate)"
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html#cross-site-variability",
+    "href": "analysis/global_sensitivity.html#cross-site-variability",
+    "title": "Global Sensitivity Analysis Using Sobol Indices",
+    "section": "6.1 Cross-Site Variability",
+    "text": "6.1 Cross-Site Variability\nA parameter whose importance varies across sites (wide box) indicates context-dependent sensitivity: its influence depends on local conditions (soil, climate, crop type). These are priorities for spatially explicit calibration.\n\n\n\n\n\nFigure 3: Distribution of Ti across sites for top 10 parameters. Points = site-level values; box = IQR; line = median. Wide boxes indicate sensitivity varies with local conditions."
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html#confidence-interval-precision",
+    "href": "analysis/global_sensitivity.html#confidence-interval-precision",
+    "title": "Global Sensitivity Analysis Using Sobol Indices",
+    "section": "10.1 Confidence Interval Precision",
+    "text": "10.1 Confidence Interval Precision\nThe width of the bootstrap confidence interval (\\(\\text{CI}_{95}\\)) for each index indicates estimation precision. Parameters with narrow CIs have well-determined importance; wide CIs flag indices that may shift with additional samples.\n\n\n\n\n\nFigure 7: Bootstrap 95% confidence interval width for Si (left) and Ti (right), by output variable. Each point is one parameter. Narrower intervals indicate more precise estimation. The dashed line marks a CI width of 0.1 (10% of output variance)."
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html#sec-scatterplots",
+    "href": "analysis/global_sensitivity.html#sec-scatterplots",
+    "title": "Global Sensitivity Analysis Using Sobol Indices",
+    "section": "10.2 Parameter-Output Relationships",
+    "text": "10.2 Parameter-Output Relationships\nThese scatterplots show the direct relationship between each top parameter’s sampled value and the model output. They reveal whether the sensitivity is linear (validating the Sobol decomposition) or nonlinear (indicating threshold behavior or saturation). Each point is one model evaluation from the Sobol design matrix.\n\n\nCould not load design matrix or output files for scatterplots.\n\n\n\n\n\n\n\n\nInterpreting Scatterplots\n\n\n\n\nLinear trend with tight spread: parameter has a strong, additive effect – Si will be high\nNonlinear trend (curve, threshold): parameter has important interactions – Ti >> Si\nCloud with no trend: parameter has low sensitivity for this variable\nFunnel shape (spread changes with x): heteroscedasticity – the parameter’s effect depends on other inputs"
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html#sec-convergence-n",
+    "href": "analysis/global_sensitivity.html#sec-convergence-n",
+    "title": "Global Sensitivity Analysis Using Sobol Indices",
+    "section": "10.3 Convergence with Sample Size",
+    "text": "10.3 Convergence with Sample Size\nTo assess whether \\(N = 32\\) is sufficient, we recompute Sobol indices using increasing fractions of the base sample. If indices stabilize at the full sample size, this supports adequate convergence; indices still drifting indicate that a larger N would improve precision.\n\n\nOutput file not found for convergence analysis.\n\n\n\n\n\n\n\n\nSample Size Considerations\n\n\n\nOur base sample \\(N = 32\\) is modest by Sobol analysis standards (Nossent et al. 2011 recommend N = 500+ for stable individual indices), chosen to balance computational cost (~1,440 model runs per site x 17 sites) against the need for results across many sites. Where indices show ongoing drift at \\(N = 32\\), a larger ensemble (Phase 4 workplan) would improve precision. The current results are reliable for parameter ranking and factor prioritization (relative ordering is robust), even though individual index point estimates carry estimation uncertainty."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html",
+    "href": "analysis/local_sensitivity.html",
+    "title": "Local Sensitivity Analysis",
+    "section": "",
+    "text": "This report presents a local sensitivity analysis of the SIPNET ecosystem model across 100 design points representing California cropland environments. The analysis identifies which model parameters most strongly control key outputs and where targeted data collection would most efficiently reduce forecast uncertainty.\n\nPhotosynthesis parameters dominate NPP sensitivity. Maximum photosynthetic rate and temperature optima consistently rank highest, reflecting leaf-level carbon fixation as the primary control on productivity in SIPNET.\nSoil carbon is controlled by decomposition rates. Litter and soil turnover parameters explain the most variance in soil organic carbon, consistent with first-order decomposition kinetics driving pool dynamics.\nSeveral high-sensitivity parameters remain poorly constrained by data and represent the highest-value targets for field campaigns or trait synthesis.\nParameter importance is not spatially uniform. Climate gradients (temperature, precipitation) and soil properties (clay, organic carbon density) systematically shift which parameters matter, supporting regionally stratified calibration rather than a single global parameterization.\nPlant functional type (PFT) differences are ecologically coherent. Woody perennial sites show higher sensitivity to allocation and wood turnover, while annual cropland sites are more sensitive to leaf phenology."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#why-sensitivity-and-uncertainty-analysis",
+    "href": "analysis/local_sensitivity.html#why-sensitivity-and-uncertainty-analysis",
+    "title": "Local Sensitivity Analysis",
+    "section": "2.1 Why sensitivity and uncertainty analysis?",
+    "text": "2.1 Why sensitivity and uncertainty analysis?\nEcosystem models encode our understanding of how carbon, water, and nutrient cycles interact. When we use them for prediction (forecasting how cropland management affects soil carbon stocks, for instance), the reliability of those predictions depends on how well we know the model’s input parameters. Some parameters have been measured hundreds of times; others are poorly constrained by available data.\nSensitivity analysis asks: which parameters does the model respond to most strongly? A parameter with high sensitivity has a large effect on model output per unit change in its value. But sensitivity alone can be misleading. A highly sensitive parameter that is well constrained by extensive measurements may contribute little to forecast uncertainty, while a moderately sensitive parameter with wide prior uncertainty can dominate the error budget.\nUncertainty analysis combines both pieces of information (model sensitivity and prior parameter uncertainty) to estimate each parameter’s contribution to predictive variance. This partitioning directly informs where to invest limited resources: the parameters with both high sensitivity and high uncertainty offer the greatest return on investment from new measurements."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#approach",
+    "href": "analysis/local_sensitivity.html#approach",
+    "title": "Local Sensitivity Analysis",
+    "section": "2.2 Approach",
+    "text": "2.2 Approach\nWe use the PEcAn variance decomposition workflow, which proceeds in three steps:\n\nMeta-analysis. A hierarchical Bayesian meta-analysis synthesizes published trait measurements to produce posterior probability distributions for each model parameter. These distributions capture both the central estimate and remaining uncertainty.\nSensitivity analysis. Each parameter is perturbed one at a time to the quantile equivalents of \\(\\pm 1\\sigma\\) and \\(\\pm 2\\sigma\\) of its posterior distribution, and the model is re-run. The resulting response curves are fit with splines, and elasticity is computed as the normalized sensitivity:\n\n\\[\\varepsilon = \\frac{\\partial Y}{\\partial X} \\cdot \\frac{X}{Y}\\]\nAn elasticity of 2 means a 1% increase in the parameter produces a 2% increase in the output. The sign indicates direction.\n\nVariance decomposition. Each parameter’s posterior distribution is transformed through its sensitivity spline to produce a predictive distribution. The variance of this distribution, expressed as a fraction of the total across all parameters, gives the partial variance – the proportion of forecast uncertainty attributable to that parameter.\n\nThe calibration priority score combines these: \\(|\\bar{\\varepsilon}| \\times \\text{CV}\\). Parameters with both high sensitivity and high prior uncertainty (coefficient of variation) score highest."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#study-design",
+    "href": "analysis/local_sensitivity.html#study-design",
+    "title": "Local Sensitivity Analysis",
+    "section": "2.3 Study design",
+    "text": "2.3 Study design\n\n\n\n\n\nFigure 1: Design points across California croplands, colored by plant functional type. Grey boundary shows the state outline.\n\n\n\n\n100 design points were selected via k-means clustering of environmental covariates (temperature, precipitation, solar radiation, vapor pressure deficit, soil clay content, organic carbon density, topographic wetness index) to capture the range of conditions across California croplands. 28 SIPNET parameters spanning photosynthesis, allocation, turnover, and phenology were analyzed for 3 response variables (Aboveground Biomass, Net Primary Productivity, Soil Carbon)."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#sec-rankings",
+    "href": "analysis/local_sensitivity.html#sec-rankings",
+    "title": "Local Sensitivity Analysis",
+    "section": "3.1 Parameter rankings",
+    "text": "3.1 Parameter rankings\nWhich parameters does SIPNET respond to most strongly? The figure below shows the top 15 parameters for each output variable, ranked by median absolute elasticity across sites. Points show median signed elasticity and whiskers show the interquartile range across sites. Absolute elasticity is used for ordering; the sign is preserved to indicate direction.\n\n\n\n\n\nFigure 2: Top 15 parameters by median absolute elasticity per response variable. Points: median signed elasticity across sites. Whiskers: interquartile range. Positive (blue) means increasing the parameter increases the output.\n\n\n\n\nParameters with wide whiskers have site-dependent sensitivity and may require spatially explicit calibration. Parameters with narrow whiskers are consistently important (or unimportant) everywhere."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#sec-variability",
+    "href": "analysis/local_sensitivity.html#sec-variability",
+    "title": "Local Sensitivity Analysis",
+    "section": "3.2 Cross-site variability",
+    "text": "3.2 Cross-site variability\nA key question is whether parameter importance changes with local conditions. The boxplots below show the full distribution of elasticity across all sites for the top 10 parameters, faceted by response variable.\n\n\n\n\n\nFigure 3: Distribution of signed elasticity across sites for the top 10 parameters. Each box shows the median, IQR, and outliers."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#sec-summary",
+    "href": "analysis/local_sensitivity.html#sec-summary",
+    "title": "Local Sensitivity Analysis",
+    "section": "3.3 Overall sensitivity summary",
+    "text": "3.3 Overall sensitivity summary\n\n\n\n\n\nFigure 4: Summary of sensitivity metrics by response variable. Left: distribution of absolute elasticity. Right: distribution of variance explained (%)."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#sec-priorities",
+    "href": "analysis/local_sensitivity.html#sec-priorities",
+    "title": "Local Sensitivity Analysis",
+    "section": "3.4 Calibration priorities",
+    "text": "3.4 Calibration priorities\nWhich parameters would benefit most from new measurements? The priority score \\(|\\bar{\\varepsilon}| \\times \\text{CV}\\) identifies parameters that are both highly sensitive and poorly constrained by existing data, where field campaigns or trait synthesis would most efficiently reduce forecast uncertainty.\n\n\n\n\n\nFigure 5: Calibration priority: parameters ranked by |elasticity| x CV. Higher values indicate greater return on investment from targeted data collection."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#sec-pft",
+    "href": "analysis/local_sensitivity.html#sec-pft",
+    "title": "Local Sensitivity Analysis",
+    "section": "3.5 PFT comparisons",
+    "text": "3.5 PFT comparisons\nParameter sensitivity may differ between woody perennial and annual herbaceous plant functional types, reflecting distinct physiological strategies. The figure below compares median signed elasticity for the top 10 parameters across PFTs, faceted by output variable.\n\n\n\n\n\nFigure 6: Top 10 parameters compared across PFTs. Bars show median signed elasticity within each PFT."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#sensitivity-metrics",
+    "href": "analysis/local_sensitivity.html#sensitivity-metrics",
+    "title": "Local Sensitivity Analysis",
+    "section": "6.1 Sensitivity metrics",
+    "text": "6.1 Sensitivity metrics\n\nElasticity (\\(\\varepsilon\\)): normalized sensitivity = \\(\\frac{\\partial Y}{\\partial X} \\cdot \\frac{X}{Y}\\). The sign indicates direction. Absolute elasticity is used for ranking importance.\nVariance explained: \\(\\frac{\\text{Partial Variance}_i}{\\sum \\text{Partial Variances}} \\times 100\\%\\). Combines model sensitivity with prior parameter uncertainty.\nCoefficient of variation (CV): \\(\\frac{\\sigma}{\\mu}\\) of the posterior parameter distribution from the Bayesian meta-analysis. Quantifies remaining uncertainty after data constraint.\nCalibration priority: \\(|\\bar{\\varepsilon}| \\times \\text{CV}\\). Parameters scoring highest have both high sensitivity and high uncertainty, making them the best targets for new data."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#regression-caveats",
+    "href": "analysis/local_sensitivity.html#regression-caveats",
+    "title": "Local Sensitivity Analysis",
+    "section": "6.2 Regression caveats",
+    "text": "6.2 Regression caveats\nThe gradient regressions assume linearity and constant variance. With 100 sites, statistical power is limited. We use \\(R^2\\) as a filter for ecologically meaningful signals rather than relying on p-values, which would require multiple-testing correction across the 420 parameter-gradient combinations tested."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#references",
+    "href": "analysis/local_sensitivity.html#references",
+    "title": "Local Sensitivity Analysis",
+    "section": "6.3 References",
+    "text": "6.3 References\n\nDietze, M. C. et al. (2014). A quantitative assessment of a terrestrial biosphere model’s data needs across North American biomes. J. Geophys. Res. Biogeosci., 119, 286-300.\nLeBauer, D. S. et al. (2013). Facilitating feedbacks between field measurements and ecosystem models. Ecological Monographs, 83(2), 133-154.\nGelman, A. & Dodhia, R. (2002). Let’s practice what we preach: Turning tables into graphs."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#software-environment",
+    "href": "analysis/local_sensitivity.html#software-environment",
+    "title": "Local Sensitivity Analysis",
+    "section": "6.4 Software environment",
+    "text": "6.4 Software environment\n\n\nR version 4.5.2 (2025-10-31)\nPlatform: x86_64-pc-linux-gnu\nRunning under: AlmaLinux 8.10 (Cerulean Leopard)\n\nMatrix products: default\nBLAS/LAPACK: FlexiBLAS NETLIB;  LAPACK version 3.12.0\n\nlocale:\n [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       \n [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   \n [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          \n[10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   \n\ntime zone: America/New_York\ntzcode source: system (glibc)\n\nattached base packages:\n[1] stats     graphics  grDevices utils     datasets  methods   base     \n\nother attached packages:\n [1] scales_1.4.0    sf_1.1-0        tidyr_1.3.1     patchwork_1.3.2\n [5] knitr_1.50      config_0.3.2    here_1.0.2      ggplot2_4.0.1  \n [9] dplyr_1.1.4     readr_2.1.6    \n\nloaded via a namespace (and not attached):\n [1] generics_0.1.4     class_7.3-23       KernSmooth_2.23-26 stringi_1.8.7     \n [5] hms_1.1.4          digest_0.6.38      magrittr_2.0.4     evaluate_1.0.5    \n [9] grid_4.5.2         RColorBrewer_1.1-3 maps_3.4.3         fastmap_1.2.0     \n[13] rprojroot_2.1.1    jsonlite_2.0.0     e1071_1.7-16       DBI_1.2.3         \n[17] purrr_1.2.0        cli_3.6.5          rlang_1.1.6        crayon_1.5.3      \n[21] units_1.0-0        bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       \n[25] tools_4.5.2        parallel_4.5.2     tzdb_0.5.0         vctrs_0.6.5       \n[29] R6_2.6.1           proxy_0.4-27       lifecycle_1.0.4    classInt_0.4-11   \n[33] stringr_1.6.0      htmlwidgets_1.6.4  bit_4.6.0          vroom_1.6.6       \n[37] pkgconfig_2.0.3    pillar_1.11.1      gtable_0.3.6       glue_1.8.0        \n[41] Rcpp_1.1.0         xfun_0.54          tibble_3.3.0       tidyselect_1.2.1  \n[45] dichromat_2.0-0.1  farver_2.1.2       htmltools_0.5.8.1  labeling_0.4.3    \n[49] rmarkdown_2.30     compiler_4.5.2     S7_0.2.1"
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#configuration",
+    "href": "analysis/local_sensitivity.html#configuration",
+    "title": "Local Sensitivity Analysis",
+    "section": "6.5 Configuration",
+    "text": "6.5 Configuration\n\n\nConfig file: /projectnb/dietzelab/abv1/ccmmf/02_uncertainty/000-config.yml \n\n\nAnalysis date: 2026-04-07 \n\n\nNumber of sites: 100 \n\n\nNumber of parameters: 28 \n\n\nResponse variables: Aboveground Biomass, Net Primary Productivity, Soil Carbon \n\n\nGradient variables: Mean Annual Temp., Mean Annual Precip., Clay Content, Organic C Density, Topographic Wetness \n\n\n\n\n\n\n\n\n\nData Availability\n\n\n\nAll datasets are available in data/aggregated_sensitivity.csv and related files. A downloadable CSV of the full parameter rankings is available in data/parameter_rankings.csv. Analysis code is in R/local_sensitivity.R."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html",
+    "href": "analysis/variance_decomposition.html",
+    "title": "Variance Decomposition",
+    "section": "",
+    "text": "This report decomposes forecast uncertainty of the SIPNET ecosystem model across 17 California cropland sites into its component sources. Building on the local (OAT) and global (Sobol) sensitivity analyses, this step answers the central question: what drives our predictive uncertainty, and what can we do about it?\n\nDominant uncertainty sources differ by output variable. Fast processes (net primary productivity, carbon fluxes) tend to be driven by meteorological uncertainty, while slow processes (soil carbon pools) are driven by initial conditions, consistent with the ecological forecasting framework.\nSpecific biological traits dominate the parameter uncertainty component. The hybrid decomposition identifies the individual parameters with the highest value of information for calibration (see Section 3.3).\nInteraction effects account for ~57% of total variance on average, indicating that parameter effects are partially dependent on meteorological context."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html#the-uncertainty-problem-in-ecological-forecasting",
+    "href": "analysis/variance_decomposition.html#the-uncertainty-problem-in-ecological-forecasting",
+    "title": "Variance Decomposition",
+    "section": "2.1 The uncertainty problem in ecological forecasting",
+    "text": "2.1 The uncertainty problem in ecological forecasting\nEcological forecasts are uncertain. When we predict how cropland soil carbon will respond to a change in management (say, switching from synthetic fertilizer to compost), that prediction carries error from multiple sources: imprecise knowledge of biological parameters, uncertain weather forecasts, unknown initial soil carbon stocks, and the structural limitations of the model itself.\nThe goal of uncertainty analysis is not to eliminate these errors (some are irreducible) but to diagnose which sources dominate so that limited resources can be directed where they will have the most impact. This is the central idea of the ecological forecasting framework (Dietze, 2017, Ch. 11). If most of our forecast uncertainty comes from poorly known biological parameters, we should invest in field campaigns and trait synthesis. If it comes from weather uncertainty, better meteorological data or ensemble weather forecasts will help most. If it comes from unknown initial conditions, data assimilation (updating model states with observations) is the path forward.\nWithout this decomposition, uncertainty reduction efforts are untargeted. We might spend years collecting trait data only to discover that driver uncertainty was the bottleneck all along."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html#the-variance-budget",
+    "href": "analysis/variance_decomposition.html#the-variance-budget",
+    "title": "Variance Decomposition",
+    "section": "2.2 The variance budget",
+    "text": "2.2 The variance budget\nFormally, the variance of a model forecast \\(Y\\) can be decomposed as:\n\\[\\text{Var}(Y) \\approx V_{\\text{Parameter}} + V_{\\text{Driver}} + V_{\\text{IC}} + V_{\\text{Management}} + V_{\\text{Interaction}}\\]\nEach term represents a distinct lever for reducing forecast uncertainty:\n\n\\(V_{\\text{Parameter}}\\): Uncertainty in biological traits, including photosynthetic capacity (\\(A_{\\max}\\)), allocation ratios, turnover rates, and temperature response curves. These are properties of the organism and ecosystem that we estimate from field measurements and literature synthesis. Reduced by collecting more trait data, running meta-analyses, or calibrating the model against flux tower or eddy covariance observations.\n\\(V_{\\text{Driver}}\\): Uncertainty in meteorological forcing (temperature, precipitation, solar radiation, humidity). For hindcasts (running the model over a historical period), driver uncertainty is small because we have observational weather data. For forecasts, it grows with lead time as weather prediction skill degrades. Reduced by improving weather forecasts or adding weather stations.\n\\(V_{\\text{IC}}\\): Uncertainty in initial conditions. How much carbon is in the soil when the simulation starts? How much standing biomass is already present? These quantities are hard to measure at every site and are often estimated from regional averages. Reduced by soil inventories, remote sensing products, or data assimilation (updating model states with observations as they become available during the simulation).\n\\(V_{\\text{Management}}\\): Uncertainty in agricultural inputs, including fertilization rates, compost application timing, tillage practices, planting and harvest dates. These are typically known to the grower but often unavailable to the modeler at scale. Reduced by better data sharing between agricultural operators and researchers.\n\\(V_{\\text{Interaction}}\\): Non-additive effects where the contribution of one source depends on the value of another. For example, parameter sensitivity may differ under wet vs. dry weather conditions, so that the uncertainty from biology and the uncertainty from weather cannot be simply added. Large interaction terms suggest that parameter calibration and driver uncertainty need to be addressed jointly rather than independently.\n\nOne important source is deliberately excluded from this analysis: process error (model structural uncertainty). This is the variance that arises because the model’s equations are an imperfect representation of reality. For example, SIPNET may not capture a soil process that matters in practice. In managed agricultural systems, process error reflects systematic biases in model structure rather than random noise, and it will be assessed separately through model-data comparison. Any residual variance after accounting for the input sources above is attributed to model structural error."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html#why-a-hybrid-approach",
+    "href": "analysis/variance_decomposition.html#why-a-hybrid-approach",
+    "title": "Variance Decomposition",
+    "section": "2.3 Why a hybrid approach?",
+    "text": "2.3 Why a hybrid approach?\nThis report sits at the end of a three-step analysis pipeline:\n\nLocal (OAT) sensitivity analysis: identifies which individual biological parameters the model is most sensitive to, one at a time\nGlobal (Sobol) sensitivity analysis: quantifies how much total variance comes from parameters vs. drivers vs. initial conditions, including interactions\nVariance decomposition (this report): combines both to attribute forecast uncertainty to individual sources and individual parameters\n\nThe Sobol analysis gives us the overall partition: how much of the total uncertainty comes from biological parameters as a category vs. meteorological drivers vs. initial conditions. But it treats all biological parameters as a single group. To identify which specific traits to target for calibration, we need to go deeper.\nThe local (OAT) analysis provides exactly this (parameter-by-parameter sensitivity) but it only captures main effects within the parameter category, not the full partition across all uncertainty sources.\nOur hybrid method combines both:\n\nSource partitioning (from global Sobol analysis): We multiply each source category’s first-order Sobol index (\\(S_i\\)) by the total ensemble variance to get absolute variance contributions in physical units: \\[V_{\\text{category}} = \\sum_{i \\in \\text{category}} S_i \\times \\text{Var}(Y_{\\text{ensemble}})\\]\nParameter attribution (from local OAT analysis): We subdivide the biological parameter variance using local partial variance fractions: \\[V_{\\text{param}_j} = \\frac{\\text{PV}_j^{\\text{local}}}{\\sum_j \\text{PV}_j^{\\text{local}}} \\times V_{\\text{Parameter}}^{\\text{global}}\\]\n\nThis gives each individual parameter’s absolute contribution to total forecast uncertainty – the “value of information” for that trait. Parameters with the highest contributions are where new measurements will most efficiently reduce forecast error."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html#study-design",
+    "href": "analysis/variance_decomposition.html#study-design",
+    "title": "Variance Decomposition",
+    "section": "2.4 Study design",
+    "text": "2.4 Study design\n\n\n\n\n\nFigure 1: Design points across California croplands.\n\n\n\n\n17 design points across California croplands. Variance decomposition combines the Sobol ensemble (Aboveground Biomass, CH₄ Flux, N₂O Flux, Net Primary Productivity, Latent Heat Flux, Soil Moisture, Soil Carbon) with OAT sensitivity results to attribute forecast uncertainty to individual sources and parameters."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html#sec-budget",
+    "href": "analysis/variance_decomposition.html#sec-budget",
+    "title": "Variance Decomposition",
+    "section": "3.1 Variance budget by site",
+    "text": "3.1 Variance budget by site\nThe stacked bars below show how total forecast variance partitions into high-level categories at each site. This answers the fundamental question: is our uncertainty dominated by what we know about the plants (parameters), the weather (drivers), or the system’s starting state (initial conditions)?\n\n\n\n\n\nFigure 2: Variance decomposition by site. Each bar represents one site; color segments show the fraction of total variance attributable to each uncertainty source."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html#sec-summary",
+    "href": "analysis/variance_decomposition.html#sec-summary",
+    "title": "Variance Decomposition",
+    "section": "3.2 Summary across sites",
+    "text": "3.2 Summary across sites\nThe bar chart below shows the mean contribution of each source averaged across all sites, with error bars showing +/- 1 SD.\n\n\n\n\n\nFigure 3: Mean variance partition across all sites by output variable. Error bars show +/- 1 SD across sites."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html#sec-param-breakdown",
+    "href": "analysis/variance_decomposition.html#sec-param-breakdown",
+    "title": "Variance Decomposition",
+    "section": "3.3 Parameter breakdown (hybrid analysis)",
+    "text": "3.3 Parameter breakdown (hybrid analysis)\nWhile the global SA gives the total variance attributable to all parameters collectively (\\(V_{\\text{Parameter}}\\)), we need to know which individual traits to target for calibration. The hybrid method multiplies the Sobol parameter variance by each parameter’s local OAT share, identifying the specific biological mechanisms driving uncertainty.\n\n\n\n\n\nFigure 4: Top 10 parameters contributing to total forecast variance (hybrid method: Sobol parameter variance x local OAT fractions). Error bars show +/- 1 SD across sites.\n\n\n\n\nThe parameters above have the highest value of information. Reducing their prior uncertainty via targeted field campaigns, literature meta-analysis, or Bayesian calibration with flux tower data will yield the largest reduction in forecast error."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html#sec-magnitude",
+    "href": "analysis/variance_decomposition.html#sec-magnitude",
+    "title": "Variance Decomposition",
+    "section": "3.4 Absolute uncertainty magnitude",
+    "text": "3.4 Absolute uncertainty magnitude\nThe variance budget above shows proportions, but not absolute magnitude. A variable with 80% driver variance but very low total variance may not need attention, while one with 40% parameter variance and very high total variance demands action.\n\n\n\n\n\nFigure 5: Absolute magnitude of forecast uncertainty (expressed as standard deviation in variable units)."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html#references",
+    "href": "analysis/variance_decomposition.html#references",
+    "title": "Variance Decomposition",
+    "section": "6.1 References",
+    "text": "6.1 References\n\nDietze, M. C. (2017). Ecological Forecasting. Princeton University Press. Chapter 11: Propagating, Analyzing, and Reducing Uncertainty.\nLeBauer, D. S. et al. (2013). Facilitating feedbacks between field measurements and ecosystem models. Ecological Monographs, 83(2), 133-154.\nDietze, M. C. et al. (2014). A quantitative assessment of a terrestrial biosphere model’s data needs across North American biomes. J. Geophys. Res. Biogeosci., 119, 286-300.\nSaltelli, A. et al. (2010). Variance based sensitivity analysis of model output. Computer Physics Communications.\nPowlson, D. S. et al. (2014). Limited potential of no-till agriculture for climate change mitigation. Nature Climate Change, 4, 678-683."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html#data-availability",
+    "href": "analysis/variance_decomposition.html#data-availability",
+    "title": "Variance Decomposition",
+    "section": "6.2 Data availability",
+    "text": "6.2 Data availability\nAll datasets: data/variance_partition_site_level.csv, data/variance_partition_parameters.csv, data/ensemble_variance.csv. Analysis code: R/variance_decomposition.R. Pipeline script: scripts/031_partition_variance.R."
+  },
+  {
+    "objectID": "analysis/variance_decomposition.html#software-environment",
+    "href": "analysis/variance_decomposition.html#software-environment",
+    "title": "Variance Decomposition",
+    "section": "6.3 Software environment",
+    "text": "6.3 Software environment\n\n\nR version 4.5.2 (2025-10-31)\nPlatform: x86_64-pc-linux-gnu\nRunning under: AlmaLinux 8.10 (Cerulean Leopard)\n\nMatrix products: default\nBLAS/LAPACK: FlexiBLAS NETLIB;  LAPACK version 3.12.0\n\nlocale:\n [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       \n [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   \n [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          \n[10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   \n\ntime zone: America/New_York\ntzcode source: system (glibc)\n\nattached base packages:\n[1] stats     graphics  grDevices utils     datasets  methods   base     \n\nother attached packages:\n [1] sf_1.1-0        patchwork_1.3.2 scales_1.4.0    knitr_1.50     \n [5] config_0.3.2    here_1.0.2      stringr_1.6.0   ggplot2_4.0.1  \n [9] tidyr_1.3.1     dplyr_1.1.4     readr_2.1.6    \n\nloaded via a namespace (and not attached):\n [1] generics_0.1.4     class_7.3-23       KernSmooth_2.23-26 stringi_1.8.7     \n [5] hms_1.1.4          digest_0.6.38      magrittr_2.0.4     evaluate_1.0.5    \n [9] grid_4.5.2         RColorBrewer_1.1-3 maps_3.4.3         fastmap_1.2.0     \n[13] rprojroot_2.1.1    jsonlite_2.0.0     e1071_1.7-16       DBI_1.2.3         \n[17] purrr_1.2.0        cli_3.6.5          crayon_1.5.3       rlang_1.1.6       \n[21] units_1.0-0        bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       \n[25] parallel_4.5.2     tools_4.5.2        tzdb_0.5.0         vctrs_0.6.5       \n[29] R6_2.6.1           proxy_0.4-27       lifecycle_1.0.4    classInt_0.4-11   \n[33] bit_4.6.0          htmlwidgets_1.6.4  vroom_1.6.6        pkgconfig_2.0.3   \n[37] pillar_1.11.1      gtable_0.3.6       glue_1.8.0         Rcpp_1.1.0        \n[41] xfun_0.54          tibble_3.3.0       tidyselect_1.2.1   dichromat_2.0-0.1 \n[45] farver_2.1.2       htmltools_0.5.8.1  labeling_0.4.3     rmarkdown_2.30    \n[49] compiler_4.5.2     S7_0.2.1"
   },
   {
     "objectID": "docs/methodology.html",
@@ -12,85 +250,6 @@
     "title": "Methodology",
     "section": "",
     "text": "This document describes the theoretical foundations and methodological approaches used in the SIPNET sensitivity analysis workflow. The framework follows established best practices in ecological forecasting (Dietze 2017) and variance-based sensitivity analysis (Saltelli et al. 2008).\n\n\n\n\n\n\nCore Questions Addressed\n\n\n\n\nSensitivity Analysis: How does a change in input \\(X\\) translate into a change in output \\(Y\\)?\nUncertainty Propagation: How does uncertainty in \\(X\\) affect uncertainty in \\(Y\\)?\nUncertainty Analysis: Which sources of uncertainty are most important?\nOptimal Design: How do we best reduce forecast uncertainty?"
-  },
-  {
-    "objectID": "docs/workflow_documentation.html",
-    "href": "docs/workflow_documentation.html",
-    "title": "Technical Workflow Documentation",
-    "section": "",
-    "text": "This workflow implements variance-based sensitivity analysis for SIPNET following the Dietze (2017) uncertainty partitioning framework. The pipeline decomposes forecast variance into parameter, initial condition, driver, and interaction components using complementary local (OAT) and global (Sobol) methods.\n\n\n\n\n\nPhase\nScripts\nPurpose\n\n\n\n\nSetup\n001–002\nDesign point selection, PEcAn XML configuration\n\n\nLocal SA\n011–012\nOAT elasticities, partial variances\n\n\nGlobal SA\n021–024\nSobol \\(S_i\\), \\(T_i\\) with IC/driver indices\n\n\nIntegration\n031\nVariance partitioning across uncertainty sources"
-  },
-  {
-    "objectID": "docs/workflow_documentation.html#terminology",
-    "href": "docs/workflow_documentation.html#terminology",
-    "title": "Technical Documentation",
-    "section": "Terminology",
-    "text": "Terminology\n\nDesign Points: Representative sites selected via k-means clustering\nElasticity: Normalized sensitivity measure\nSobol Indices: Variance-based parameter importance\nVariance Decomposition: Attribution of uncertainty to sources"
-  },
-  {
-    "objectID": "docs/workflow_documentation.html#workflow-steps",
-    "href": "docs/workflow_documentation.html#workflow-steps",
-    "title": "Technical Documentation",
-    "section": "Workflow Steps",
-    "text": "Workflow Steps\n\nConfiguration\nSettings are in 000-config.yml:\n\npaths: Directory locations\nsites: Design point specifications\n\nsensitivity: Analysis parameters\n\n\n\n1. Local Sensitivity Analysis\nRscript scripts/011_run_local_sensitivity.R\nRscript scripts/012_aggregate_sensitivity.R\nOne-at-a-time (OAT) analysis varying parameters at ±1σ, ±2σ from prior distributions.\nOutputs:\n\naggregated_sensitivity.csv\nparameter_rankings.csv\n\n\n\n2. Global Sensitivity Analysis\nRscript scripts/021_generate_sobol_design.R\nRscript scripts/023_run_global_sensitivity.R\nRscript scripts/024_compute_sobol_indices.R\nSaltelli sampling with Jansen estimators for first-order (\\(S_i\\)) and total-order (\\(T_i\\)) indices.\nOutputs:\n\nsobol_indices.csv\nsobol_design_metadata.rds\n\n\n\n3. Variance Decomposition\nRscript scripts/031_partition_variance.R\nPartitions total variance: \\(\\text{Var}(Y) \\approx V_{\\text{Param}} + V_{\\text{Driver}} + V_{\\text{IC}} + V_{\\text{Int}}\\)\nOutputs:\n\nvariance_partition_site_level.csv\nvariance_partition_parameters.csv"
-  },
-  {
-    "objectID": "docs/workflow_documentation.html#running-on-bu-cluster",
-    "href": "docs/workflow_documentation.html#running-on-bu-cluster",
-    "title": "Technical Documentation",
-    "section": "Running on BU Cluster",
-    "text": "Running on BU Cluster\nInteractive session:\nqrsh -l h_rt=3:00:00 -pe omp 16 -l buyin"
-  },
-  {
-    "objectID": "docs/workflow_documentation.html#documentation-site-quarto",
-    "href": "docs/workflow_documentation.html#documentation-site-quarto",
-    "title": "Technical Documentation",
-    "section": "Documentation Site (Quarto)",
-    "text": "Documentation Site (Quarto)\n\nPreview: quarto preview\nBuild: quarto render\nPublish: quarto publish gh-pages"
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Sensitivity Analysis Workflow",
-    "section": "",
-    "text": "Warning\n\n\n\nThis proof of concept is untested and subject to change. Interpret results as illustrative.",
-    "crumbs": [
-      "Home",
-      "Overview"
-    ]
-  },
-  {
-    "objectID": "index.html#overview",
-    "href": "index.html#overview",
-    "title": "Sensitivity Analysis Workflow",
-    "section": "Overview",
-    "text": "Overview\nThis workflow performs sensitivity analysis and uncertainty partitioning for the SIPNET ecosystem model to identify the primary drivers of forecast uncertainty for California croplands.\nKey components:\n\nLocal Sensitivity Analysis: One-at-a-time (OAT) parameter perturbations\nGlobal Sensitivity Analysis: Variance-based Sobol indices\nVariance Decomposition: Attribution of uncertainty to parameters, drivers, and initial conditions\n\nConfiguration: see 000-config.yml for paths, variables, and workflow settings.",
-    "crumbs": [
-      "Home",
-      "Overview"
-    ]
-  },
-  {
-    "objectID": "index.html#quick-start",
-    "href": "index.html#quick-start",
-    "title": "Sensitivity Analysis Workflow",
-    "section": "Quick Start",
-    "text": "Quick Start\nmodule load R/4.4.0 gdal proj geos sqlite udunits quarto\nexport CCMMF_DIR=/projectnb/dietzelab/ccmmf\ngit clone https://github.com/ccmmf/uncertainty.git\ncd uncertainty\nR -e 'renv::restore()'\nSee full details in the Technical Documentation.",
-    "crumbs": [
-      "Home",
-      "Overview"
-    ]
-  },
-  {
-    "objectID": "index.html#running-the-workflow",
-    "href": "index.html#running-the-workflow",
-    "title": "Sensitivity Analysis Workflow",
-    "section": "Running the Workflow",
-    "text": "Running the Workflow\n# 1. Setup design points\nRscript scripts/001_setup_design_points.R\nRscript scripts/002_build_xml.R\n\n# 2. Local sensitivity\nRscript scripts/011_run_local_sensitivity.R\nRscript scripts/012_aggregate_sensitivity.R\n\n# 3. Global sensitivity  \nRscript scripts/021_generate_sobol_design.R\nRscript scripts/023_run_global_sensitivity.R\nRscript scripts/024_compute_sobol_indices.R\n\n# 4. Variance decomposition\nRscript scripts/031_partition_variance.R",
-    "crumbs": [
-      "Home",
-      "Overview"
-    ]
   },
   {
     "objectID": "docs/methodology.html#local-sensitivity-analysis-one-at-a-time",
@@ -163,18 +322,74 @@
     "text": "Dummy Parameter Method\nWe include a “dummy” parameter that varies randomly but has no effect on model output. Its Sobol index represents numerical noise. Parameters with \\(T_i\\) within the dummy’s confidence interval are candidates for fixing."
   },
   {
+    "objectID": "docs/references.html",
+    "href": "docs/references.html",
+    "title": "References",
+    "section": "",
+    "text": "Dietze, M. C. (2017). Ecological Forecasting. Princeton University Press.\nSaltelli, A., et al. (2010). Variance based sensitivity analysis. Computer Physics Communications.\nPuy, A., et al. (2022). sensobol: R Package for Sobol Indices. Journal of Statistical Software."
+  },
+  {
+    "objectID": "docs/renv_setup.html",
+    "href": "docs/renv_setup.html",
+    "title": "Package Management with renv",
+    "section": "",
+    "text": "This project uses renv to manage R package dependencies. The lockfile (renv.lock) records exact package versions, ensuring reproducibility across machines and collaborators.\nKey files:\n\n\n\nFile\nPurpose\n\n\n\n\nrenv.lock\nRecords exact package versions (committed to git)\n\n\nrenv/activate.R\nBootstraps renv on session start\n\n\n.Rprofile\nCalls activate.R automatically"
+  },
+  {
+    "objectID": "docs/renv_setup.html#setup",
+    "href": "docs/renv_setup.html#setup",
+    "title": "Package Management with renv",
+    "section": "Setup",
+    "text": "Setup\n\nFirst-time setup\n# Clone repository\ngit clone https://github.com/ccmmf/uncertainty.git\ncd uncertainty\n\n# Create your .Renviron (required before renv works on SCC)\ncp .Renviron.example .Renviron\n# Edit paths if needed\n\n# Restore packages from lockfile\nR -e \"renv::restore()\"\n\n\nVerifying installation\n\n\nCode\n# Check that PEcAn packages load\nlibrary(PEcAn.settings)\nlibrary(PEcAn.uncertainty)\nlibrary(sensobol)"
+  },
+  {
+    "objectID": "docs/renv_setup.html#common-operations",
+    "href": "docs/renv_setup.html#common-operations",
+    "title": "Package Management with renv",
+    "section": "Common operations",
+    "text": "Common operations\n\nAdding packages\n\n\nCode\n# Install from CRAN\ninstall.packages(\"newpackage\")\n\n# Install from GitHub (e.g., PEcAn development branch)\nrenv::install(\"PecanProject/pecan@develop\", subdir = \"modules/uncertainty\")\n\n# Update lockfile\nrenv::snapshot()\n\n\n\n\nAfter pulling changes\nIf renv.lock changed in a pull:\n\n\nCode\nrenv::restore()\n\n\n\n\nChecking status\n\n\nCode\n# Compare library state to lockfile\nrenv::status()\n\n# See which packages are used in project code\nrenv::dependencies()"
+  },
+  {
+    "objectID": "docs/renv_setup.html#scc-specific-notes",
+    "href": "docs/renv_setup.html#scc-specific-notes",
+    "title": "Package Management with renv",
+    "section": "SCC-specific notes",
+    "text": "SCC-specific notes\n\nLibrary location\nOn BU SCC, home directories have limited quota. The .Renviron file redirects renv’s cache and library to the shared project space:\nRENV_PATHS_CACHE=/projectnb/dietzelab/ccmmf/renv-cache\nRENV_PATHS_LIBRARY=/projectnb/dietzelab/ccmmf/renv-library\nThis must be set before running renv::restore().\n\n\nModule dependencies\nBefore starting R, load required system modules:\nmodule load R/4.4.0 gdal proj geos sqlite udunits"
+  },
+  {
+    "objectID": "docs/renv_setup.html#troubleshooting",
+    "href": "docs/renv_setup.html#troubleshooting",
+    "title": "Package Management with renv",
+    "section": "Troubleshooting",
+    "text": "Troubleshooting\n“there is no package called ‘renv’”\nInstall renv globally first:\n\n\nCode\ninstall.packages(\"renv\")\n\n\n“cannot allocate vector of size X Gb”\nrenv cache is in home directory (quota exceeded). Set RENV_PATHS_CACHE in .Renviron.\nPackage not found in repositories\nPEcAn packages require the R-universe repo. Check that .Rprofile includes:\n\n\nCode\noptions(repos = c(\n  PEcAn = \"https://pecanproject.r-universe.dev\",\n  CRAN  = \"https://cloud.r-project.org\"\n))\n\n\nWrong package version loading\nCheck library search path:\n\n\nCode\n.libPaths()  # Project library should be first\n\n\nIf system library is first, ensure renv/activate.R is being sourced in .Rprofile."
+  },
+  {
+    "objectID": "docs/renv_setup.html#references",
+    "href": "docs/renv_setup.html#references",
+    "title": "Package Management with renv",
+    "section": "References",
+    "text": "References\n\nrenv documentation\nPEcAn R-universe"
+  },
+  {
+    "objectID": "docs/workflow_documentation.html",
+    "href": "docs/workflow_documentation.html",
+    "title": "Technical Workflow Documentation",
+    "section": "",
+    "text": "This workflow implements variance-based sensitivity analysis for SIPNET following the Dietze (2017) uncertainty partitioning framework. The pipeline decomposes forecast variance into parameter, initial condition, driver, and interaction components using complementary local (OAT) and global (Sobol) methods.\n\n\n\n\n\n\n\n\n\n\nPhase\nScripts\nPurpose\n\n\n\n\nSetup\n001–002\nDesign point selection, PEcAn XML configuration\n\n\nLocal SA\n011–012\nOAT elasticities, partial variances\n\n\nGlobal SA\n021–025\nSobol design, events, model runs, \\(S_i\\)/\\(T_i\\)\n\n\nIntegration\n031\nVariance partitioning across uncertainty sources"
+  },
+  {
     "objectID": "docs/workflow_documentation.html#configuration",
     "href": "docs/workflow_documentation.html#configuration",
     "title": "Technical Workflow Documentation",
     "section": "2 Configuration",
-    "text": "2 Configuration\nCentral configuration in 000-config.yml:\ndefault:\n  paths:\n    ccmmf_dir: \"/projectnb2/dietzelab/ccmmf\"\n    data_dir: \"data\"\n    raw_data_dir: \"data_raw\"\n  sites:\n    n_sample: 100\n  sensitivity:\n    sigma_levels: [-2, -1, 1, 2]"
+    "text": "2 Configuration\nCentral configuration in 000-config.yml:\ndefault:\n  paths:\n    ccmmf_dir: \"/projectnb2/dietzelab/ccmmf\"\n    data_dir: \"data\"\n    raw_data_dir: \"data_raw\"\n  sites:\n    n_sample: 10\n  sensitivity:\n    sigma_levels: [-2, -1, 1, 2]"
   },
   {
     "objectID": "docs/workflow_documentation.html#phase-1-setup",
     "href": "docs/workflow_documentation.html#phase-1-setup",
     "title": "Technical Workflow Documentation",
     "section": "3 Phase 1: Setup",
-    "text": "3 Phase 1: Setup\n\n3.1 001_setup_design_points.R\nSelects SA sites from the 198-site master design and maps LandIQ PFT names to PEcAn conventions.\nPFT Mapping: - annual crop → grass - woody perennial crop → temperate.deciduous\nOutput: data_raw/sa_design_points.csv\n\n\n3.2 002_build_xml.R\nGenerates multisite PEcAn settings XML with ensemble paths and sensitivity configuration.\nKey settings: - Ensemble size: 20 (parameters) x 10 (met) - Simulation period: 2016–2023 - Sigma levels: ±1σ, ±2σ perturbations\nOutput: data_raw/settings_sa.xml"
+    "text": "3 Phase 1: Setup\n\n3.1 001_setup_design_points.R\nSelects SA sites from the 198-site master design and maps LandIQ PFT names to PEcAn conventions.\nPFT Mapping: - annual crop → grass - woody perennial crop → temperate.deciduous\nOutput: data_raw/sa_design_points.csv\n\n\n3.2 002_build_xml.R\nGenerates multisite PEcAn settings XML with ensemble paths and sensitivity configuration.\nKey settings: - Ensemble size: 20 (parameters) × 10 (met) - Simulation period: 2016–2023 - Sigma levels: ±1σ, ±2σ perturbations\nOutput: data_raw/settings_sa.xml"
   },
   {
     "objectID": "docs/workflow_documentation.html#phase-2-local-sensitivity-analysis",
@@ -188,7 +403,7 @@
     "href": "docs/workflow_documentation.html#phase-3-global-sensitivity-analysis",
     "title": "Technical Workflow Documentation",
     "section": "5 Phase 3: Global Sensitivity Analysis",
-    "text": "5 Phase 3: Global Sensitivity Analysis\n\n5.1 021_generate_sobol_design.R\nGenerates Saltelli quasi-random design matrix for variance-based SA.\nDesign structure: - \\(N \\times (k + 2)\\) model evaluations (Saltelli scheme) - Continuous parameters: quantile-transformed from posterior - Discrete inputs (IC, met): inverse transform method\n# Discrete variable handling\ndesign$ic_ensemble <- floor(qunif(design$ic_ensemble, min = 1, max = n_ic + 1))\nDummy parameter: Uniform(0,1) baseline for numerical noise estimation.\nOutputs: - data/sobol_design_matrix.csv - data/sobol_design_metadata.rds\n\n\n5.2 022_prepare_pecan_inputs.R\nTransforms Sobol design into PEcAn-compatible structures: - Parses pft.parameter namespacing → separate PFT lists - Creates ensemble.samples (list of data frames per PFT) - Creates input_design mapping sample_id → IC/met indices\nOutputs: - output/samples.Rdata - cache/input_design.rds\n\n\n5.3 023_run_global_sensitivity.R\nExecutes all \\(N(k+2)\\) model runs specified by the Sobol design.\n\n\n5.4 024_compute_sobol_indices.R\nComputes Sobol indices using sensobol:\nidx <- sensobol::sobol_indices(Y = Y, N = N, params = params, boot = TRUE, R = 500)\nOutput columns: - Si_original: First-order index (main effect) - Ti_original: Total-order index (main + interactions) - Bootstrap 95% CIs\nOutput: data/sobol_indices.csv"
+    "text": "5 Phase 3: Global Sensitivity Analysis\n\n5.1 021_generate_sobol_design.R\nGenerates Saltelli quasi-random design matrix for variance-based SA.\nDesign structure: - \\(N \\times (k + 2)\\) model evaluations (Saltelli scheme) - Continuous parameters: quantile-transformed from posterior - Discrete inputs (IC, met): inverse transform method\n# Discrete variable handling\ndesign$ic_ensemble <- floor(qunif(design$ic_ensemble, min = 1, max = n_ic + 1))\nDummy parameter: Uniform(0,1) baseline for numerical noise estimation.\nOutputs: - data/sobol_design_matrix.csv - data/sobol_design_metadata.rds\n\n\n5.2 022_prepare_pecan_inputs.R\nTransforms Sobol design into PEcAn-compatible structures: - Parses pft.parameter namespacing → separate PFT lists - Creates ensemble.samples (list of data frames per PFT) - Creates input_design mapping sample_id → IC/met indices\nOutputs: - output/samples.Rdata - cache/input_design.rds\n\n\n5.3 024_run_global_sensitivity.R\nExecutes all \\(N(k+2)\\) model runs specified by the Sobol design.\nsettings$ensemble$size <- 1  # Each row = one run\nsettings <- runModule.run.write.configs(settings, input_design = input_design)\n\n\n5.4 025_compute_sobol_indices.R\nComputes Sobol indices using sensobol:\nidx <- sensobol::sobol_indices(Y = Y, N = N, params = params, boot = TRUE, R = 500)\nOutput columns: - Si_original: First-order index (main effect) - Ti_original: Total-order index (main + interactions) - Bootstrap 95% CIs\nOutput: data/sobol_indices.csv"
   },
   {
     "objectID": "docs/workflow_documentation.html#phase-4-variance-decomposition",
@@ -216,7 +431,7 @@
     "href": "docs/workflow_documentation.html#execution",
     "title": "Technical Workflow Documentation",
     "section": "9 Execution",
-    "text": "9 Execution\n# Complete workflow\nRscript scripts/001_setup_design_points.R\nRscript scripts/002_build_xml.R\nRscript scripts/011_run_local_sensitivity.R\nRscript scripts/012_aggregate_sensitivity.R\nRscript scripts/021_generate_sobol_design.R --sample-size 512\nRscript scripts/022_prepare_pecan_inputs.R\nRscript scripts/023_run_global_sensitivity.R\nRscript scripts/024_compute_sobol_indices.R\nRscript scripts/031_partition_variance.R"
+    "text": "9 Execution\n# Full pipeline (shell scripts)\nbash scripts/run_pipeline.sh\n\n# Or step-by-step:\nbash scripts/run_local_sa.sh    # 001 → 002 → 011 → 012\nbash scripts/run_global_sa.sh   # 021 → 022 → 023 → 024 → 025\nRscript scripts/031_partition_variance.R"
   },
   {
     "objectID": "docs/workflow_documentation.html#output-variables",
@@ -224,117 +439,5 @@
     "title": "Technical Workflow Documentation",
     "section": "10 Output Variables",
     "text": "10 Output Variables\n\n\n\nVariable\nDescription\nUnits\n\n\n\n\nNPP\nNet Primary Productivity\nkg C ha⁻¹ yr⁻¹\n\n\nAbvGrndWood\nAboveground Woody Biomass\nkg C ha⁻¹\n\n\nQle\nLatent Heat Flux\nW m⁻²"
-  },
-  {
-    "objectID": "docs/workflow_documentation.html#directory-structure",
-    "href": "docs/workflow_documentation.html#directory-structure",
-    "title": "Technical Workflow Documentation",
-    "section": "11 Directory Structure",
-    "text": "11 Directory Structure\nuncertainty/\n├── 000-config.yml\n├── R/\n│   ├── local_sensitivity.R\n│   ├── global_sensitivity.R\n│   └── variance_decomposition.R\n├── scripts/\n│   ├── 001_setup_design_points.R\n│   ├── 002_build_xml.R\n│   ├── 011_run_local_sensitivity.R\n│   ├── 012_aggregate_sensitivity.R\n│   ├── 021_generate_sobol_design.R\n│   ├── 022_prepare_pecan_inputs.R\n│   ├── 023_run_global_sensitivity.R\n│   ├── 024_compute_sobol_indices.R\n│   ├── 031_partition_variance.R\n│   └── sge_array_launcher.sh\n├── data/\n│   ├── aggregated_sensitivity.csv\n│   ├── sobol_indices.csv\n│   └── variance_partition_*.csv\n└── output/\n    └── ensemble.output.*.Rdata"
-  },
-  {
-    "objectID": "analysis/global_sensitivity.html",
-    "href": "analysis/global_sensitivity.html",
-    "title": "Global Sensitivity Analysis Using Sobol Indices",
-    "section": "",
-    "text": "This report presents results from a variance-based global sensitivity analysis of the SIPNET ecosystem model using Sobol indices. Unlike local sensitivity analysis (which measures rates of change at baseline conditions), variance-based methods decompose output variance into contributions from individual parameters and their interactions.\n\n\n\n\n\n\nWhy Sobol Indices?\n\n\n\nSobol indices provide a rigorous framework for:\n\nQuantifying parameter importance via variance decomposition\nDetecting interactions between parameters (non-additive effects)\nFactor prioritization (which parameters to constrain for uncertainty reduction)\nFactor fixing (which parameters can be fixed without loss of information)\n\n\n\n\n\nSobol indices are normalized variance contributions:\n\\[\nS_i = \\frac{V_i}{\\text{VAR}(y)} \\quad \\text{(First-order index)}\n\\]\n\\[\nT_i = 1 - \\frac{\\text{VAR}_{x_{\\sim i}}[\\mathbb{E}_{x_i}(y | x_{\\sim i})]}{\\text{VAR}(y)} = \\frac{\\mathbb{E}_{x_{\\sim i}}[\\text{VAR}_{x_i}(y | x_{\\sim i})]}{\\text{VAR}(y)} \\quad \\text{(Total-order index)}\n\\]\nwhere \\(x_{\\sim i}\\) denotes all-parameters-but-\\(x_i\\).\n\n\n\n\\(S_i\\): Direct effect of \\(x_i\\) on output variance (excluding interactions)\n\\(T_i\\): Total effect of \\(x_i\\) including all interactions with other parameters\n\\(T_i - S_i\\): Interaction strength (purely higher-order effects)\n\\(\\sum S_i \\approx 1\\): Model is additive (linear-like behavior)\n\\(\\sum S_i \\ll 1\\): Model is non-additive (interactions dominate)"
-  },
-  {
-    "objectID": "analysis/variance_decomposition.html",
-    "href": "analysis/variance_decomposition.html",
-    "title": "Uncertainty Partitioning: Decomposing SIPNET Forecast Variance",
-    "section": "",
-    "text": "Objective: To determine the most cost-effective strategies for reducing forecast uncertainty by identifying its primary drivers.\nKey Findings:\n\nDominant Drivers: Forecast uncertainty is driven by distinct factors depending on the variable. Fast processes (e.g., carbon fluxes) are dominated by Meteorology, while slow processes (e.g., soil carbon) are dominated by Initial Conditions.\nCritical Traits: The analysis identifies specific biological traits (e.g., temperature sensitivity, allocation fractions) that contribute disproportionately to uncertainty. Reducing uncertainty in these specific parameters will yield the highest return on investment.\nEnvironmental Context: The sources of uncertainty shift across environmental gradients (e.g., precipitation), suggesting that management strategies may need to be site-specific."
-  },
-  {
-    "objectID": "analysis/variance_decomposition.html#theoretical-framework",
-    "href": "analysis/variance_decomposition.html#theoretical-framework",
-    "title": "Uncertainty Partitioning: Decomposing SIPNET Forecast Variance",
-    "section": "Theoretical Framework",
-    "text": "Theoretical Framework\nFollowing the ecological forecasting framework (Dietze 2017), the variance of a forecast (\\(Y\\)) can be decomposed into contributions from the uncertainties in model inputs and drivers:\n\\[\\text{Var}(Y) \\approx V_{Parameter} + V_{Driver} + V_{InitialCond} + V_{Interaction}\\]\nIn this analysis, we focus on the Modeled Variance components derived from our Sobol ensemble:\n\nParameter Uncertainty (\\(V_{Param}\\)): Uncertainty arising from biological traits (e.g., \\(A_{max}\\), \\(SLA\\)).\nDriver Uncertainty (\\(V_{Driver}\\)): Uncertainty from meteorological forcing (e.g., Temperature, Precipitation).\nInitial Conditions (\\(V_{IC}\\)): Uncertainty from the system’s starting state (e.g., Soil Carbon pools).\nInteraction Variance (\\(V_{Int}\\)): Non-additive variance arising from the interplay between parameters and drivers.\n\n\n\n\n\n\n\nScope Note\n\n\n\nProcess Error is excluded from this specific analysis. In managed agricultural systems, process error is often driven by Model Structure rather than random stochasticity. This component will be assessed in a separate validation workflow.\n\n\n\n\n\n\n\n\nGoal\n\n\n\nTo identify the dominant source of uncertainty for each site and variable. This informs whether future research should focus on field data collection (to reduce \\(V_{Param}\\)), sensor network improvement (to reduce \\(V_{Driver}\\)), or data assimilation (to constrain \\(V_{IC}\\))."
-  },
-  {
-    "objectID": "analysis/variance_decomposition.html#summary-statistics",
-    "href": "analysis/variance_decomposition.html#summary-statistics",
-    "title": "Uncertainty Partitioning: Decomposing SIPNET Forecast Variance",
-    "section": "Summary Statistics",
-    "text": "Summary Statistics\nAverage contribution of each source across the network:\n\n\n?(caption)"
-  },
-  {
-    "objectID": "analysis/variance_decomposition.html#interpretation",
-    "href": "analysis/variance_decomposition.html#interpretation",
-    "title": "Uncertainty Partitioning: Decomposing SIPNET Forecast Variance",
-    "section": "Interpretation",
-    "text": "Interpretation\n\nParameters vs Drivers:\n\nIf Meteorology is the dominant term, predictive skill is limited by our ability to forecast weather (extrinsic forcing).\nIf Biological Parameters dominate, we can improve forecasts by collecting more trait data to constrain model physics (internal biology).\n\nInitial Conditions (System Memory):\n\nIf Initial Conditions dominate (common for slow variables like Soil Carbon), the forecast is limited by our knowledge of the system’s starting state. Reducing this uncertainty requires site-specific inventory measurements or Data Assimilation.\n\nInteractions:\n\nA large interaction term implies that parameters behave differently under different weather conditions (non-additive effects), suggesting complex non-linear dynamics."
-  },
-  {
-    "objectID": "analysis/local_sensitivity.html",
-    "href": "analysis/local_sensitivity.html",
-    "title": "Local Sensitivity Analysis",
-    "section": "",
-    "text": "This report presents results from a local sensitivity analysis of the SIPNET ecosystem model across multiple design points representing diverse environmental conditions across California croplands.\nPurpose: Identify which model parameters have the largest impact on key outputs (NPP, soil carbon, aboveground biomass), quantify how parameter importance varies with environmental gradients (climate, soil properties), and assess spatial heterogeneity in parameter sensitivity.\n\n\n\n\n\n\nAnalysis Framework\n\n\n\nThis sensitivity analysis follows established best practices for reporting both elasticity (sensitivity magnitude) and variance explained (parameter importance). Results support targeted parameter calibration and uncertainty reduction strategies.\n\n\n\n\nSpatial coverage: 100 design points selected via k-means clustering to represent environmental heterogeneity across California croplands\nModel outputs: 3 response variables (AbvGrndWood, NPP, TotSoilCarb)\nParameters analyzed: 28 SIPNET parameters across photosynthesis, allocation, turnover, and phenology processes\nEnvironmental gradients: MAT, MAP, clay, ocd, twi"
-  },
-  {
-    "objectID": "analysis/local_sensitivity.html#regression-results",
-    "href": "analysis/local_sensitivity.html#regression-results",
-    "title": "Local Sensitivity Analysis",
-    "section": "Regression Results",
-    "text": "Regression Results\nFor each parameter-response-gradient combination, we fit linear models to test relationships between environmental conditions and both:\n\nElasticity (sensitivity): Rate of output change per unit parameter change\nVariance explained (importance): Contribution to output uncertainty\n\n\n\n\n\n\n\nStatistical Thresholds\n\n\n\nResults shown meet significance criteria: p < 0.05 and \\(R^2\\) > 0.10. Non-significant relationships are excluded to focus on robust patterns.\n\n\n\nElasticity TrendsVariance Explained Trends\n\n\n\n\n\n\n\n\n\nInterpretation guide:\n\nPositive slope: Sensitivity increases along gradient (e.g., warmer sites more sensitive)\nNegative slope: Sensitivity decreases along gradient\nHigh \\(R^2\\): Strong environmental control on parameter importance\n\n\n\n\n\n\n\n\n\n\nWhy both metrics matter: A parameter may have high sensitivity (elasticity) but low importance (variance explained) if its prior uncertainty is small. Conversely, a moderately sensitive parameter with high prior uncertainty may dominate output variability."
-  },
-  {
-    "objectID": "analysis/local_sensitivity.html#summary-statistics",
-    "href": "analysis/local_sensitivity.html#summary-statistics",
-    "title": "Local Sensitivity Analysis",
-    "section": "Summary Statistics",
-    "text": "Summary Statistics\n\n\nTable 1: ?(caption)\n\n\n\n\n(a) Summary of significant gradient relationships by target metric\n\n\nTarget Metric\nN Significant\nMean R2\nMedian R2\nMax R2\n\n\n\n\nelasticity\n132\n0.201\n0.201\n0.294\n\n\nvariance_explained\n132\n0.201\n0.201\n0.294"
-  },
-  {
-    "objectID": "analysis/local_sensitivity.html#method",
-    "href": "analysis/local_sensitivity.html#method",
-    "title": "Local Sensitivity Analysis",
-    "section": "Method",
-    "text": "Method\nWe use Random Forest regression to model elasticity ~ MAT + MAP + clay + ocd + twi, then compute partial dependence for each gradient. PDPs show how the predicted sensitivity changes as one gradient varies, holding others at their average values."
-  },
-  {
-    "objectID": "analysis/local_sensitivity.html#example-amax-sensitivity-for-npp",
-    "href": "analysis/local_sensitivity.html#example-amax-sensitivity-for-npp",
-    "title": "Local Sensitivity Analysis",
-    "section": "Example: Amax Sensitivity for NPP",
-    "text": "Example: Amax Sensitivity for NPP\n\n\n\n\n\nFigure 4: Partial dependence of Amax (maximum photosynthesis) sensitivity on environmental gradients for NPP. Rug plots show observed site values.\n\n\n\n\n\n\n\n\n\n\nInterpreting PDPs\n\n\n\n\nFlat lines: Sensitivity constant across gradient (no environmental control)\nMonotonic trends: Linear increase/decrease (consistent with regression)\nNon-monotonic patterns: Thresholds or optima (linear models inadequate)\nRug plots: Density of observed data (avoid extrapolation where data sparse)"
-  },
-  {
-    "objectID": "analysis/local_sensitivity.html#overall-sensitivity-summary",
-    "href": "analysis/local_sensitivity.html#overall-sensitivity-summary",
-    "title": "Local Sensitivity Analysis",
-    "section": "Overall Sensitivity Summary",
-    "text": "Overall Sensitivity Summary\n\n\n\n\nTable 2: Overall sensitivity summary statistics by response variable\n\n\n\n\n\n\n\n\n\n\nresponse_var\nN Parameters\nMean |Elasticity|\nMedian |Elasticity|\nMax |Elasticity|\nMean Variance Explained (%)\n\n\n\n\nAbvGrndWood\n28\n19.956\n2.491\n449.546\n3.981\n\n\nNPP\n28\n10.537\n1.330\n267.761\n3.981\n\n\nTotSoilCarb\n28\n10.167\n0.893\n299.447\n3.981"
-  },
-  {
-    "objectID": "analysis/local_sensitivity.html#key-findings",
-    "href": "analysis/local_sensitivity.html#key-findings",
-    "title": "Local Sensitivity Analysis",
-    "section": "Key Findings",
-    "text": "Key Findings\n\n1. Parameter Prioritization for Calibration\nHigh priority (high elasticity × high prior uncertainty):\n\n\nTable 3: ?(caption)\n\n\n\n\n(a) Top 5 parameters for calibration priority (TotSoilCarb)\n\n\n\n\n\n\n\n\nParameter\nMean |Elasticity|\nMean CV\nPriority Score\n\n\n\n\nleafC\n160.990\n0.041\n6.551\n\n\nGDD\n6.522\n0.247\n1.608\n\n\ndVpdExp\n3.336\n0.239\n0.796\n\n\nleaf_turnover_rate\n1.340\n0.521\n0.698\n\n\nroot_respiration_rate\n0.957\n0.631\n0.604\n\n\n\n\n\n\n\n\n2. Spatial Heterogeneity\n\n100 sites show substantial variation in parameter importance, confirming need for site-specific or region-specific calibration\nClimate gradients explain 10-40% of variance in parameter sensitivity for key parameters\nSoil properties (clay, OCD) primarily control turnover parameter importance\n\n\n\n3. Model Structure Implications\nParameter sensitivity patterns reveal underlying model structure:\n\nNPP: Dominated by photosynthesis (Amax, psnTOpt) and allocation processes\nSoil Carbon: Controlled by turnover rates (litterTurnover, soilTurnover)\nWoody Biomass: Sensitive to allocation (wood_allocation_rate) and longevity\n\nThese patterns align with ecological theory and provide confidence in model representation of ecosystem processes."
-  },
-  {
-    "objectID": "analysis/local_sensitivity.html#sensitivity-metrics",
-    "href": "analysis/local_sensitivity.html#sensitivity-metrics",
-    "title": "Local Sensitivity Analysis",
-    "section": "Sensitivity Metrics",
-    "text": "Sensitivity Metrics\n\nElasticity (\\(\\varepsilon\\)): Normalized sensitivity = \\(\\frac{\\partial Y}{\\partial X} \\cdot \\frac{X}{Y}\\)\nVariance explained: \\(\\frac{\\text{Partial Variance}_i}{\\sum \\text{Partial Variances}} \\times 100\\%\\)\nCoefficient of variation (CV): Prior uncertainty = \\(\\frac{\\sigma}{\\mu}\\) from parameter distributions"
-  },
-  {
-    "objectID": "analysis/local_sensitivity.html#software-environment",
-    "href": "analysis/local_sensitivity.html#software-environment",
-    "title": "Local Sensitivity Analysis",
-    "section": "Software Environment",
-    "text": "Software Environment\n\n\nR version 4.4.0 (2024-04-24)\nPlatform: x86_64-pc-linux-gnu\nRunning under: AlmaLinux 8.10 (Cerulean Leopard)\n\nMatrix products: default\nBLAS/LAPACK: FlexiBLAS NETLIB;  LAPACK version 3.11.0\n\nlocale:\n [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              \n [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    \n [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   \n [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 \n [9] LC_ADDRESS=C               LC_TELEPHONE=C            \n[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       \n\ntime zone: America/New_York\ntzcode source: system (glibc)\n\nattached base packages:\n[1] stats     graphics  grDevices utils     datasets  methods   base     \n\nother attached packages:\n [1] tidyr_1.3.1          patchwork_1.2.0      pdp_0.8.2           \n [4] randomForest_4.7-1.1 knitr_1.50           config_0.3.2        \n [7] here_1.0.1           DT_0.33              ggplot2_4.0.0       \n[10] dplyr_1.1.4          readr_2.1.5         \n\nloaded via a namespace (and not attached):\n [1] sass_0.4.10        generics_0.1.4     stringi_1.8.7      lattice_0.22-6    \n [5] hms_1.1.4          digest_0.6.37      magrittr_2.0.4     evaluate_1.0.5    \n [9] grid_4.4.0         RColorBrewer_1.1-3 iterators_1.0.14   fastmap_1.2.0     \n[13] foreach_1.5.2      rprojroot_2.0.4    jsonlite_2.0.0     purrr_1.1.0       \n[17] crosstalk_1.2.2    scales_1.4.0       jquerylib_0.1.4    codetools_0.2-20  \n[21] cli_3.6.5          rlang_1.1.6        crayon_1.5.3       bit64_4.6.0-1     \n[25] cachem_1.1.0       withr_3.0.2        yaml_2.3.10        tools_4.4.0       \n[29] parallel_4.4.0     tzdb_0.5.0         vctrs_0.6.5        R6_2.6.1          \n[33] lifecycle_1.0.4    htmlwidgets_1.6.4  bit_4.6.0          vroom_1.6.6       \n[37] pkgconfig_2.0.3    pillar_1.11.1      bslib_0.9.0        gtable_0.3.6      \n[41] glue_1.8.0         PEcAn.logger_1.8.4 xfun_0.53          tibble_3.3.0      \n[45] tidyselect_1.2.1   dichromat_2.0-0.1  farver_2.1.2       htmltools_0.5.8.1 \n[49] labeling_0.4.3     rmarkdown_2.30     compiler_4.4.0     S7_0.2.0"
-  },
-  {
-    "objectID": "analysis/local_sensitivity.html#configuration",
-    "href": "analysis/local_sensitivity.html#configuration",
-    "title": "Local Sensitivity Analysis",
-    "section": "Configuration",
-    "text": "Configuration\n\n\nConfig file: /projectnb/dietzelab/abv1/ccmmf/uncertainty_dev/000-config.yml \n\n\nAnalysis date: 2025-12-26 \n\n\nNumber of sites: 100 \n\n\nNumber of parameters: 28 \n\n\nResponse variables: AbvGrndWood, NPP, TotSoilCarb \n\n\nGradient variables: MAT, MAP, clay, ocd, twi \n\n\n\n\n\n\n\n\n\nData Availability\n\n\n\nAll datasets used in this report are available in data/aggregated_sensitivity.csv and related files. Analysis code is in R/local_sensitivity.R."
   }
 ]
