@@ -147,8 +147,24 @@ Based on this ingestion, the following additions to the template would improve u
 
 ## What Is Needed to Complete This Entry
 
-- [ ] Download CSV from USDA Ag Data Commons and fill `observations_soc.csv` Years 2-8 block-level values
+- [ ] Fill `observations_soc.csv` Years 2-8 block-level SOC values — see instructions below
 - [x] Expand `management_events.csv` for Years 2-8 — complete
 - [x] Confirm quadrennial cover crop years — confirmed as Years 4 and 8 from companion paper
-- [ ] Confirm harvest component fractions — standard practice (head only) assumed; no explicit data in paper
-- [ ] Extend `observations_soc.csv` rows for Years 3-8 (Years 0-2 structure complete)
+- [x] Harvest component — confirmed as standard practice: lettuce=head, broccoli=floret; stover left in field. No biomass amounts reported in paper.
+- [x] Extend `observations_soc.csv` rows for all Years 0-8, all 5 treatments, all 4 blocks — complete (180 rows; values need filling)
+
+## How to Fill the Remaining SOC Values
+
+The block-level per-year SOC values are in **one of two places**:
+
+**Option A — PLoS ONE Supplementary Table S1** (easiest):
+1. Go to https://doi.org/10.1371/journal.pone.0228677
+2. Download the Supporting Information file (S1 Table)
+3. Match by system number + block + year → fill `SOC_stock_Mg_ha` and `total_N_stock_Mg_ha`
+
+**Option B — SOCS GitHub repo Excel files**:
+1. Go to https://github.com/swood-ecology/socs/tree/main/data
+2. Download `usda-soil-data.xlsx` and `site-data.xlsx`
+3. Run `/code/data-analysis.R` to compute stocks from raw fractions + bulk density
+
+Once filled, change `value_status` from `NEEDS_FILL` to `AG_DATA_COMMONS` or `PLOS_S1_TABLE`.
