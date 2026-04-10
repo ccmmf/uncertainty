@@ -1,0 +1,2 @@
+citation_id,authors,year,title,journal,volume,article,doi,dataset_doi,dataset_repository,data_access_notes
+white_salinas_2020,"White KE, Brennan EB, Cavigelli MA",2020,"Soil carbon and nitrogen data during eight years of cover crop and compost treatments in organic vegetable production","Data in Brief",33,106481,https://doi.org/10.1016/j.dib.2020.106481,https://doi.org/10.15482/USDA.ADC/1503453,USDA Agricultural Data Commons,"Dataset available at https://agdatacommons.nal.usda.gov — download CSV files directly to fill actual SOC/N values in observations_soc.csv"

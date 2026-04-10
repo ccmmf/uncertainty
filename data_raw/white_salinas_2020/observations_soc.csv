@@ -1,0 +1,86 @@
+observation_id,site_id,treatment_id,block,study_year,calendar_year,sample_season,sample_date,depth_min_cm,depth_max_cm,SOC_stock_Mg_ha,total_N_stock_Mg_ha,POXC_stock_Mg_ha,bulk_density_g_cm3,value_status,notes
+# SOURCE: White et al. 2020 (Data in Brief) + companion PLoS ONE (PMC7004306)
+# Year 0 and Year 1 values: from companion paper text (all treatments ~equal before differentiation)
+# Years 2-8: means estimated from Figure 6A in companion paper; per-year per-block values
+#   require downloading CSV from USDA Ag Data Commons:
+#   https://agdatacommons.nal.usda.gov/articles/dataset/.../24774105
+# POXC: measured only at Years 0, 6, 8
+# Bulk density: measured only at Years 3 and 7
+# Baseline sampling exact date: October 13, 2003 (from companion paper)
+# Year 6 sampling exact date: October 30, 2009
+# Year 8 sampling: August 2011 (post-lettuce harvest, earlier than other years)
+#
+# value_status codes:
+#   PAPER_TEXT  = reported as mean in paper text (no block-level breakdown)
+#   FIG_EST     = estimated from figure; ±2 Mg/ha uncertainty
+#   NEEDS_FILL  = must be filled from Ag Data Commons download
+#
+# --- YEAR 0 BASELINE (Oct 13 2003; all treatments equal before differentiation) ---
+obs_y0_s1_b1,white_salinas_usda,sys1_control,1,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks; block-level values need Ag Data Commons download
+obs_y0_s1_b2,white_salinas_usda,sys1_control,2,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks; block-level values need Ag Data Commons download
+obs_y0_s1_b3,white_salinas_usda,sys1_control,3,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks; block-level values need Ag Data Commons download
+obs_y0_s1_b4,white_salinas_usda,sys1_control,4,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks; block-level values need Ag Data Commons download
+obs_y0_s2_b1,white_salinas_usda,sys2_quad_compost,1,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s2_b2,white_salinas_usda,sys2_quad_compost,2,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s2_b3,white_salinas_usda,sys2_quad_compost,3,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s2_b4,white_salinas_usda,sys2_quad_compost,4,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s3_b1,white_salinas_usda,sys3_annual_legumerye,1,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s3_b2,white_salinas_usda,sys3_annual_legumerye,2,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s3_b3,white_salinas_usda,sys3_annual_legumerye,3,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s3_b4,white_salinas_usda,sys3_annual_legumerye,4,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s4_b1,white_salinas_usda,sys4_annual_mustard,1,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s4_b2,white_salinas_usda,sys4_annual_mustard,2,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s4_b3,white_salinas_usda,sys4_annual_mustard,3,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s4_b4,white_salinas_usda,sys4_annual_mustard,4,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s5_b1,white_salinas_usda,sys5_annual_rye,1,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s5_b2,white_salinas_usda,sys5_annual_rye,2,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s5_b3,white_salinas_usda,sys5_annual_rye,3,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+obs_y0_s5_b4,white_salinas_usda,sys5_annual_rye,4,0,2003,fall,2003-10-13,0,30,50,4.8,NA,NA,PAPER_TEXT,Mean across all blocks
+# --- YEAR 1 (2004; all treatments still ~equal; large SOC drop from field conversion) ---
+obs_y1_s1_b1,white_salinas_usda,sys1_control,1,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,~38% decline from Year 0; all treatments similar; block values need Ag Data Commons
+obs_y1_s1_b2,white_salinas_usda,sys1_control,2,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s1_b3,white_salinas_usda,sys1_control,3,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s1_b4,white_salinas_usda,sys1_control,4,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s2_b1,white_salinas_usda,sys2_quad_compost,1,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s2_b2,white_salinas_usda,sys2_quad_compost,2,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s2_b3,white_salinas_usda,sys2_quad_compost,3,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s2_b4,white_salinas_usda,sys2_quad_compost,4,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s3_b1,white_salinas_usda,sys3_annual_legumerye,1,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s3_b2,white_salinas_usda,sys3_annual_legumerye,2,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s3_b3,white_salinas_usda,sys3_annual_legumerye,3,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s3_b4,white_salinas_usda,sys3_annual_legumerye,4,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s4_b1,white_salinas_usda,sys4_annual_mustard,1,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s4_b2,white_salinas_usda,sys4_annual_mustard,2,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s4_b3,white_salinas_usda,sys4_annual_mustard,3,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s4_b4,white_salinas_usda,sys4_annual_mustard,4,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s5_b1,white_salinas_usda,sys5_annual_rye,1,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s5_b2,white_salinas_usda,sys5_annual_rye,2,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s5_b3,white_salinas_usda,sys5_annual_rye,3,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+obs_y1_s5_b4,white_salinas_usda,sys5_annual_rye,4,1,2004,fall,NA,0,30,19,2.5,NA,NA,PAPER_TEXT,block values need Ag Data Commons
+# --- YEARS 2-8: per-year per-block values need Ag Data Commons download ---
+# Mean SOC across Years 2-8 from Figure 6A (companion paper PMC7004306):
+#   sys1_control: ~32 Mg/ha; sys2_quad_compost: ~39; sys3-5 annual compost: ~40-41
+# Structure rows below are placeholders -- replace SOC_stock_Mg_ha with actual values
+obs_y2_s1_b1,white_salinas_usda,sys1_control,1,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s1_b2,white_salinas_usda,sys1_control,2,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s1_b3,white_salinas_usda,sys1_control,3,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s1_b4,white_salinas_usda,sys1_control,4,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s2_b1,white_salinas_usda,sys2_quad_compost,1,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s2_b2,white_salinas_usda,sys2_quad_compost,2,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s2_b3,white_salinas_usda,sys2_quad_compost,3,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s2_b4,white_salinas_usda,sys2_quad_compost,4,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s3_b1,white_salinas_usda,sys3_annual_legumerye,1,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s3_b2,white_salinas_usda,sys3_annual_legumerye,2,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s3_b3,white_salinas_usda,sys3_annual_legumerye,3,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s3_b4,white_salinas_usda,sys3_annual_legumerye,4,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s4_b1,white_salinas_usda,sys4_annual_mustard,1,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s4_b2,white_salinas_usda,sys4_annual_mustard,2,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s4_b3,white_salinas_usda,sys4_annual_mustard,3,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s4_b4,white_salinas_usda,sys4_annual_mustard,4,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s5_b1,white_salinas_usda,sys5_annual_rye,1,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s5_b2,white_salinas_usda,sys5_annual_rye,2,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s5_b3,white_salinas_usda,sys5_annual_rye,3,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+obs_y2_s5_b4,white_salinas_usda,sys5_annual_rye,4,2,2005,fall,NA,0,30,NA,NA,NA,NA,NEEDS_FILL,Download from Ag Data Commons
+# Years 3-8 follow identical row structure; calendar years 2006-2011
+# Year 6 sampling date = 2009-10-30 (known); Year 8 sampling = August 2011
+# Repeat pattern above for study_years 3-8 after filling from Ag Data Commons

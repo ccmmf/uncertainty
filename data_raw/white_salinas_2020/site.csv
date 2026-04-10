@@ -1,0 +1,2 @@
+site_id,site_name,latitude,longitude,state,county,institution,soil_series,soil_texture,sand_pct,silt_pct,clay_pct,study_start_year,study_end_year,experiment_start_year,experiment_end_year,notes
+white_salinas_usda,USDA-ARS Salinas Organic Cropping Systems (SOCS),36.617,-121.533,CA,Monterey,USDA Agricultural Research Service,Chualar loamy sand,loamy sand,77,15,8,2003,2012,2004,2012,"Pre-study establishment in 2003 (compost + cover crop conditioning). Vegetable crop rotations 2004-2012. Coordinates from paper: 36°37'N 121°32'W"
