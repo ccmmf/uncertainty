@@ -13,7 +13,3 @@ We vendor them so the calval → events.json pipeline can run without a
 sibling checkout of `ccmmf/scenarios`. Once `ccmmf/scenarios` is
 released as a proper R package with a `DESCRIPTION`, swap this directory
 out for a `library(scenarios)` import.
-
-**Do not edit either file in place** — keep them byte-identical to the
-upstream source so future re-syncs are trivial. If you need behavior
-changes, file an issue or PR upstream.
