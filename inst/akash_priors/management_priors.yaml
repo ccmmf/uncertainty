@@ -1,0 +1,454 @@
+# Prior distributions for CA agricultural management parameters
+# Sources: NRCS practice standards, CDFA HSP guidelines, UC ANR pubs
+#
+# Machine-readable prior distributions for agricultural management parameters
+# used in ensemble simulations.
+#
+# STIR scale documentation:
+#   The NRCS Soil tillage intensity rating (STIR) ranges from 0 to 200.
+#
+#   | Category       | STIR Range | Our tillage_eff_0to1 |
+#   |----------------|------------|----------------------|
+#   | No-till        | 0-20       | 0.00-0.10            |
+#   | Reduced till   | 20-60      | 0.10-0.30            |
+#   | Conventional   | 60-150+    | 0.30-0.75            |
+#
+#   Conversion: tillage_eff_0to1 ≈ STIR / 200
+#   This parameter represents SOM pool transfer fraction, not direct STIR.
+
+schema_version: "0.1.0"
+
+# STIR scale note: NRCS uses 0-200. Our tillage_eff is roughly STIR/200.
+# No-till: STIR<=20, Reduced: 20-60, Conventional: >80
+
+practices:
+
+  # Tillage
+  conventional_tillage:
+    description: Full inversion, STIR 80-150
+    source: NRCS CPS 329
+    parameters:
+      tillage_eff_0to1:
+        distribution: beta
+        a: 7
+        b: 13  # mean=0.35
+      date:
+        distribution: quantiles
+        q25: "03-10"
+        median: "03-20"
+        q75: "04-01"
+
+  reduced_tillage:
+    description: Strip-till, STIR 20-60, >30% residue
+    source: NRCS CPS 345
+    parameters:
+      tillage_eff_0to1:
+        distribution: beta
+        a: 2
+        b: 18  # mean=0.10
+      date:
+        distribution: quantiles
+        q25: "03-10"
+        median: "03-20"
+        q75: "04-01"
+
+  no_tillage:
+    description: Direct seeding, STIR <=20
+    source: NRCS CPS 329
+    parameters:
+      tillage_eff_0to1:
+        distribution: constant
+        value: 0.0
+
+  # Fertilization
+  synthetic_fertilizer_annual:
+    description: Synthetic N for annual row crops
+    source: UC ANR Pub 3470
+    parameters:
+      nh4_n_kg_m2:
+        distribution: truncnorm
+        mean: 0.018  # 180 kg N/ha
+        sd: 0.004
+        lower: 0.010
+        upper: 0.030
+      date:
+        distribution: quantiles
+        q25: "03-15"
+        median: "03-25"
+        q75: "04-05"
+
+  synthetic_fertilizer_woody:
+    description: Synthetic N for orchards
+    source: Almond Board; UC ANR Pub 3364
+    parameters:
+      nh4_n_kg_m2:
+        distribution: truncnorm
+        mean: 0.024  # 240 kg N/ha
+        sd: 0.005
+        lower: 0.015
+        upper: 0.035
+      split_fractions:
+        distribution: constant
+        value: [0.2, 0.4, 0.4]
+      split_dates:
+        distribution: constant
+        value: ["02-15", "04-15", "06-15"]
+
+  compost_application:
+    description: Finished compost, CDFA HSP eligible
+    source: CDFA Gravuer 2016 Table 2
+    parameters:
+      org_c_kg_m2:
+        # Table 2: annual crops + lower N compost = 4.0-5.3 dry tons/ac
+        # 4.7 tons/ac * 907 kg/ton / 4047 m2/ac * 0.35 C = 0.37 kg C/m2
+        # lognormal with median ~0.40 covers the range
+        distribution: lognormal
+        meanlog: -0.92
+        sdlog: 0.35
+      cn_ratio:
+        distribution: normal
+        mean: 16
+        sd: 3
+      date:
+        distribution: quantiles
+        q25: "02-01"
+        median: "02-20"
+        q75: "03-10"
+
+  # Irrigation
+  irrigation_sprinkler:
+    description: Overhead/surface, 60-75% efficiency
+    source: NRCS CPS 449; Hanson et al 2006
+    parameters:
+      seasonal_total_mm:
+        distribution: normal
+        mean: 550
+        sd: 80
+      n_events:
+        distribution: categorical
+        choices: [4, 5, 6, 7]
+        probabilities: [0.1, 0.2, 0.5, 0.2]
+      method:
+        distribution: constant
+        value: canopy
+
+  irrigation_drip:
+    description: Drip/micro, 85-95% efficiency
+    source: NRCS CPS 449; Hanson et al 2006
+    parameters:
+      seasonal_total_mm:
+        distribution: normal
+        mean: 350
+        sd: 60
+      amount_mm_per_event:
+        distribution: truncnorm
+        mean: 8
+        sd: 2
+        lower: 4
+        upper: 15
+      every_days:
+        distribution: categorical
+        choices: [2, 3, 4]
+        probabilities: [0.3, 0.5, 0.2]
+      method:
+        distribution: constant
+        value: soil
+
+  # Cover crops
+  cover_crop_annual:
+    description: Winter cover in annual systems
+    source: NRCS CPS 340; Brennan & Boyd 2012
+    parameters:
+      planting_date:
+        distribution: quantiles
+        q25: "10-10"
+        median: "11-01"
+        q75: "11-15"
+      termination_date:
+        distribution: quantiles
+        q25: "03-01"
+        median: "03-20"
+        q75: "04-10"
+      species:
+        distribution: categorical
+        choices: [legume, grass, brassica, mixed]
+        probabilities: [0.25, 0.30, 0.10, 0.35]
+      biomass_kg_dm_ha:
+        distribution: lognormal
+        meanlog: 8.0  # ~3000 kg/ha
+        sdlog: 0.5
+      n_fixation_kg_ha:
+        distribution: truncnorm
+        mean: 80
+        sd: 30
+        lower: 20
+        upper: 150
+
+  cover_crop_orchard:
+    description: Floor cover between tree rows
+    source: UC ANR; NRCS CPS 340
+    parameters:
+      planting_date:
+        distribution: quantiles
+        q25: "09-15"
+        median: "10-15"
+        q75: "11-15"
+      termination_date:
+        distribution: quantiles
+        q25: "03-15"
+        median: "04-15"
+        q75: "05-01"
+      species:
+        distribution: categorical
+        choices: [native_grass, clover, mixed_legume_grass]
+        probabilities: [0.30, 0.25, 0.45]
+
+  # Harvest
+  harvest_grain:
+    description: Grain harvest, ~50% removal
+    source: UC ANR
+    parameters:
+      frac_above_removed_0to1:
+        distribution: beta
+        a: 10
+        b: 10
+      frac_below_removed_0to1:
+        distribution: constant
+        value: 0.0
+      date:
+        distribution: quantiles
+        q25: "09-20"
+        median: "10-10"
+        q75: "10-25"
+
+  harvest_silage:
+    description: Whole-plant silage, ~90% removal
+    source: UC ANR
+    parameters:
+      frac_above_removed_0to1:
+        distribution: beta
+        a: 18
+        b: 2
+      frac_below_removed_0to1:
+        distribution: constant
+        value: 0.0
+
+# Regional adoption rates (USDA NASS 2022; CDFA HSP data)
+adoption_rates:
+  San Joaquin Valley:
+    annual_row_crop:
+      conventional_tillage:
+        distribution: beta
+        a: 13
+        b: 7  # ~65%
+      reduced_tillage:
+        distribution: beta
+        a: 5
+        b: 15  # ~25%
+      no_tillage:
+        distribution: beta
+        a: 2
+        b: 18  # ~10%
+      cover_crop:
+        distribution: beta
+        a: 3
+        b: 17  # ~15%
+      compost:
+        distribution: beta
+        a: 1
+        b: 19  # ~5%
+      irrigation_drip:
+        distribution: beta
+        a: 8
+        b: 12  # ~40%
+      irrigation_sprinkler:
+        distribution: beta
+        a: 12
+        b: 8  # ~60%
+    perennial_woody:
+      no_tillage:
+        distribution: beta
+        a: 6
+        b: 14  # ~30%
+      cover_crop:
+        distribution: beta
+        a: 5
+        b: 15  # ~25%
+      compost:
+        distribution: beta
+        a: 2
+        b: 18  # ~10%
+      irrigation_drip:
+        distribution: beta
+        a: 15
+        b: 5  # ~75%
+
+  Sacramento Valley:
+    annual_row_crop:
+      conventional_tillage:
+        distribution: beta
+        a: 14
+        b: 6
+      reduced_tillage:
+        distribution: beta
+        a: 4
+        b: 16
+      no_tillage:
+        distribution: beta
+        a: 2
+        b: 18
+      cover_crop:
+        distribution: beta
+        a: 4
+        b: 16
+      irrigation_drip:
+        distribution: beta
+        a: 7
+        b: 13
+
+  Imperial Valley:
+    annual_row_crop:
+      conventional_tillage:
+        distribution: beta
+        a: 16
+        b: 4  # ~80%
+      irrigation_drip:
+        distribution: beta
+        a: 5
+        b: 15  # ~25%, flood dominant
+
+# Crop-specific baselines
+crop_baselines:
+  processing_tomato:
+    pft: annual_row_crop
+    region: San Joaquin Valley
+    source: UC Davis Cost Study 2023
+    events:
+      tillage:
+        practice: conventional_tillage
+      fertilization:
+        practice: synthetic_fertilizer_annual
+        parameters:
+          nh4_n_kg_m2:
+            distribution: normal
+            mean: 0.020
+            sd: 0.003
+      planting:
+        date:
+          distribution: quantiles
+          q25: "04-01"
+          median: "04-15"
+          q75: "04-25"
+        leaf_c_kg_m2:
+          distribution: normal
+          mean: 0.0034
+          sd: 0.0005
+      irrigation:
+        practice: irrigation_sprinkler
+        parameters:
+          seasonal_total_mm:
+            distribution: normal
+            mean: 550
+            sd: 70
+      harvest:
+        practice: harvest_grain
+        parameters:
+          date:
+            distribution: quantiles
+            q25: "09-25"
+            median: "10-10"
+            q75: "10-15"
+
+  almond:
+    pft: perennial_woody
+    region: San Joaquin Valley
+    source: UC ANR Pub 3364
+    events:
+      fertilization:
+        practice: synthetic_fertilizer_woody
+      irrigation:
+        practice: irrigation_drip
+        parameters:
+          seasonal_total_mm:
+            distribution: normal
+            mean: 1100
+            sd: 150
+
+  rice:
+    pft: annual_row_crop
+    region: Sacramento Valley
+    source: UC ANR Rice Manual
+    events:
+      tillage:
+        practice: conventional_tillage
+        parameters:
+          date:
+            distribution: quantiles
+            q25: "04-01"
+            median: "04-15"
+            q75: "05-01"
+      fertilization:
+        practice: synthetic_fertilizer_annual
+        parameters:
+          nh4_n_kg_m2:
+            distribution: normal
+            mean: 0.015
+            sd: 0.003
+      planting:
+        date:
+          distribution: quantiles
+          q25: "05-01"
+          median: "05-15"
+          q75: "05-25"
+      irrigation:
+        method: flood
+        seasonal_total_mm:
+          distribution: normal
+          mean: 1200
+          sd: 200
+      harvest:
+        date:
+          distribution: quantiles
+          q25: "09-25"
+          median: "10-05"
+          q75: "10-15"
+
+compatibility:
+  synergistic:
+    - [no_tillage, cover_crop]
+    - [reduced_tillage, cover_crop]
+    - [compost_application, reduced_tillage]
+    - [irrigation_drip, cover_crop_orchard]
+  incompatible:
+    - [no_tillage, irrigation_flood]
+  sequential:
+    - practice_a: cover_crop
+      practice_b: tillage
+      constraint: cover_crop.termination_date < tillage.date
+    - practice_a: compost_application
+      practice_b: tillage
+      constraint: compost.date < tillage.date OR no_till
+
+metadata:
+  sources:
+    - id: nrcs_cps_329
+      citation: USDA NRCS CPS 329 - Residue and Tillage Management, No Till (Sept 2016)
+      url: https://www.nrcs.usda.gov/
+    - id: nrcs_cps_340
+      citation: USDA NRCS CPS 340 - Cover Crop (May 2024)
+    - id: nrcs_cps_449
+      citation: USDA NRCS CPS 449 - Irrigation Water Management (Oct 2024)
+    - id: cdfa_gravuer_2016
+      citation: Gravuer 2016 - Compost Application Rates for CA Croplands, CDFA EFA SAP
+      url: https://www.cdfa.ca.gov/oefi/healthysoils/
+    - id: hanson_2006
+      citation: Hanson et al 2006 - Scheduling Irrigations, UC ANR Pub 3396
+    - id: brennan_2012
+      citation: Brennan & Boyd 2012 - Winter cover crop seeding rate, Agronomy J
+    - id: usda_nass_2022
+      citation: USDA NASS Census of Agriculture 2022 - California
+  changelog:
+    - version: "0.1.0"
+      date: "2026-01-29"
+      changes:
+        - Initial draft
