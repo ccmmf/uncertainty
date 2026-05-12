@@ -2,11 +2,9 @@
 # 050_events_to_sipnet.R
 #
 # Convert events.json files produced by 040_calval_to_events.R into SIPNET
-# events.in files, then optionally patch the settings.xml produced by
-# `magic-ensemble prepare` to wire in the events ensemble paths.
-#
-# write_events_sipnet() is vendored inline from PEcAn models/sipnet so this
-# script runs without needing PEcAn.model.SIPNET installed.
+# events.in files via PEcAn.SIPNET::write_events_sipnet(), then optionally
+# patch the settings.xml produced by `magic-ensemble prepare` to wire in
+# the events ensemble paths.
 #
 # Usage:
 #   Rscript scripts/050_events_to_sipnet.R \
@@ -18,78 +16,8 @@
 suppressPackageStartupMessages({
   library(jsonlite)
   library(xml2)
+  library(PEcAn.SIPNET)
 })
-
-# ---- Vendored from PEcAn models/sipnet/R/write.events.SIPNET.R -------------
-# Source: https://github.com/PecanProject/pecan/blob/develop/models/sipnet/R/write.events.SIPNET.R
-write_events_sipnet <- function(events_json, outdir) {
-  kg2g  <- 1000
-  mm2cm <- 0.1
-  leafAllocation       <- 0.50
-  woodAllocation       <- 0.15
-  fineRootAllocation   <- 0.10
-  coarseRootAllocation <- 0.25
-
-  x <- jsonlite::fromJSON(events_json, simplifyVector = FALSE)
-  site_objs <- if (!is.null(x$site_id)) list(x) else x
-  files_written <- character(0)
-
-  for (site in site_objs) {
-    sid <- site$site_id
-    evs <- site$events
-    dates <- as.Date(vapply(evs, function(e) as.character(e$date), character(1)))
-    years <- as.integer(format(dates, "%Y"))
-    days  <- as.integer(format(dates, "%j"))
-    ord   <- order(dates)
-    evs_sorted   <- evs[ord]
-    days_sorted  <- days[ord]
-    years_sorted <- years[ord]
-    lines <- character(length(evs))
-
-    for (i in seq_along(evs_sorted)) {
-      e    <- evs_sorted[[i]]
-      year <- years_sorted[[i]]
-      day  <- days_sorted[[i]]
-      type <- e$event_type
-
-      if (type == "tillage") {
-        f <- if (is.null(e$tillage_eff_0to1)) 0 else e$tillage_eff_0to1
-        lines[i] <- sprintf("%d  %d  till  %s", year, day, f)
-      } else if (type == "planting") {
-        leaf_g  <- as.numeric(if (is.null(e$leaf_c_kg_m2)) 0 else e$leaf_c_kg_m2) * kg2g
-        total_g <- if (leafAllocation > 0) leaf_g / leafAllocation else leaf_g
-        wood_g  <- woodAllocation * total_g
-        fr_g    <- fineRootAllocation * total_g
-        cr_g    <- coarseRootAllocation * total_g
-        lines[i] <- sprintf("%d  %d  plant  %s %s %s %s", year, day, leaf_g, wood_g, fr_g, cr_g)
-      } else if (type == "fertilization") {
-        orgN_g <- as.numeric(if (is.null(e$org_n_kg_m2))  0 else e$org_n_kg_m2)  * kg2g
-        orgC_g <- as.numeric(if (is.null(e$org_c_kg_m2))  0 else e$org_c_kg_m2)  * kg2g
-        nh4_g  <- as.numeric(if (is.null(e$nh4_n_kg_m2))  0 else e$nh4_n_kg_m2)  * kg2g
-        no3_g  <- as.numeric(if (is.null(e$no3_n_kg_m2))  0 else e$no3_n_kg_m2)  * kg2g
-        minN_g <- nh4_g + no3_g
-        lines[i] <- sprintf("%d  %d  fert   %s %s %s", year, day, orgN_g, orgC_g, minN_g)
-      } else if (type == "irrigation") {
-        amt_cm      <- as.numeric(if (is.null(e$amount_mm)) 0 else e$amount_mm) * mm2cm
-        method_code <- if (is.null(e$method) || e$method == "soil") 1 else 0
-        lines[i] <- sprintf("%d  %d  irrig  %s %s", year, day, amt_cm, method_code)
-      } else if (type == "harvest") {
-        abv_rem <- if (is.null(e$frac_above_removed_0to1)) 0 else e$frac_above_removed_0to1
-        blw_rem <- if (is.null(e$frac_below_removed_0to1)) 0 else e$frac_below_removed_0to1
-        abv_lit <- if (is.null(e$frac_above_to_litter_0to1)) 1 - abv_rem else e$frac_above_to_litter_0to1
-        blw_lit <- if (is.null(e$frac_below_to_litter_0to1)) 1 - blw_rem else e$frac_below_to_litter_0to1
-        lines[i] <- sprintf("%d  %d  harv   %s %s %s %s", year, day, abv_rem, blw_rem, abv_lit, blw_lit)
-      }
-    }
-
-    dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
-    fp <- file.path(outdir, sprintf("events-%s.in", sid))
-    writeLines(lines, fp)
-    files_written <- c(files_written, fp)
-  }
-  invisible(files_written)
-}
-# ---- End vendored code -------------------------------------------------------
 
 file_arg <- grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE)
 project_root <- if (length(file_arg) > 0) {
@@ -129,7 +57,7 @@ for (jf in json_files) {
     sid <- s$site_id
     if (!sid %in% all_site_ids) {
       all_site_ids <- c(all_site_ids, sid)
-      written <- write_events_sipnet(jf, out_dir)
+      written <- PEcAn.SIPNET::write_events_sipnet(jf, out_dir)
       cat("  wrote: ", basename(written), "\n", sep = "")
     }
   }
@@ -149,7 +77,7 @@ if (!is.null(xml_path)) {
 
   events_node <- xml2::xml_add_child(inputs_node, "events")
   for (n in seq_len(n_ens)) {
-    sid   <- all_site_ids[1]
+    sid    <- all_site_ids[1]
     path_n <- xml2::xml_add_child(events_node, paste0("path", n))
     xml2::xml_text(path_n) <- file.path(out_dir, sprintf("events-%s.in", sid))
   }
