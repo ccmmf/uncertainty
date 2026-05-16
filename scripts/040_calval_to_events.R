@@ -33,8 +33,24 @@ project_root <- if (length(file_arg) > 0) {
 for (f in list.files(file.path(project_root, "R"), pattern = "\\.R$", full.names = TRUE)) {
   source(f)
 }
-# Vendored priors helpers from ccmmf/scenarios PR #3 (see inst/akash_priors/README.md).
-source(file.path(project_root, "inst", "akash_priors", "sample_priors.R"))
+
+# Priors helpers live in the sibling ccmmf/scenarios checkout (PR #3,
+# branch `management_prac`). Until scenarios is released as a proper R
+# package, we source the files directly via relative path. Override the
+# location with the SCENARIOS_DIR environment variable if your sibling
+# checkout lives elsewhere.
+scenarios_dir <- Sys.getenv("SCENARIOS_DIR",
+                            unset = normalizePath(
+                              file.path(project_root, "..", "scenarios"),
+                              mustWork = FALSE))
+if (!dir.exists(scenarios_dir)) {
+  stop("ccmmf/scenarios sibling checkout not found at: ", scenarios_dir,
+       "\n  Clone it next to this repo:",
+       "\n    git clone -b management_prac https://github.com/ccmmf/scenarios.git ",
+       dirname(scenarios_dir),
+       "\n  Or set SCENARIOS_DIR to point at an existing checkout.")
+}
+source(file.path(scenarios_dir, "R", "sample_priors.R"))
 
 # ---- Argument parsing (lightweight; avoids a dependency on optparse) -------
 args <- commandArgs(trailingOnly = TRUE)
@@ -63,17 +79,16 @@ cat("\nLoaded ", nrow(wb$managements), " managements rows across ",
     length(unique(wb$managements$`treatments.name`)), " treatments.\n", sep = "")
 
 priors <- if (do_priors) {
-  load_priors(file.path(project_root, "inst", "akash_priors", "management_priors.yaml"))
+  load_priors(file.path(scenarios_dir, "data", "management_priors.yaml"))
 } else NULL
 
 written <- write_events_json(
-  mgmt        = wb$managements,
-  sites       = wb$sites,
-  out_dir     = out_dir,
-  dataset_id  = dataset,
-  schema_path = file.path(project_root, "inst", "extdata", "events_schema_v0.1.1.json"),
-  validate    = do_validate,
-  priors      = priors
+  mgmt       = wb$managements,
+  sites      = wb$sites,
+  out_dir    = out_dir,
+  dataset_id = dataset,
+  validate   = do_validate,
+  priors     = priors
 )
 
 cat("\nWrote ", length(written), " events.json files:\n", sep = "")
