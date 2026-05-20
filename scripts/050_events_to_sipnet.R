@@ -57,7 +57,7 @@ for (jf in json_files) {
     sid <- s$site_id
     if (!sid %in% all_site_ids) {
       all_site_ids <- c(all_site_ids, sid)
-      written <- PEcAn.SIPNET::write_events_sipnet(jf, out_dir)
+      written <- PEcAn.SIPNET::write.events.SIPNET(jf, out_dir)
       cat("  wrote: ", basename(written), "\n", sep = "")
     }
   }
