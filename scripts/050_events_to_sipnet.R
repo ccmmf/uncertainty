@@ -2,7 +2,7 @@
 # 050_events_to_sipnet.R
 #
 # Convert events.json files produced by 040_calval_to_events.R into SIPNET
-# events.in files via PEcAn.SIPNET::write_events_sipnet(), then optionally
+# events.in files via PEcAn.SIPNET::write.events.sipnet(), then optionally
 # patch the settings.xml produced by `magic-ensemble prepare` to wire in
 # the events ensemble paths.
 #
