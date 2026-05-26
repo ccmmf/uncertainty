@@ -157,14 +157,21 @@ Based on this ingestion, the following additions to the template would improve u
 
 The block-level per-year SOC values are in **one of two places**:
 
-**Option A — PLoS ONE Supplementary Table S1** (easiest):
+**Option A — PLoS ONE Supplementary Table S1** (treatment means + SE only):
 1. Go to https://doi.org/10.1371/journal.pone.0228677
 2. Download the Supporting Information file (S1 Table)
-3. Match by system number + block + year → fill `SOC_stock_Mg_ha` and `total_N_stock_Mg_ha`
+3. Match by system number + year → fill `SOC_stock_Mg_ha` and `total_N_stock_Mg_ha` at the treatment-mean level
 
-**Option B — SOCS GitHub repo Excel files**:
-1. Go to https://github.com/swood-ecology/socs/tree/main/data
-2. Download `usda-soil-data.xlsx` and `site-data.xlsx`
-3. Run `/code/data-analysis.R` to compute stocks from raw fractions + bulk density
+**Option B — USDA Ag Data Commons (block-level, preferred)**:
+1. Access the canonical archive at doi:10.15482/USDA.ADC/1503927
+2. Pull block-level SOC + bulk density values
+3. Match by system + block + year for full per-replicate resolution
 
-Once filled, change `value_status` from `NEEDS_FILL` to `AG_DATA_COMMONS` or `PLOS_S1_TABLE`.
+Once filled, set `fill_status` to `FILLED_S1_TABLE` (Option A) or `FILLED_AG_DATA_COMMONS` (Option B).
+
+> Note: an earlier draft listed `github.com/swood-ecology/socs` as a third option.
+> That repo is analysis code (the
+> `data-analysis.Rmd` SOC-stock formula `pom.stock = (POM C * blkden * 30)/10`),
+> not a separate data archive — the underlying observations all live in Ag Data
+> Commons (doi above). The repo is useful as a reference if we write our own
+> parse script, but should not be cited as a data source.
