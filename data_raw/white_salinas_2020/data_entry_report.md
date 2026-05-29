@@ -52,19 +52,28 @@ Years 2-8 follow the identical cycle; quadrennial systems (sys1, sys2) omit
 cover crop planting in years 2, 3, 4, 6, 7, 8 and add it back in year 5.
 
 ### SOC Observations
-The paper reports annual SOC stock measurements (0-30 cm, Mg ha⁻¹) for Years 0-8
-across 5 treatments × 4 replicates = 40 observations per year × 9 time points = 360 rows.
-POXC (labile C) measured at Years 0, 6, 8 only.
+The paper reports annual SOC stock measurements (0–30 cm, Mg ha⁻¹) for Years 0–8
+across 5 treatments × 4 replicates = 20 plot-years per year × 9 time points = **180 block-level
+SOC rows** (each variable). POXC (labile C) measured at Years 0, 6, 8 only.
 Bulk density measured at Years 3 and 7 only.
 
-**The actual values could not be automatically retrieved** — the USDA Ag Data Commons
-repository (https://agdatacommons.nal.usda.gov) returned HTTP 403 during automated access.
+**Data source — Zotero supplemental** (per @dlebauer's pointer to
+https://www.zotero.org/groups/5606810/ccmmf/items/U8UG83C5): the block-level values
+were pulled from White et al. 2020 *Data in Brief* Supplemental Tables.xlsx
+(Zotero storage `5CB4ZEF8`, Tables 1–4). The original Zotero copy includes:
 
-To complete `observations_soc.csv`:
-1. Go to https://agdatacommons.nal.usda.gov/articles/dataset/Data_from_Soil_carbon_and_nitrogen_data.../24774105
-2. Download the CSV files
-3. Fill in `SOC_stock_Mg_ha`, `total_N_stock_Mg_ha`, and `POXC_stock_Mg_ha` columns
-4. Match by treatment system number and block/replicate ID
+- 180 block-level SOC stock + concentration rows (`FILLED_ZOTERO_XLSX`)
+- 180 block-level Total N stock + concentration rows
+- 180 nitrate-N rows (new variable `nitrate_N_mg_kg`)
+- POXC, C/N inputs, and yields
+
+These are now in the active MAGiC cal/val workbook
+(`White_Salinas_2020_filled.xlsx`) under the `observations` tab with
+`observation_level=replicate, n=1`.
+
+The USDA Ag Data Commons archive (doi:10.15482/USDA.ADC/1503927) remains the
+canonical long-term source for Years 0–1 block-level SOC, which are still pooled
+treatment_mean rows in the workbook pending an AgDC pull.
 
 ---
 
