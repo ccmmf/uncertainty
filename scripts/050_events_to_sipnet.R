@@ -67,22 +67,17 @@ cat("\nDone writing", length(all_site_ids), "events.in file(s).\n")
 
 if (!is.null(xml_path)) {
   if (!file.exists(xml_path)) stop("settings.xml not found: ", xml_path)
-  doc <- xml2::read_xml(xml_path)
-
-  inputs_node <- xml2::xml_find_first(doc, "//run/inputs")
-  if (is.na(inputs_node)) stop("Could not find //run/inputs in settings.xml")
-
-  existing <- xml2::xml_find_all(doc, "//run/inputs/events")
-  xml2::xml_remove(existing)
-
-  events_node <- xml2::xml_add_child(inputs_node, "events")
-  for (n in seq_len(n_ens)) {
-    sid    <- all_site_ids[1]
-    path_n <- xml2::xml_add_child(events_node, paste0("path", n))
-    xml2::xml_text(path_n) <- file.path(out_dir, sprintf("events-%s.in", sid))
-  }
-
-  xml2::write_xml(doc, xml_path)
-  cat("\nPatched settings.xml at: ", xml_path, "\n", sep = "")
-  cat("Added", n_ens, "events ensemble paths for site:", all_site_ids[1], "\n")
+   settings <- PEcAn.settings::read.settings(xml_path)
+   settings <- PEcAn.settings::setEnsemblePaths(
+    settings,
+    n_reps = n_ens,
+    input_type = "events",
+    path = out_dir,
+    path_template = "{path}/events-{id}-{n}.in"
+  )
+  PEcAn.settings::write.settings(
+    settings,
+    outputfile = basename(xml_path),
+    outputdir = dirname(xml_path)
+  )
 }
