@@ -84,11 +84,14 @@ treatment_mean rows in the workbook pending an AgDC pull.
 management events. No day-month-year dates are given for any planting, harvest, tillage,
 or compost event in any year.
 
-**Assumption:** DOY estimates assigned based on Salinas Valley vegetable production norms
-(see table above). These could be off by ±2-4 weeks.
-
-**Schema suggestion:** Add a `date_precision` field with values like
-`exact | month | season | year | inferred` to formally capture this uncertainty.
+**Approach (per @dlebauer and @divine7022 on PR #5):** capture the paper's stated
+range as `min_date` / `max_date` rather than inventing a point DOY from production
+norms. Each managements row carries the season bounds the paper actually reports
+(e.g. spring planting = `min_date=Mar 1, max_date=May 31`) plus a `notes` field
+indicating source (`paper text: spring planting`). Norm-based / monitoring-derived
+DOY refinement is deferred to a downstream gap-fill stage rather than baked into
+the curated workbook — keeps the date uncertainty in the posterior instead of
+pinning to an invented day.
 
 ### 2. Fertilization: not applicable (organic system)
 **Challenge:** Issue #215 lists fertilization date and N rate as required management fields.
@@ -145,7 +148,7 @@ field to distinguish pre-study conditioning from the treatment period.
 
 Based on this ingestion, the following additions to the template would improve usability:
 
-1. **`date_precision` field** in management_events — `exact | month | season | inferred`
+1. ~~`date_precision` field in management_events~~ — superseded: adopted `min_date` / `max_date` to carry paper's stated range + `notes` for source (per @dlebauer / @divine7022 review)
 2. **`organic_amendment` event type** separate from `fertilization`, with `C_Mg_ha` and `N_Mg_ha` subfields
 3. **`harvest_component_known` boolean** in harvest events
 4. **`is_establishment` flag** for pre-study management events
