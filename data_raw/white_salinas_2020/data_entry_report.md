@@ -49,11 +49,10 @@ instead of pinning to an invented day.
 > managements tab carries season-bound ranges only. Removed here so the
 > report doesn't suggest values that aren't in the dataset.
 
-Year 1 (2003 planting → 2004 vegetables) and Years 2-8 are fully expanded
-in the workbook's `managements` tab. Quadrennial systems (sys1, sys2) omit
-cover crop planting in non-quadrennial years; quadrennial years confirmed
-as Years 3 and 7 (per companion paper PMC7004306, Year 0 = baseline Oct
-2003).
+All event rows (Years 0–8, all 5 systems) are in the workbook's
+`managements` tab. Treatment-cycle metadata (quadrennial cover crop years,
+system-specific rotation) lives alongside the rows in `managements` /
+`treatments`, not here.
 
 ### SOC Observations
 The paper reports annual SOC stock measurements (0–30 cm, Mg ha⁻¹) for Years 0–8
