@@ -96,7 +96,7 @@ the curated workbook — keeps the date uncertainty in the posterior instead of
 pinning to an invented day.
 
 ### 2. Fertilization: not applicable (organic system)
-**Challenge:** Issue #215 lists fertilization date and N rate as required management fields.
+**Challenge:** Issue [#215](https://github.com/ccmmf/organization/issues/215) lists fertilization date and N rate as required management fields.
 This is an organic system — no synthetic fertilizer was applied.
 
 **Assumption:** Compost is treated as the organic amendment / N source.
@@ -112,16 +112,32 @@ supplement for year-resolved values.
 - A dedicated `organic_amendment` event type with `C_rate` and `N_rate` fields, or
 - A `fertilization` event type that accepts `form = organic` with `material_type` subfield.
 
-### 3. Harvest component not specified
-**Challenge:** The paper does not specify what fraction of broccoli or lettuce biomass was
-removed vs. left in field. Issue #215 requires harvest component (grain/fruit/straw/wood/leaf).
+### 3. Harvest component and harvest index
+**Reported in White et al. (2020b):** romaine lettuce and broccoli harvest
+indices are explicitly stated:
 
-**Assumption:** For lettuce: harvested component = head (leaves); stover left in field.
-For broccoli: harvested component = head (floret); stover left in field.
-These are standard commercial practices for these crops but not stated explicitly.
+> "Vegetable post-harvest residues were estimated based on measured
+> harvested shoot biomass and measured harvest indices of 0.26 and 0.24
+> for romaine lettuce hearts and broccoli, respectively (Brennan,
+> unpublished data). Thus, approximately 74% (1 − 0.26) of total lettuce
+> shoot biomass and 76% (1 − 0.24) of total broccoli shoot biomass was
+> left in the field as residue."
 
-**Flag:** `exact_date_known = FALSE` used as proxy; a separate `biomass_removal_known` flag
-would be more precise.
+These values are now in the workbook's `managements` tab harvest rows:
+
+- **Romaine lettuce hearts:** `harvest_index = 0.26`, ~74% residue left
+  in field. (Lower than a whole-head value would be — romaine hearts are
+  field-trimmed to the heart and outer leaves stay as residue.)
+- **Broccoli:** `harvest_index = 0.24`, ~76% residue left in field
+  (floret only removed).
+
+Both attributed to *Brennan, unpublished data* per the cited paper.
+
+**Note on Issue [#215](https://github.com/ccmmf/organization/issues/215)
+"harvest component required" field:** worth revisiting — when the paper
+does not report HI, downstream code can assume a per-crop default and
+flag it. We do not need the harvest_component / HI field to block
+ingestion. Tracking this as a schema follow-up.
 
 ### 4. Quadrennial cover crop schedule
 **Challenge:** The paper says cover crops are planted every 4th winter in sys1 and sys2.
@@ -133,7 +149,7 @@ systems received legume-rye; the 4-year cycle then counts from there,
 making next quadrennial = fall 2006 = Year 4 of the veg seasons.
 
 ### 5. GHG flux measurements absent
-**Challenge:** Issue #215 lists GHG flux as a validation target. This dataset contains
+**Challenge:** Issue [#215](https://github.com/ccmmf/organization/issues/215) lists GHG flux as a validation target. This dataset contains
 no N₂O, CH₄, or CO₂ measurements — explicitly noted as a limitation in the paper.
 
 **Impact:** This dataset can only validate SOC dynamics, not GHG fluxes. It remains
