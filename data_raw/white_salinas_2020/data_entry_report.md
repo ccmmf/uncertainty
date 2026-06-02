@@ -99,9 +99,14 @@ pinning to an invented day.
 **Challenge:** Issue #215 lists fertilization date and N rate as required management fields.
 This is an organic system — no synthetic fertilizer was applied.
 
-**Assumption:** Compost is treated as the organic amendment / N source. Compost N content
-(15 g N/kg, applied at 7.6 Mg ha⁻¹) is recorded in `management_events.csv` as
-`event_type = compost_application`.
+**Assumption:** Compost is treated as the organic amendment / N source.
+Material type is **urban yard-waste compost** per White et al. (2020b).
+Compost N content (15 g N kg⁻¹, applied at 7.6 Mg ha⁻¹) is recorded in the
+workbook's `managements` tab as `event_type = compost_application`. The
+PLOS ONE paper reports the compost C:N ratio was measured in only 4 of 8
+study years and ranged 18–28 (mean 22); per-year compost C:N values are
+not captured in the workbook yet — pending a check of the *Data in Brief*
+supplement for year-resolved values.
 
 **Schema suggestion:** The current schema conflates compost with fertilization. Need either:
 - A dedicated `organic_amendment` event type with `C_rate` and `N_rate` fields, or
@@ -134,16 +139,27 @@ no N₂O, CH₄, or CO₂ measurements — explicitly noted as a limitation in t
 **Impact:** This dataset can only validate SOC dynamics, not GHG fluxes. It remains
 valuable for soil carbon calibration.
 
-### 6. Pre-study 2003 management
-**Challenge:** Pre-study establishment in 2003 included a one-time compost application
-at 22 Mg ha⁻¹ (wet weight) — much higher than the subsequent annual rate and applied
-to ALL systems. This affects Year 0 baseline SOC.
+### 6. Pre-study site history and 2003 establishment
+**Site history per White et al. (2020b):**
+- **1990–1996:** hay production and mixed vegetable / sugar beet trials.
+- **1997–2003:** occasional vegetable trials and cover crops with
+  **minimal compost or fertilizer inputs** and frequent fallow periods.
 
-**Assumption:** Included as `study_year = 0`, `treatment_id = all_systems` with a note.
-The template schema does not currently have a mechanism for pre-treatment establishment events.
+This puts the pre-study soil in a relatively low-input baseline state,
+not a fully fertilized prior — relevant for Year 0 SOC interpretation
+since the baseline C is not a steady-state under the new treatments.
 
-**Schema suggestion:** Add an `is_establishment` boolean or `phase = establishment | treatment`
-field to distinguish pre-study conditioning from the treatment period.
+**Challenge:** Pre-study establishment in 2003 included a one-time compost
+application at 22 Mg ha⁻¹ (wet weight) — much higher than the subsequent
+annual rate and applied to ALL systems. This affects Year 0 baseline SOC.
+
+**Assumption:** Included as `study_year = 0`, `treatment_id = all_systems`
+with a note. The template schema does not currently have a mechanism for
+pre-treatment establishment events.
+
+**Schema suggestion:** Add an `is_establishment` boolean or
+`phase = establishment | treatment` field to distinguish pre-study
+conditioning from the treatment period.
 
 ---
 
