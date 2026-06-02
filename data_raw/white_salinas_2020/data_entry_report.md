@@ -2,21 +2,25 @@
 
 **Dataset:** White et al. (2020a) — see Citations at the bottom of this document.
 
-**Entered by:** Aritra Dey
+**Entered by:** Aritra Dey  
 **Entry date:** 2026-04-10  
-**Related issue:** ccmmf/organization#221
+**Related issue:** [ccmmf/organization#221](https://github.com/ccmmf/organization/issues/221)
 
 ---
 
-## Files Created
+## Workbook Tabs Populated
 
-| File | Status | Source |
+All data is ingested into the MAGiC cal/val workbook
+([Google Sheets](https://docs.google.com/spreadsheets/d/1pXiZUkNP50WXbmAztoEgUJ6rpQNyewmobCuaFHL8UjQ/edit)),
+not local CSV files. The tabs touched by this ingestion:
+
+| Tab | Status | Source |
 |------|--------|--------|
-| `citation.csv` | Complete | Paper metadata |
-| `site.csv` | Complete | Paper text (coordinates from 36°37'N, 121°32'W) |
-| `treatments.csv` | Complete | Paper Table 1 / methods |
-| `management_events.csv` | Partial — Year 1 complete, Years 2-8 need expansion | Paper methods (seasonal description) |
-| `observations_soc.csv` | Structure complete, values need filling | USDA Ag Data Commons download required |
+| `citations` | Complete | Paper metadata + DOIs for White et al. (2020a, 2020b) and the AgDC archive |
+| `sites` | Complete | Paper text (coordinates 36°37′N, 121°32′W) |
+| `treatments` | Complete | Paper Table 1 + methods |
+| `managements` | Complete (Years 0–8, all 5 systems, season-bound `min_date`/`max_date` per row) | Paper methods |
+| `observations` | Years 2–8 block-level rows complete (180 SOC + 180 total N + 180 nitrate-N + POXC/yields); Years 0–1 are still treatment-mean rows pending an Ag Data Commons pull | White et al. (2020a) supplemental tables + (Years 0–1) PLoS ONE S1 |
 
 ---
 
@@ -82,18 +86,13 @@ the active AgDC record identifier still needs to be confirmed.
 ## Challenges and Assumptions
 
 ### 1. No exact event dates
-**Challenge:** The paper provides only seasonal windows (fall, spring, summer) for all
-management events. No day-month-year dates are given for any planting, harvest, tillage,
-or compost event in any year.
+**Challenge:** The paper provides only seasonal windows (fall, spring, summer)
+for all management events. No day-month-year dates are given for any planting,
+harvest, tillage, or compost event in any year.
 
-**Approach:** capture the paper's stated
-range as `min_date` / `max_date` rather than inventing a point DOY from production
-norms. Each managements row carries the season bounds the paper actually reports
-(e.g. spring planting = `min_date=Mar 1, max_date=May 31`) plus a `notes` field
-indicating source (`paper text: spring planting`). Norm-based / monitoring-derived
-DOY refinement is deferred to a downstream gap-fill stage rather than baked into
-the curated workbook — keeps the date uncertainty in the posterior instead of
-pinning to an invented day.
+**Approach:** Documented above under *Management Events* — paper's stated
+season-bounds go into `min_date` / `max_date`, no point-estimate DOYs are
+invented in the workbook.
 
 ### 2. Fertilization: not applicable (organic system)
 **Challenge:** Issue [#215](https://github.com/ccmmf/organization/issues/215) lists fertilization date and N rate as required management fields.
@@ -108,9 +107,10 @@ study years and ranged 18–28 (mean 22); per-year compost C:N values are
 not captured in the workbook yet — pending a check of the *Data in Brief*
 supplement for year-resolved values.
 
-**Schema suggestion:** The current schema conflates compost with fertilization. Need either:
-- A dedicated `organic_amendment` event type with `C_rate` and `N_rate` fields, or
-- A `fertilization` event type that accepts `form = organic` with `material_type` subfield.
+**Schema (resolved):** Per PR #5 review — extend the existing
+`fertilization` event with `form: organic` + `material_type` + optional
+`C_rate` / `C_N_ratio` fields, rather than introducing a new
+`organic_amendment` event_type. Same correctness fix, no schema bump.
 
 ### 3. Harvest component and harvest index
 **Reported in White et al. (2020b):** romaine lettuce and broccoli harvest
@@ -143,10 +143,11 @@ ingestion. Tracking this as a schema follow-up.
 **Challenge:** The paper says cover crops are planted every 4th winter in sys1 and sys2.
 
 **Confirmed from the companion paper (White et al. 2020b):** Quadrennial
-cover crop planted in **Years 4 and 8** (fall 2006 and fall 2010), not
+cover crop planted in **Years 3 and 7** (fall 2006 and fall 2010), not
 Years 1 and 5 as initially assumed. Year 0 pre-study (fall 2003) all
-systems received legume-rye; the 4-year cycle then counts from there,
-making next quadrennial = fall 2006 = Year 4 of the veg seasons.
+systems received legume-rye; counting from there, the next quadrennial
+plantings line up with fall 2006 and fall 2010 (i.e. Years 3 and 7 of
+the experimental period).
 
 ### 5. GHG flux measurements absent
 **Challenge:** Issue [#215](https://github.com/ccmmf/organization/issues/215) lists GHG flux as a validation target. This dataset contains
@@ -213,13 +214,15 @@ Based on this ingestion, the following additions to the template would improve u
 
 ## What Is Needed to Complete This Entry
 
-- [ ] Fill `observations_soc.csv` Years 2-8 block-level SOC values — see instructions below
-- [x] Expand `management_events.csv` for Years 2-8 — complete
-- [x] Confirm quadrennial cover crop years — confirmed as Years 4 and 8 from companion paper
-- [x] Harvest component — confirmed as standard practice: lettuce=head, broccoli=floret; stover left in field. No biomass amounts reported in paper.
-- [x] Extend `observations_soc.csv` rows for all Years 0-8, all 5 treatments, all 4 blocks — complete (180 rows; values need filling)
+- [x] Expand `managements` tab for Years 0–8 (5 systems × season-bound rows) — complete
+- [x] Confirm quadrennial cover crop years — confirmed as Years 3 and 7 from companion paper (White et al. 2020b)
+- [x] Capture harvest indices — HI = 0.26 (romaine hearts) and 0.24 (broccoli) per White et al. (2020b), citing Brennan, unpublished
+- [x] Ingest block-level `observations` rows for Years 2–8 (180 SOC + 180 total N + 180 nitrate-N rows from White et al. 2020a supplemental tables)
+- [ ] Pull Years 0–1 block-level rows from USDA Ag Data Commons (currently treatment-mean rows from PLoS ONE S1 — see *How to Fill the Remaining SOC Values* below)
+- [ ] Expand the single 2003 pre-establishment compost row into 5 per-treatment rows (see Challenge #6)
+- [ ] Check the *Data in Brief* supplement for year-resolved compost C:N values (see Challenge #2)
 
-## How to Fill the Remaining SOC Values
+## How to Fill the Remaining Years 0–1 SOC Values
 
 The two data sources are **not at the same resolution** — one is a
 summary of the other:
