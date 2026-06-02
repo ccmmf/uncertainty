@@ -60,23 +60,28 @@ across 5 treatments × 4 replicates = 20 plot-years per year × 9 time points = 
 SOC rows** (each variable). POXC (labile C) measured at Years 0, 6, 8 only.
 Bulk density measured at Years 3 and 7 only.
 
-**Data source — Zotero supplemental** (per pointer to
-https://www.zotero.org/groups/5606810/ccmmf/items/U8UG83C5): the block-level values
-were pulled from White et al. 2020 *Data in Brief* Supplemental Tables.xlsx
-(Zotero storage `5CB4ZEF8`, Tables 1–4). The original Zotero copy includes:
+**Data source.** All block-level values are sourced from the published
+*Data in Brief* supplemental tables (Tables 1–4) accompanying:
 
-- 180 block-level SOC stock + concentration rows (`FILLED_ZOTERO_XLSX`)
-- 180 block-level Total N stock + concentration rows
-- 180 nitrate-N rows (new variable `nitrate_N_mg_kg`)
+> White KE, Brennan EB, Cavigelli MA (2020). Soil carbon and nitrogen
+> data during eight years of cover crop and compost treatments in organic
+> vegetable production. *Data in Brief* 33, 106481.
+> https://doi.org/10.1016/j.dib.2020.106481
+
+Block-level rows ingested into the workbook's `observations` tab
+(`observation_level=replicate, n=1`):
+
+- 180 SOC stock + concentration rows
+- 180 Total N stock + concentration rows
+- 180 nitrate-N rows
 - POXC, C/N inputs, and yields
 
-These are now in the active MAGiC cal/val workbook
-(`White_Salinas_2020_filled.xlsx`) under the `observations` tab with
-`observation_level=replicate, n=1`.
+Full citation details (DOI, URL, supplement identifiers) are in the
+workbook's `citations` tab.
 
-The USDA Ag Data Commons archive (doi:10.15482/USDA.ADC/1503927) remains the
-canonical long-term source for Years 0–1 block-level SOC, which are still pooled
-treatment_mean rows in the workbook pending an AgDC pull.
+The USDA Ag Data Commons archive (doi:10.15482/USDA.ADC/1503927) is the
+canonical long-term archive for Years 0–1 block-level SOC, which remain
+pooled `treatment_mean` rows in the workbook pending an AgDC pull.
 
 ---
 
