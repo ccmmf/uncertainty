@@ -1,10 +1,8 @@
 # Data Entry Report: White/Salinas Cover Crop + Compost Dataset
 
-**Dataset:** White KE, Brennan EB, Cavigelli MA (2020). Soil carbon and nitrogen data during
-eight years of cover crop and compost treatments in organic vegetable production.
-*Data in Brief* 33, 106481. https://doi.org/10.1016/j.dib.2020.106481
+**Dataset:** White et al. (2020a) — see Citations at the bottom of this document.
 
-**Entered by:** AritraDey-Dev  
+**Entered by:** Aritra Dey
 **Entry date:** 2026-04-10  
 **Related issue:** ccmmf/organization#221
 
@@ -60,15 +58,9 @@ across 5 treatments × 4 replicates = 20 plot-years per year × 9 time points = 
 SOC rows** (each variable). POXC (labile C) measured at Years 0, 6, 8 only.
 Bulk density measured at Years 3 and 7 only.
 
-**Data source.** All block-level values are sourced from the published
-*Data in Brief* supplemental tables (Tables 1–4) accompanying:
-
-> White KE, Brennan EB, Cavigelli MA (2020). Soil carbon and nitrogen
-> data during eight years of cover crop and compost treatments in organic
-> vegetable production. *Data in Brief* 33, 106481.
-> https://doi.org/10.1016/j.dib.2020.106481
-
-Block-level rows ingested into the MAGiC cal/val workbook
+**Data source.** All block-level values are sourced from the
+supplemental tables (Tables 1–4) of White et al. (2020a). Block-level rows
+ingested into the MAGiC cal/val workbook
 ([Google Sheets](https://docs.google.com/spreadsheets/d/1pXiZUkNP50WXbmAztoEgUJ6rpQNyewmobCuaFHL8UjQ/edit))
 under the `observations` tab (`observation_level=replicate, n=1`):
 
@@ -80,9 +72,10 @@ under the `observations` tab (`observation_level=replicate, n=1`):
 Full citation details (DOI, URL, supplement identifiers) are in the
 workbook's `citations` tab.
 
-The USDA Ag Data Commons archive (doi:10.15482/USDA.ADC/1503927) is the
-canonical long-term archive for Years 0–1 block-level SOC, which remain
-pooled `treatment_mean` rows in the workbook pending an AgDC pull.
+Years 0–1 block-level SOC remain pooled `treatment_mean` rows in the
+workbook; an additional USDA Ag Data Commons pull is needed for full
+per-block resolution. The previously circulated DOI did not resolve;
+the active AgDC record identifier still needs to be confirmed.
 
 ---
 
@@ -128,10 +121,11 @@ would be more precise.
 ### 4. Quadrennial cover crop schedule
 **Challenge:** The paper says cover crops are planted every 4th winter in sys1 and sys2.
 
-**Confirmed from companion paper (PMC7004306):** Quadrennial cover crop planted in
-**Years 4 and 8** (fall 2006 and fall 2010), not Years 1 and 5 as initially assumed.
-Year 0 pre-study (fall 2003) all systems received legume-rye; the 4-year cycle then
-counts from there, making next quadrennial = fall 2006 = Year 4 of the veg seasons.
+**Confirmed from the companion paper (White et al. 2020b):** Quadrennial
+cover crop planted in **Years 4 and 8** (fall 2006 and fall 2010), not
+Years 1 and 5 as initially assumed. Year 0 pre-study (fall 2003) all
+systems received legume-rye; the 4-year cycle then counts from there,
+making next quadrennial = fall 2006 = Year 4 of the veg seasons.
 
 ### 5. GHG flux measurements absent
 **Challenge:** Issue #215 lists GHG flux as a validation target. This dataset contains
@@ -179,20 +173,41 @@ Based on this ingestion, the following additions to the template would improve u
 The block-level per-year SOC values are in **one of two places**:
 
 **Option A — PLoS ONE Supplementary Table S1** (treatment means + SE only):
-1. Go to https://doi.org/10.1371/journal.pone.0228677
-2. Download the Supporting Information file (S1 Table)
-3. Match by system number + year → fill `SOC_stock_Mg_ha` and `total_N_stock_Mg_ha` at the treatment-mean level
+1. Download the Supporting Information file (S1 Table) from White et al. (2020b)
+2. Match by system number + year → fill `SOC_stock_Mg_ha` and `total_N_stock_Mg_ha` at the treatment-mean level
 
 **Option B — USDA Ag Data Commons (block-level, preferred)**:
-1. Access the canonical archive at doi:10.15482/USDA.ADC/1503927
+1. Open the dataset landing page:
+   <https://data.nal.usda.gov/dataset/data-soil-carbon-and-nitrogen-data-during-eight-years-cover-crop-and-compost-treatments-organic-vegetable-production>
+   (canonical DOI is in the workbook's `citations` tab)
 2. Pull block-level SOC + bulk density values
 3. Match by system + block + year for full per-replicate resolution
 
 Once filled, set `fill_status` to `FILLED_S1_TABLE` (Option A) or `FILLED_AG_DATA_COMMONS` (Option B).
 
-> Note: an earlier draft listed `github.com/swood-ecology/socs` as a third option.
-> That repo is analysis code (the
-> `data-analysis.Rmd` SOC-stock formula `pom.stock = (POM C * blkden * 30)/10`),
-> not a separate data archive — the underlying observations all live in Ag Data
-> Commons (doi above). The repo is useful as a reference if we write our own
-> parse script, but should not be cited as a data source.
+> Note: an earlier draft listed `github.com/swood-ecology/socs` as a third
+> option. That repo is analysis code, not a separate data archive — the
+> underlying observations are White et al. (2020a / b). Useful as a
+> reference if we write our own parse script, but should not be cited as a
+> data source.
+
+---
+
+## Citations
+
+- **White et al. (2020a)** — White KE, Brennan EB, Cavigelli MA. Soil
+  carbon and nitrogen data during eight years of cover crop and compost
+  treatments in organic vegetable production. *Data in Brief* 33, 106481.
+  <https://doi.org/10.1016/j.dib.2020.106481>
+- **White et al. (2020b)** — White KE, Brennan EB, Cavigelli MA. Companion
+  PLoS ONE paper reporting the same multi-year cover crop / compost
+  experiment (treatment means + SE in Supplementary Table S1).
+  <https://doi.org/10.1371/journal.pone.0228677>
+- **USDA Ag Data Commons** — long-term archive for block-level SOC and
+  bulk density values from the same Salinas experiment. Landing page:
+  <https://data.nal.usda.gov/dataset/data-soil-carbon-and-nitrogen-data-during-eight-years-cover-crop-and-compost-treatments-organic-vegetable-production>.
+  Canonical DOI recorded in the workbook's `citations` tab (the
+  `10.15482/USDA.ADC/1503927` identifier in earlier drafts did not
+  resolve — please defer to the citations tab as the source of truth).
+
+Full citation metadata also lives in the workbook's `citations` tab.
