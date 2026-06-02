@@ -68,8 +68,9 @@ Bulk density measured at Years 3 and 7 only.
 > vegetable production. *Data in Brief* 33, 106481.
 > https://doi.org/10.1016/j.dib.2020.106481
 
-Block-level rows ingested into the workbook's `observations` tab
-(`observation_level=replicate, n=1`):
+Block-level rows ingested into the MAGiC cal/val workbook
+([Google Sheets](https://docs.google.com/spreadsheets/d/1pXiZUkNP50WXbmAztoEgUJ6rpQNyewmobCuaFHL8UjQ/edit))
+under the `observations` tab (`observation_level=replicate, n=1`):
 
 - 180 SOC stock + concentration rows
 - 180 Total N stock + concentration rows
