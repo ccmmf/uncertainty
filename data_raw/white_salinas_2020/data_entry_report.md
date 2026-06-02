@@ -221,20 +221,42 @@ Based on this ingestion, the following additions to the template would improve u
 
 ## How to Fill the Remaining SOC Values
 
-The block-level per-year SOC values are in **one of two places**:
+The two data sources are **not at the same resolution** — one is a
+summary of the other:
 
-**Option A — PLoS ONE Supplementary Table S1** (treatment means + SE only):
-1. Download the Supporting Information file (S1 Table) from White et al. (2020b)
-2. Match by system number + year → fill `SOC_stock_Mg_ha` and `total_N_stock_Mg_ha` at the treatment-mean level
+- **USDA Ag Data Commons** — *primary data*. All 4 block-level
+  measurements per `(system, year)`. The experiment uses a randomized
+  complete block design with 4 blocks, and each treatment appears once
+  per block, so **block-level = per-replicate resolution at this site**.
+  Includes SOC concentration, bulk density, total N, POXC, and yields.
+- **PLoS ONE Supplementary Table S1** — *summaries* of the primary data:
+  treatment means + standard errors per `(system, year)`, computed across
+  the 4 blocks. No information in S1 that is not derivable from the AgDC
+  primary data.
 
-**Option B — USDA Ag Data Commons (block-level, preferred)**:
+**Default ingestion path: always pull from the primary archive when one
+exists.** For this dataset that means Ag Data Commons:
+
 1. Open the dataset landing page:
    <https://data.nal.usda.gov/dataset/data-soil-carbon-and-nitrogen-data-during-eight-years-cover-crop-and-compost-treatments-organic-vegetable-production>
    (canonical DOI is in the workbook's `citations` tab)
-2. Pull block-level SOC + bulk density values
-3. Match by system + block + year for full per-replicate resolution
+2. Pull block-level SOC + bulk density + total N values
+3. Match by `(system, block, year)` for full per-replicate rows in the
+   workbook's `observations` tab
 
-Once filled, set `fill_status` to `FILLED_S1_TABLE` (Option A) or `FILLED_AG_DATA_COMMONS` (Option B).
+PLoS ONE S1 is a useful cross-check (do our block-means line up with
+their reported treatment means?) but should not be used as the primary
+fill source if AgDC is reachable.
+
+Once filled, set `fill_status` to `FILLED_AG_DATA_COMMONS`. Use
+`FILLED_S1_TABLE` only for treatment-mean rows where block-level data
+genuinely is not available (Years 0–1 in the current workbook).
+
+**Protocol note (apply to future ingestions):** when a paper has a
+companion data publication or open archive, treat that as the
+authoritative source. Tables and supplementary files in the analysis
+paper are summary statistics over the same data — useful for
+verification, not a substitute for replicate-level ingestion.
 
 > Note: an earlier draft listed `github.com/swood-ecology/socs` as a third
 > option. That repo is analysis code, not a separate data archive — the
