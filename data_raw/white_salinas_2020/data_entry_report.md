@@ -167,15 +167,34 @@ since the baseline C is not a steady-state under the new treatments.
 
 **Challenge:** Pre-study establishment in 2003 included a one-time compost
 application at 22 Mg ha⁻¹ (wet weight) — much higher than the subsequent
-annual rate and applied to ALL systems. This affects Year 0 baseline SOC.
+annual rate and applied to ALL 5 systems. This is materially load-bearing
+for the cal/val: the unexpected Year 0 → Year 1 SOC decline reported in
+White et al. (2020b) is driven by this pre-treatment compost flush rather
+than by the treatments themselves.
 
-**Assumption:** Included as `study_year = 0`, `treatment_id = all_systems`
-with a note. The template schema does not currently have a mechanism for
-pre-treatment establishment events.
+**Approach (per PR #5 review):** capture pre-establishment events
+explicitly, one row per treatment. This follows the same convention the
+workbook already uses for in-treatment events — each `(treatment_id,
+event_type, date_range)` gets its own row even when the only differing
+field is `treatment_id`. So the 2003 establishment compost expands to 5
+identical rows (sys1–sys5) on the `managements` tab. Same pattern for any
+prior management we extract from the 1990–2003 site history if/when
+those become event-resolved.
+
+A many-to-many normalization (a `managements_treatments` lookup table, or
+a `treatment_ids` JSON list on each management row) was considered but
+not adopted — duplication-per-treatment is simpler, matches the existing
+workbook convention, and remains BETYdb-compatible.
 
 **Schema suggestion:** Add an `is_establishment` boolean or
-`phase = establishment | treatment` field to distinguish pre-study
-conditioning from the treatment period.
+`phase = establishment | treatment` field on `managements` so pre-study
+conditioning is distinguishable from the treatment period at query time.
+`study_year = 0` is necessary but not sufficient on its own — multi-year
+pre-history would need either negative `study_year` values or this
+explicit phase flag.
+
+**TODO (workbook):** expand the current single `treatment_id =
+all_systems` row for the 2003 compost into 5 per-treatment rows.
 
 ---
 
