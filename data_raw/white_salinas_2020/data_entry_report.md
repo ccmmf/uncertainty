@@ -183,12 +183,12 @@ conditioning from the treatment period.
 
 Based on this ingestion, the following additions to the template would improve usability:
 
-1. ~~`date_precision` field in management_events~~ — superseded: adopted `min_date` / `max_date` to carry paper's stated range + `notes` for source
-2. **`organic_amendment` event type** separate from `fertilization`, with `C_Mg_ha` and `N_Mg_ha` subfields
-3. **`harvest_component_known` boolean** in harvest events
-4. **`is_establishment` flag** for pre-study management events
-5. **`study_year` alongside `calendar_year`** — many papers report Year 0-8 without clear calendar year mapping
-6. **`replicate_id` or `block`** column in observations — needed for proper mixed-effects model validation
+1. ~~`date_precision` field in management_events~~ — superseded: `min_date` / `max_date` carry the paper's stated range; `min_date == max_date` ⇒ exact date known, so a separate boolean is redundant.
+2. **Organic amendment handling** in `fertilization` — add `form: organic` + `material_type` + `C_rate` / `C_N_ratio` to the existing fertilization event, rather than introducing a new `organic_amendment` event_type. Same correctness fix, no schema bump.
+3. ~~`harvest_component_known` boolean in harvest events~~ — superseded: missingness already means unknown; downstream code can assume a per-crop default (e.g. HI from a `PEcAn.data.land::look_up_harvest_index()` lookup) and flag it.
+4. **`is_establishment` flag** for pre-study management events — pre-treatment conditioning is a meaningfully different phase that the curated workbook should distinguish.
+5. **`study_year` alongside `calendar_year`** — many papers report Year 0–8 without clear calendar year mapping; carrying both avoids re-derivation downstream.
+6. **`replicate_id` or `block`** column in observations — needed for proper mixed-effects model validation.
 
 ---
 
