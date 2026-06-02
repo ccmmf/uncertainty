@@ -186,12 +186,12 @@ a `treatment_ids` JSON list on each management row) was considered but
 not adopted — duplication-per-treatment is simpler, matches the existing
 workbook convention, and remains BETYdb-compatible.
 
-**Schema suggestion:** Add an `is_establishment` boolean or
-`phase = establishment | treatment` field on `managements` so pre-study
-conditioning is distinguishable from the treatment period at query time.
-`study_year = 0` is necessary but not sufficient on its own — multi-year
-pre-history would need either negative `study_year` values or this
-explicit phase flag.
+**Schema:** No new flag needed — pre-treatment rows are already
+distinguishable as `management.date < treatment.start_date`, so a
+downstream query can derive phase from the existing fields without
+introducing an `is_establishment` boolean whose meaning is ambiguous to
+read later. If multi-year pre-history needs sequencing, negative
+`study_year` values are the cleanest convention.
 
 **TODO (workbook):** expand the current single `treatment_id =
 all_systems` row for the 2003 compost into 5 per-treatment rows.
@@ -205,7 +205,7 @@ Based on this ingestion, the following additions to the template would improve u
 1. ~~`date_precision` field in management_events~~ — superseded: `min_date` / `max_date` carry the paper's stated range; `min_date == max_date` ⇒ exact date known, so a separate boolean is redundant.
 2. **Organic amendment handling** in `fertilization` — add `form: organic` + `material_type` + `C_rate` / `C_N_ratio` to the existing fertilization event, rather than introducing a new `organic_amendment` event_type. Same correctness fix, no schema bump.
 3. ~~`harvest_component_known` boolean in harvest events~~ — superseded: missingness already means unknown; downstream code can assume a per-crop default (e.g. HI from a `PEcAn.data.land::look_up_harvest_index()` lookup) and flag it.
-4. **`is_establishment` flag** for pre-study management events — pre-treatment conditioning is a meaningfully different phase that the curated workbook should distinguish.
+4. ~~`is_establishment` flag for pre-study management events~~ — superseded: derivable as `management.date < treatment.start_date`; explicit flag name was ambiguous to read at query time.
 5. **`study_year` alongside `calendar_year`** — many papers report Year 0–8 without clear calendar year mapping; carrying both avoids re-derivation downstream.
 6. **`replicate_id` or `block`** column in observations — needed for proper mixed-effects model validation.
 
