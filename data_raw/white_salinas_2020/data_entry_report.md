@@ -206,7 +206,7 @@ Based on this ingestion, the following additions to the template would improve u
 2. **Organic amendment handling** in `fertilization` — add `form: organic` + `material_type` + `C_rate` / `C_N_ratio` to the existing fertilization event, rather than introducing a new `organic_amendment` event_type. Same correctness fix, no schema bump.
 3. ~~`harvest_component_known` boolean in harvest events~~ — superseded: missingness already means unknown; downstream code can assume a per-crop default (e.g. HI from a `PEcAn.data.land::look_up_harvest_index()` lookup) and flag it.
 4. ~~`is_establishment` flag for pre-study management events~~ — superseded: derivable as `management.date < treatment.start_date`; explicit flag name was ambiguous to read at query time.
-5. **`study_year` alongside `calendar_year`** — many papers report Year 0–8 without clear calendar year mapping; carrying both avoids re-derivation downstream.
+5. ~~`study_year` alongside `calendar_year`~~ — superseded: not needed for White/Salinas (Year 0–8 ↔ 2003–2011 is unambiguous from the companion paper). For papers where the calendar year IS missing, a sentinel `0000-MM-DD` date is a cleaner encoding than a parallel `study_year` integer field, since it keeps the partial-date information in the existing `date` column rather than splitting it across two fields.
 6. **`replicate_id` or `block`** column in observations — needed for proper mixed-effects model validation.
 
 ---
