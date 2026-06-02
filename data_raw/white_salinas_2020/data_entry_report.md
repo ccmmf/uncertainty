@@ -33,23 +33,27 @@ The paper describes management as seasonal windows (e.g., "cover crops planted
 in fall, incorporated in late winter/early spring"). **No exact calendar dates
 are provided for any event in any year.**
 
-Approach taken:
-- Assigned approximate DOY based on typical Salinas Valley vegetable production calendar
-- Flagged all events with `exact_date_known = FALSE`
-- Used the following DOY estimates:
-  - Cover crop planting: DOY 288 (mid-October)
-  - Spader tillage / cover crop incorporation: DOY 46 (mid-February)
-  - Compost application (spring, before lettuce): DOY 121 (May 1)
-  - Lettuce transplanting: DOY 135 (May 15)
-  - Lettuce harvest: DOY 182 (July 1)
-  - Broccoli transplanting: DOY 196 (July 15)
-  - Broccoli harvest: DOY 274 (October 1)
-  - Compost application (fall, before cover crop): DOY 278 (October 5)
-  - Subsoiling: DOY 283 (October 10)
+Approach taken: record the paper's stated range in `min_date` /
+`max_date` rather than inventing point-estimate DOY values from
+production-calendar norms. Each managements row carries the
+season bounds the paper actually reports (e.g. spring planting →
+`min_date=2005-03-01, max_date=2005-05-31`) plus a `notes` field indicating
+source (`paper text: spring planting`). Norm-based / monitoring-derived DOY
+refinement is deferred to a downstream gap-fill stage rather than baked
+into the curated workbook — keeps the date uncertainty in the posterior
+instead of pinning to an invented day.
 
-Year 1 (2003 planting → 2004 vegetables) is fully expanded in `management_events.csv`.
-Years 2-8 follow the identical cycle; quadrennial systems (sys1, sys2) omit
-cover crop planting in years 2, 3, 4, 6, 7, 8 and add it back in year 5.
+> Note: an earlier draft of this report listed point-estimate DOYs for each
+> event type (e.g. DOY 288 for cover crop planting, DOY 121 for spring
+> compost). Those values were never propagated into the workbook — the
+> managements tab carries season-bound ranges only. Removed here so the
+> report doesn't suggest values that aren't in the dataset.
+
+Year 1 (2003 planting → 2004 vegetables) and Years 2-8 are fully expanded
+in the workbook's `managements` tab. Quadrennial systems (sys1, sys2) omit
+cover crop planting in non-quadrennial years; quadrennial years confirmed
+as Years 3 and 7 (per companion paper PMC7004306, Year 0 = baseline Oct
+2003).
 
 ### SOC Observations
 The paper reports annual SOC stock measurements (0–30 cm, Mg ha⁻¹) for Years 0–8
@@ -57,7 +61,7 @@ across 5 treatments × 4 replicates = 20 plot-years per year × 9 time points = 
 SOC rows** (each variable). POXC (labile C) measured at Years 0, 6, 8 only.
 Bulk density measured at Years 3 and 7 only.
 
-**Data source — Zotero supplemental** (per @dlebauer's pointer to
+**Data source — Zotero supplemental** (per pointer to
 https://www.zotero.org/groups/5606810/ccmmf/items/U8UG83C5): the block-level values
 were pulled from White et al. 2020 *Data in Brief* Supplemental Tables.xlsx
 (Zotero storage `5CB4ZEF8`, Tables 1–4). The original Zotero copy includes:
@@ -84,7 +88,7 @@ treatment_mean rows in the workbook pending an AgDC pull.
 management events. No day-month-year dates are given for any planting, harvest, tillage,
 or compost event in any year.
 
-**Approach (per @dlebauer and @divine7022 on PR #5):** capture the paper's stated
+**Approach:** capture the paper's stated
 range as `min_date` / `max_date` rather than inventing a point DOY from production
 norms. Each managements row carries the season bounds the paper actually reports
 (e.g. spring planting = `min_date=Mar 1, max_date=May 31`) plus a `notes` field
@@ -148,7 +152,7 @@ field to distinguish pre-study conditioning from the treatment period.
 
 Based on this ingestion, the following additions to the template would improve usability:
 
-1. ~~`date_precision` field in management_events~~ — superseded: adopted `min_date` / `max_date` to carry paper's stated range + `notes` for source (per @dlebauer / @divine7022 review)
+1. ~~`date_precision` field in management_events~~ — superseded: adopted `min_date` / `max_date` to carry paper's stated range + `notes` for source
 2. **`organic_amendment` event type** separate from `fertilization`, with `C_Mg_ha` and `N_Mg_ha` subfields
 3. **`harvest_component_known` boolean** in harvest events
 4. **`is_establishment` flag** for pre-study management events
