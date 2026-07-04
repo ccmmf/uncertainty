@@ -210,15 +210,50 @@ with its current status.
 
 ---
 
-## What Is Needed to Complete This Entry
+## Ingestion Decisions and Assumptions
 
-- [x] Expand `managements` tab for Years 0–8 (5 systems × season-bound rows) — complete
-- [x] Confirm quadrennial cover crop years — confirmed as Years 3 and 7 from companion paper (White et al. 2020b)
-- [x] Capture harvest indices — HI = 0.26 (romaine hearts) and 0.24 (broccoli) per White et al. (2020b), citing Brennan, unpublished
-- [x] Ingest block-level `observations` rows for Years 2–8 (180 SOC + 180 total N + 180 nitrate-N rows from White et al. 2020a supplemental tables)
-- [ ] Pull Years 0–1 block-level rows from USDA Ag Data Commons (currently treatment-mean rows from PLoS ONE S1 — see *How to Fill the Remaining SOC Values* below)
-- [ ] Expand the single 2003 pre-establishment compost row into 5 per-treatment rows (see Challenge #6)
-- [ ] Check the *Data in Brief* supplement for year-resolved compost C:N values (see Challenge #2)
+Record of what was ingested, at what resolution, and the decisions made
+while doing so. Assumptions here shape how downstream cal/val work should
+interpret the workbook rows for this dataset.
+
+**Data ingested:**
+
+- `managements` tab: expanded for Years 0–8 across the 5 observed systems,
+  each event carrying `min_date` / `max_date` season bounds only (no
+  point-estimate DOYs invented from production norms).
+- `observations` tab: Years 2–8 block-level ingested from the *Data in
+  Brief* supplemental tables — 180 SOC stock + 180 total N + 180
+  nitrate-N rows.
+- Harvest indices captured on the harvest managements rows as
+  HI = 0.26 (romaine hearts) and HI = 0.24 (broccoli), per White et al.
+  (2020b) citing Brennan, unpublished.
+- Quadrennial cover crop years fixed at Years 3 and 7 (fall 2006 and
+  fall 2010), confirmed from the companion paper.
+
+**Assumptions made:**
+
+- Block ≡ replicate at this site (RCBD, 4 blocks, one plot per treatment
+  per block); block number used as the replicate identifier.
+- Compost C:N ratio (mean 22, range 18–28) is captured at the source
+  level, not per-year — the paper reports only the 4-of-8-year aggregate
+  and per-year values are not recoverable from the publication.
+- Pre-treatment 2003 establishment compost (22 Mg ha⁻¹ wet weight) is
+  materially load-bearing for the Year 0 → Year 1 SOC decline (per
+  companion paper: spading + tillage breaking macroaggregates + exposing
+  protected SOC) — retained in `managements` and flagged as
+  pre-establishment via `management.date < treatment.start_date`, not via
+  a separate boolean.
+
+**Open follow-ups (do not block this ingestion):**
+
+- Pull Years 0–1 block-level rows from USDA Ag Data Commons — currently
+  treatment-mean rows from PLoS ONE S1 (see *How to Fill the Remaining
+  SOC Values* below).
+- Expand the single 2003 pre-establishment compost row into per-treatment
+  rows (see Challenge #6 and PR #5 review — 5 vs. 8 system reconciliation
+  pending @dlebauer's call).
+- Add `use_for_calibration` column to `observations` and populate
+  `treatment_pairs` (per divine7022's PR #5 review).
 
 ## How to Fill the Remaining Years 0–1 SOC Values
 
