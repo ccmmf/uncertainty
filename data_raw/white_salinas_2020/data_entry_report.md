@@ -288,11 +288,15 @@ Once filled, set `fill_status` to `FILLED_AG_DATA_COMMONS`. Use
 `FILLED_S1_TABLE` only for treatment-mean rows where block-level data
 genuinely is not available (Years 0–1 in the current workbook).
 
-**Protocol note (apply to future ingestions):** when a paper has a
-companion data publication or open archive, treat that as the
-authoritative source. Tables and supplementary files in the analysis
-paper are summary statistics over the same data — useful for
-verification, not a substitute for replicate-level ingestion.
+**Protocol note (apply to future ingestions):** most datasets have more
+than one authoritative source — the paper contributes experimental
+design, treatment definitions, and other metadata; a companion data
+publication or archive typically contributes the replicate-level
+observations. The principle is not "primary source vs. secondary" but:
+**when replicate-level (block or plot) data is available, always ingest
+at that resolution.** Treatment means and standard errors in analysis-
+paper tables should be treated as verification checks against the
+replicate-level ingest, not as a substitute for it.
 
 > Note: an earlier draft listed `github.com/swood-ecology/socs` as a third
 > option. That repo is analysis code, not a separate data archive — the
