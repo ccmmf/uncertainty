@@ -298,11 +298,17 @@ at that resolution.** Treatment means and standard errors in analysis-
 paper tables should be treated as verification checks against the
 replicate-level ingest, not as a substitute for it.
 
-> Note: an earlier draft listed `github.com/swood-ecology/socs` as a third
-> option. That repo is analysis code, not a separate data archive — the
-> underlying observations are White et al. (2020a / b). Useful as a
-> reference if we write our own parse script, but should not be cited as a
-> data source.
+**Related resource — `github.com/swood-ecology/socs`.** An
+analysis-code repository accompanying the White et al. papers, containing
+the SOC-stock derivation formula
+(`pom.stock = (POM C * blkden * 30) / 10`) and related processing steps.
+The repository is not a data archive — the underlying block-level
+observations live in the *Data in Brief* supplement and the USDA Ag Data
+Commons archive — so it should not be cited as a data source. It is
+useful, however, as a **methodology reference** if we ever need to
+independently derive SOC stocks from concentration + bulk density values
+(e.g. for datasets that report per-layer C% + BD but not pre-computed
+stocks, as is the case for Russell Ranch).
 
 ---
 
