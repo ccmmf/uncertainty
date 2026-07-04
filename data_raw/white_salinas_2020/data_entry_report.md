@@ -153,9 +153,6 @@ the experimental period).
 **Challenge:** Issue [#215](https://github.com/ccmmf/organization/issues/215) lists GHG flux as a validation target. This dataset contains
 no N₂O, CH₄, or CO₂ measurements — explicitly noted as a limitation in the paper.
 
-**Impact:** This dataset can only validate SOC dynamics, not GHG fluxes. It remains
-valuable for soil carbon calibration.
-
 ### 6. Pre-study site history and 2003 establishment
 **Site history per White et al. (2020b):**
 - **1990–1996:** hay production and mixed vegetable / sugar beet trials.
