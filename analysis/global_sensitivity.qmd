@@ -1,0 +1,441 @@
+---
+title: "Global Sensitivity Analysis Using Sobol Indices"
+author: "Akash B V"
+date: last-modified
+format:
+  html:
+    self-contained: true
+    df-print: paged
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-tools: true
+    theme: cosmo
+    number-sections: true
+execute:
+  echo: false
+  warning: false
+  message: false
+  cache: false
+---
+
+# Overview
+
+This report presents results from a **variance-based global sensitivity analysis** of the SIPNET ecosystem model using Sobol indices. Unlike local sensitivity analysis (which measures rates of change at baseline conditions), variance-based methods decompose output variance into contributions from individual parameters and their interactions.
+
+::: callout-note
+## Why Sobol Indices?
+
+Sobol indices provide a rigorous framework for:
+
+-   **Quantifying parameter importance** via variance decomposition
+-   **Detecting interactions** between parameters (non-additive effects)
+-   **Factor prioritization** (which parameters to constrain for uncertainty reduction)
+-   **Factor fixing** (which parameters can be fixed without loss of information)
+:::
+
+## Theoretical Background
+
+**Sobol indices** are normalized variance contributions:
+
+$$
+S_i = \frac{V_i}{\text{VAR}(y)} \quad \text{(First-order index)}
+$$ {#eq-si}
+
+$$
+T_i = 1 - \frac{\text{VAR}_{x_{\sim i}}[\mathbb{E}_{x_i}(y | x_{\sim i})]}{\text{VAR}(y)} = \frac{\mathbb{E}_{x_{\sim i}}[\text{VAR}_{x_i}(y | x_{\sim i})]}{\text{VAR}(y)} \quad \text{(Total-order index)}
+$$ {#eq-ti}
+
+where $x_{\sim i}$ denotes all-parameters-but-$x_i$.
+
+### Interpretation
+
+-   $S_i$: Direct effect of $x_i$ on output variance (excluding interactions)
+-   $T_i$: Total effect of $x_i$ including all interactions with other parameters
+-   $T_i - S_i$: Interaction strength (purely higher-order effects)
+-   $\sum S_i \approx 1$: Model is **additive** (linear-like behavior)
+-   $\sum S_i \ll 1$: Model is **non-additive** (interactions dominate)
+
+# Study Design
+
+```{r}
+#| label: setup
+#| include: false
+
+library(here)
+here::i_am("analysis/global_sensitivity.qmd")
+
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(stringr)
+library(knitr)
+library(scales)
+library(config)
+
+cfg <- config::get(file = here::here("000-config.yml"))
+
+sobol_indices <- readr::read_csv(
+  here::here(cfg$paths$data_dir, "sobol_indices.csv"),
+  show_col_types = FALSE
+)
+metadata <- readRDS(here::here(cfg$paths$data_dir, "sobol_design_matrix_metadata.rds"))
+
+N <- metadata$N
+k <- metadata$k
+total_runs <- metadata$total_runs
+n_sites <- dplyr::n_distinct(sobol_indices$runid)
+response_vars <- unique(sobol_indices$variable)
+
+# consistent theme
+theme_set(
+  theme_minimal(base_size = 12) +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.text = element_text(size = 10, margin = margin(2, 2, 2, 2)),
+      legend.position = "bottom"
+    )
+)
+```
+
+**Method:** Saltelli's sampling scheme with Jansen estimators
+
+**Sample Size:** $N = `r N`$, Total Runs = $N \times (k + 2)$ = `r total_runs`
+
+**Scope:** `r n_sites` sites across California row-crop agriculture
+
+# Data Processing
+
+We process the raw indices to parse namespaced parameters (e.g. `grass.SLA`), identify the Dummy parameter (Sobol validation -- its $T_i$ should be near zero), and calculate interaction components ($T_i - S_i$).
+
+```{r}
+#| label: data-processing
+
+# reshape and enforce non-negativity (numerical artifacts can cause small negatives)
+sobol_long <- sobol_indices |>
+  select(runid, variable, parameters,
+         Si_original, Si_low.ci, Si_high.ci,
+         Ti_original, Ti_low.ci, Ti_high.ci) |>
+  mutate(
+    Si = pmax(Si_original, 0),
+    Ti = pmax(Ti_original, 0),
+    Interaction = pmax(Ti - Si, 0)
+  )
+
+# parse parameter names: "pft.param" -> Prefix + Trait
+sobol_parsed <- sobol_long |>
+  separate(parameters, into = c("Prefix", "Trait"), sep = "\\.",
+           extra = "merge", fill = "right") |>
+  mutate(
+    Trait = ifelse(is.na(Trait), Prefix, Trait),
+    Category = case_when(
+      Prefix == "ic_ensemble" ~ "Initial Conditions",
+      Prefix == "met_ensemble" ~ "Meteorology",
+      Prefix == "dummy" ~ "Control (Noise)",
+      Prefix == "mgmt" ~ "Management",
+      TRUE ~ "Biological Parameter"
+    ),
+    Label = case_when(
+      Prefix == "ic_ensemble" ~ "Init. Cond.",
+      Prefix == "met_ensemble" ~ "Met. Driver",
+      Prefix == "dummy" ~ "Dummy (Noise)",
+      Prefix == "mgmt" ~ str_to_title(gsub("_", " ", Trait)),
+      TRUE ~ paste(str_to_title(Prefix), Trait)
+    )
+  )
+
+# per-site summaries (keep distribution for cross-site variability)
+sobol_site <- sobol_parsed |>
+  summarize(
+    Si = mean(Si, na.rm = TRUE),
+    Ti = mean(Ti, na.rm = TRUE),
+    Interaction = mean(Interaction, na.rm = TRUE),
+    .by = c("runid", "variable", "Category", "Label")
+  )
+
+# cross-site summary: median + IQR
+sobol_summary <- sobol_site |>
+  summarize(
+    median_Ti = median(Ti, na.rm = TRUE),
+    q25_Ti = quantile(Ti, 0.25, na.rm = TRUE),
+    q75_Ti = quantile(Ti, 0.75, na.rm = TRUE),
+    median_Si = median(Si, na.rm = TRUE),
+    median_Int = median(Interaction, na.rm = TRUE),
+    .by = c("variable", "Category", "Label")
+  )
+```
+
+# Key Findings
+
+```{r}
+#| label: key-findings
+#| results: asis
+
+# additivity
+additivity <- sobol_parsed |>
+  filter(Category != "Control (Noise)") |>
+  summarize(Sum_Si = sum(Si, na.rm = TRUE), .by = c("runid", "variable")) |>
+  summarize(mean_sum = mean(Sum_Si), .by = "variable")
+
+# top 3 parameters
+top3 <- sobol_summary |>
+  filter(Category != "Control (Noise)") |>
+  arrange(desc(median_Ti)) |>
+  slice_head(n = 3)
+
+# biology fraction
+bio_frac <- sobol_parsed |>
+  filter(Category != "Control (Noise)") |>
+  summarize(Total_Si = sum(Si, na.rm = TRUE), .by = c("variable", "Category")) |>
+  mutate(frac = Total_Si / sum(Total_Si), .by = "variable") |>
+  filter(Category == "Biological Parameter") |>
+  pull(frac) |>
+  mean()
+
+# noise floor
+dummy_vals <- sobol_summary |>
+  filter(Category == "Control (Noise)") |>
+  pull(median_Ti) |>
+  mean()
+```
+
+Based on a Sobol analysis with `r N` base samples and `r total_runs` total runs across `r n_sites` sites:
+
+-   **Top parameters**: `r top3$Label[1]`, `r top3$Label[2]`, and `r top3$Label[3]` explain the most output variance ($T_i$ = `r round(top3$median_Ti[1], 2)`, `r round(top3$median_Ti[2], 2)`, `r round(top3$median_Ti[3], 2)`)
+-   **Biological parameters** account for \~`r round(bio_frac * 100)`% of explained variance; meteorological and initial condition drivers explain the rest
+-   **Model additivity** ($\sum S_i$) averages `r round(mean(additivity$mean_sum), 2)` -- values near 1 indicate additive behavior, values $\ll 1$ indicate parameter interactions dominate
+-   **Noise floor**: the dummy parameter's median $T_i$ = `r round(dummy_vals, 4)`, providing a rigorous threshold for identifying non-influential inputs
+
+# Variance Decomposition (Source Partitioning) {#sec-variance-partition}
+
+Before ranking individual parameters, we assess the *sources* of uncertainty. We sum the First-Order indices ($S_i$) by category (see @eq-si). The "Control (Noise)" segment is excluded to avoid confusion; it represents numerical estimation error from the Sobol design.
+
+```{r}
+#| label: fig-variance-partition
+#| fig-cap: "Proportion of variance explained by Biology (parameters) vs. Environment (IC / met). This partitioning answers: is output uncertainty dominated by what we know about the plants, or by the weather and initial conditions?"
+#| fig-width: 8
+#| fig-height: 5
+
+variance_partition <- sobol_parsed |>
+  filter(Category != "Control (Noise)") |>
+  summarize(Total_Si = sum(Si, na.rm = TRUE), .by = c("variable", "Category")) |>
+  mutate(Percentage = Total_Si / sum(Total_Si), .by = "variable")
+
+ggplot(variance_partition, aes(x = variable, y = Total_Si, fill = Category)) +
+  geom_col(position = "fill", width = 0.7) +
+  geom_text(aes(label = percent(Percentage, accuracy = 1)),
+            position = position_fill(vjust = 0.5),
+            color = "white", fontface = "bold", size = 3.5) +
+  scale_y_continuous(labels = percent) +
+  scale_fill_brewer(palette = "Dark2") +
+  labs(
+    y = "Proportion of Variance",
+    x = NULL,
+    fill = "Source"
+  ) +
+  coord_flip()
+```
+
+# Parameter Ranking (First & Total Order) {#sec-rankings}
+
+This plot compares First-Order ($S_i$, solid bar) and Total-Order ($T_i$, whisker) indices. The gap between them quantifies interaction strength (@eq-ti minus @eq-si).
+
+**Solid bar** ($S_i$): Direct (main) effect of the parameter alone
+
+**Gap** ($T_i - S_i$): Higher-order interaction effects with other parameters
+
+Parameters are ordered by median $T_i$ across sites. We show the top 15 per output variable.
+
+```{r}
+#| label: fig-ranking-combined
+#| fig-cap: "Top 15 inputs ranked by median Total Effect (Ti) across sites. Solid bar = Main Effect (Si); whisker = Total Effect (Ti). Parameters with large gaps between Si and Ti interact strongly with other inputs."
+#| fig-height: 10
+#| fig-width: 10
+
+top_params <- sobol_summary |>
+  filter(Category != "Control (Noise)") |>
+  slice_max(order_by = median_Ti, n = 15, by = "variable")
+
+ggplot(top_params, aes(x = reorder(Label, median_Ti), y = median_Ti)) +
+  geom_errorbar(
+    aes(ymin = median_Si, ymax = median_Ti),
+    width = 0.2, color = "grey50"
+  ) +
+  geom_point(aes(y = median_Ti, color = Category), shape = 95, size = 10) +
+  geom_col(aes(y = median_Si, fill = Category), alpha = 0.8) +
+  coord_flip() +
+  facet_wrap(~variable, scales = "free_x") +
+  scale_fill_brewer(palette = "Set2") +
+  scale_color_brewer(palette = "Set2") +
+  labs(
+    x = NULL,
+    y = "Sobol Index (median across sites)"
+  )
+```
+
+## Cross-Site Variability
+
+A parameter whose importance varies across sites (wide box) indicates context-dependent sensitivity -- its influence depends on local conditions (soil, climate, crop type). These are priorities for spatially explicit calibration.
+
+```{r}
+#| label: fig-site-variability
+#| fig-cap: "Distribution of Ti across sites for top 10 parameters. Points = site-level values; box = IQR; line = median. Wide boxes indicate sensitivity varies with local conditions."
+#| fig-height: 8
+#| fig-width: 10
+
+# top 10 by median Ti (across all variables)
+top10_labels <- sobol_summary |>
+  filter(Category != "Control (Noise)") |>
+  slice_max(order_by = median_Ti, n = 10) |>
+  pull(Label) |>
+  unique()
+
+sobol_site |>
+  filter(Label %in% top10_labels, Category != "Control (Noise)") |>
+  ggplot(aes(x = reorder(Label, Ti, FUN = median), y = Ti)) +
+  geom_boxplot(aes(fill = Category), outlier.size = 0.8, alpha = 0.7) +
+  coord_flip() +
+  facet_wrap(~variable, scales = "free_x") +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    x = NULL,
+    y = "Total-order index (Ti)",
+    fill = "Source"
+  )
+```
+
+# Interaction Analysis {#sec-interactions}
+
+Parameters with large differences between $T_i$ and $S_i$ interact strongly with other factors. These non-additive effects mean the parameter's impact on output depends on the values of other inputs.
+
+```{r}
+#| label: fig-interactions
+#| fig-cap: "Interaction strength (Ti - Si) for parameters with interactions exceeding 5% of total variance. Numbers show percent of Ti attributable to interactions."
+#| fig-height: 6
+#| fig-width: 9
+
+high_int <- sobol_summary |>
+  filter(Category != "Control (Noise)", median_Int > 0.05) |>
+  mutate(Int_pct = (median_Int / median_Ti) * 100)
+
+if (nrow(high_int) > 0) {
+  ggplot(high_int, aes(x = reorder(Label, median_Int), y = median_Int)) +
+    geom_col(aes(fill = Category), alpha = 0.8) +
+    geom_text(
+      aes(label = paste0(round(Int_pct, 0), "%")),
+      hjust = -0.1, size = 3
+    ) +
+    coord_flip() +
+    facet_wrap(~variable, scales = "free_x") +
+    scale_fill_brewer(palette = "Set2") +
+    labs(
+      x = NULL,
+      y = "Interaction strength (Ti - Si)",
+      fill = "Source"
+    )
+} else {
+  cat("No parameters exceeded the 5% interaction threshold.")
+}
+```
+
+# Factor Fixing (Screening) {#sec-screening}
+
+To identify non-influential parameters, we compare their Total-Order index ($T_i$) against the **Dummy parameter** (noise floor). The dummy parameter varies randomly but has no effect on model output, so any parameter with $T_i$ indistinguishable from the dummy can be safely fixed to a constant value without meaningful loss of variance coverage.
+
+The dashed red line marks the noise floor (median dummy $T_i$).
+
+```{r}
+#| label: fig-screening
+#| fig-cap: "Factor screening: parameters below the noise line (dashed red) can be fixed. Dot = median Ti across sites; whisker = IQR."
+#| fig-height: 16
+#| fig-width: 12
+
+dummy_thresholds <- sobol_summary |>
+  filter(Category == "Control (Noise)") |>
+  select(variable, noise_Ti = median_Ti)
+
+screening <- sobol_summary |>
+  filter(Category != "Control (Noise)") |>
+  left_join(dummy_thresholds, by = "variable")
+
+ggplot(screening, aes(x = reorder(Label, median_Ti), y = median_Ti)) +
+  geom_point(aes(color = Category), size = 2.5) +
+  geom_errorbar(
+    aes(ymin = q25_Ti, ymax = q75_Ti, color = Category),
+    width = 0.3, alpha = 0.6
+  ) +
+  geom_hline(
+    data = dummy_thresholds,
+    aes(yintercept = noise_Ti),
+    linetype = "dashed", color = "red", alpha = 0.7
+  ) +
+  coord_flip() +
+  facet_wrap(~variable, scales = "free_x") +
+  scale_color_brewer(palette = "Set2") +
+  labs(
+    x = NULL,
+    y = "Total-order index (Ti)",
+    color = "Source"
+  ) +
+  theme(axis.text.y = element_text(size = 8))
+```
+
+```{r}
+#| label: fixable-params
+#| results: asis
+
+fixable <- screening |>
+  filter(median_Ti <= noise_Ti) |>
+  select(Variable = variable, Input = Label,
+         `Median Ti` = median_Ti, `Noise Threshold` = noise_Ti) |>
+  arrange(Variable, `Median Ti`)
+
+if (nrow(fixable) > 0) {
+  cat("\n**Fixable parameters** (Ti below noise floor):\n\n")
+  knitr::kable(fixable, digits = 4)
+} else {
+  cat("\n**No parameters met the screening criteria.** All inputs exceed the numerical noise floor.\n")
+}
+```
+
+# Model Additivity {#sec-additivity}
+
+The sum of First-Order indices ($\sum S_i$) indicates the degree of model linearity. Values near 1.0 imply the model is **additive** (parameters contribute independently). Values well below 1 indicate that **interactions dominate** -- the model's response to one parameter depends on the values of others.
+
+```{r}
+#| label: fig-additivity
+#| fig-cap: "Distribution of model additivity (sum of Si) across sites. Dashed line at 1.0 marks perfect additivity. Values below 1 indicate interaction effects."
+#| fig-height: 4
+#| fig-width: 7
+
+additivity_site <- sobol_parsed |>
+  filter(Category != "Control (Noise)") |>
+  summarize(Sum_Si = sum(Si, na.rm = TRUE), .by = c("runid", "variable"))
+
+ggplot(additivity_site, aes(x = variable, y = Sum_Si)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.5, outlier.size = 0.8) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "grey50") +
+  labs(x = NULL, y = expression(sum(S[i]))) +
+  coord_flip()
+```
+
+# Synthesis
+
+**What drives uncertainty?** The variance decomposition (@sec-variance-partition) separates biological parameter uncertainty from environmental forcing.
+
+**What to calibrate first?** Parameter rankings (@sec-rankings) identify the top candidates for reducing predictive uncertainty. Parameters whose importance varies across sites (@fig-site-variability) need spatially explicit calibration.
+
+**What can be simplified?** Factor fixing (@sec-screening) uses the dummy parameter as a rigorous noise floor to identify inputs that can be set to nominal values.
+
+**Is the model additive?** Additivity diagnostics (@sec-additivity) indicate whether parameter effects are independent or interact. Strong interactions (large $T_i - S_i$ in @sec-interactions) suggest that calibrating parameters independently may be insufficient.
+
+# References
+
+1.  Puy, A., et al. (2022). sensobol: An R Package to Compute Variance-Based Sensitivity Indices. *Journal of Statistical Software*, 102(5).
+
+2.  Saltelli, A., et al. (2010). Variance based sensitivity analysis of model output. *Computer Physics Communications*.
+
+3.  Dietze, M. (2017). *Ecological Forecasting*. Princeton University Press.
+
+4.  Gelman, A. & Dodhia, R. (2002). Let's practice what we preach: Turning tables into graphs.
