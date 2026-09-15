@@ -47,3 +47,10 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# XLSX snapshots — kept in Google Docs as the data-entry UI and attached
+# to GitHub releases for record-keeping; not tracked in the repo.
+*.xlsx
+
+# Pipeline outputs
+data/
