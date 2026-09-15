@@ -9,13 +9,23 @@
 #' @return A patchwork plot: labels, density, then one column per output.
 #' @export
 plot_sensitivities_multi <- function(sensitivity.results, trait.samples, threshold = 0.05) {
+  if (!length(sensitivity.results)) stop("Supply at least one output.", call. = FALSE)
+  if (length(threshold) != 1L || !is.finite(threshold) || threshold < 0 || threshold > 1) {
+    stop("threshold must be a finite number between zero and one.", call. = FALSE)
+  }
   sensitivity.plot.inputs <- lapply(sensitivity.results, `[[`, "sensitivity.output")
   samples <- sensitivity.plot.inputs[[1]]$sa.samples
+  if (!all(vapply(sensitivity.plot.inputs, function(x) isTRUE(all.equal(x$sa.samples, samples)), logical(1)))) {
+    stop("Outputs must have aligned parameter samples for one site, treatment, PFT, and window.", call. = FALSE)
+  }
   outputs <- names(sensitivity.results)
   contributions <- do.call(cbind, lapply(sensitivity.results, function(x) {
     x$variance.decomposition.output$partial.variances[colnames(samples)]
   }))
-  traits <- colnames(samples)[apply(contributions, 1, max, na.rm = TRUE) >= threshold]
+  peak <- apply(contributions, 1, function(x) if (any(is.finite(x))) max(x[is.finite(x)]) else NA_real_)
+  traits <- colnames(samples)[is.finite(peak) & peak >= threshold]
+  if (!length(traits)) stop("No traits meet the partial variance threshold.", call. = FALSE)
+  if (!all(traits %in% names(trait.samples))) stop("Missing saved trait samples for retained traits.", call. = FALSE)
   probabilities <- as.numeric(rownames(samples))
   points <- curves <- list()
   for (output in outputs) {
