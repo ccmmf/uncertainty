@@ -1,0 +1,19 @@
+# OAT sensitivity analysis at the cal/val sites: 25 runs over 7 sites, one per
+# site and treatment, each with a plant and a soil PFT.
+#
+#   export UNCERTAINTY_DATA_ROOT=/path/to/artifacts
+#   Rscript scripts/010_build_settings.R -c examples/calval/config.yml
+#   Rscript scripts/020_run_sa.R         -c examples/calval/config.yml
+#   Rscript scripts/030_aggregate.R      -c examples/calval/config.yml
+#
+# sites and template are in the repository. input_root, binary and workspace are
+# resolved against UNCERTAINTY_DATA_ROOT, so no absolute path is committed. the
+# input package is published at s3://carb/calval_sa_inputs/v1.0; unpack it under
+# that root.
+default:
+  sites: examples/calval/sites.csv
+  template: examples/calval/template.xml
+  input_root: calval_sa_inputs/v1.0
+  binary: calval_sa_v3_20260821/tools/sipnet_d2fc7a2
+  workspace: calval_oat_sa
+  ensemble_size: 20

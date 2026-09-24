@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<!--
+  OAT sensitivity template for the cal/val sites.
+
+  Everything marked "set per block" is filled by R/build_settings.R from
+  data_raw/calval_sites.csv, because the cal/val sites do not share a run
+  window: modesto is 2018-2019 and russell is 1992-2014, so dates, PFTs and
+  inputs are per block rather than whole-run.
+-->
+<pecan>
+ <info>
+  <notes>cal/val OAT sensitivity analysis</notes>
+  <userid>-1</userid>
+  <username></username>
+ </info>
+ <outdir>output</outdir>
+ <modeloutdir>output/out</modeloutdir>
+ <rundir>output/run</rundir>
+ <pfts>
+  <!-- replaced per block with that block's veg and soil PFT -->
+ </pfts>
+ <sensitivity.analysis>
+  <quantiles>
+   <sigma>-2</sigma>
+   <sigma>-1</sigma>
+   <sigma>1</sigma>
+   <sigma>2</sigma>
+  </quantiles>
+  <variable>TotSoilCarb</variable>
+  <variable>NEE</variable>
+  <variable>HeteroResp</variable>
+  <variable>NPP</variable>
+  <variable>AbvGrndWood</variable>
+  <variable>Qle</variable>
+  <variable>SoilMoistFrac</variable>
+  <variable>CH4_flux</variable>
+  <variable>N2O_flux</variable>
+  <variable>N_fixation</variable>
+  <start.year><!-- set per block --></start.year>
+  <end.year><!-- set per block --></end.year>
+ </sensitivity.analysis>
+ <ensemble>
+  <size>20</size>
+  <variable>TotSoilCarb</variable>
+  <variable>NEE</variable>
+  <variable>HeteroResp</variable>
+  <variable>NPP</variable>
+  <variable>AbvGrndWood</variable>
+  <variable>Qle</variable>
+  <variable>SoilMoistFrac</variable>
+  <variable>CH4_flux</variable>
+  <variable>N2O_flux</variable>
+  <variable>N_fixation</variable>
+  <samplingspace>
+   <parameters>
+    <method>uniform</method>
+   </parameters>
+   <met>
+    <method>sampling</method>
+   </met>
+   <poolinitcond>
+    <method>sampling</method>
+   </poolinitcond>
+   <events>
+    <method>sampling</method>
+   </events>
+  </samplingspace>
+  <start.year><!-- set per block --></start.year>
+  <end.year><!-- set per block --></end.year>
+ </ensemble>
+ <model>
+  <id>99000000003</id>
+  <type>SIPNET</type>
+  <revision>2.1.0</revision>
+  <delete.raw>FALSE</delete.raw>
+  <binary><!-- set from config --></binary>
+  <options>
+   <GDD>0</GDD>
+   <NITROGEN_CYCLE>1</NITROGEN_CYCLE>
+   <ANAEROBIC>1</ANAEROBIC>
+   <FLOODING>1</FLOODING>
+   <LITTER_POOL>1</LITTER_POOL>
+  </options>
+ </model>
+ <run>
+  <site><!-- set per block --></site>
+  <inputs>
+   <met>
+    <id></id>
+    <path><!-- set per block --></path>
+   </met>
+   <poolinitcond>
+    <source>RS_veg</source>
+    <output>poolinitcond</output>
+    <ensemble><!-- set per block --></ensemble>
+    <path><!-- set per block --></path>
+   </poolinitcond>
+   <events>
+    <path><!-- set per block --></path>
+   </events>
+  </inputs>
+  <start.date><!-- set per block --></start.date>
+  <end.date><!-- set per block --></end.date>
+ </run>
+ <host>
+  <name>localhost</name>
+  <outdir>output/out</outdir>
+  <rundir>output/run</rundir>
+  <qsub>qsub -V -cwd -N @NAME@ -j y -o /dev/null -S /bin/bash</qsub>
+  <qsub.jobid>Your job-array ([0-9]+).*</qsub.jobid>
+  <qstat>qstat -j @JOBID@ || echo DONE</qstat>
+  <modellauncher>
+   <binary>./scripts/sge_array_launcher.sh</binary>
+   <qsub.extra>-t 1-@NJOBS@</qsub.extra>
+   <Njobmax>140</Njobmax>
+  </modellauncher>
+ </host>
+</pecan>
