@@ -1,0 +1,67 @@
+// steps on the left, what each step produces on the right, and the report figure
+// that shows it. the dashed loop is the calibration this analysis feeds.
+// dot -Tsvg analysis/figures/oat_workflow.dot -o analysis/figures/oat_workflow.svg
+digraph oat_workflow {
+  graph [rankdir=TB, bgcolor="white", pad=0.25, ranksep=0.32, nodesep=0.45,
+         newrank=true, fontname="Arial"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=13,
+        color="#456579", fillcolor="#F0F5F8", fontcolor="#183447",
+        margin="0.18,0.12", penwidth=1.2, width=3.9];
+  edge [color="#456579", penwidth=1.3, arrowsize=0.75];
+
+  // data products
+  node [shape=parallelogram, style=filled, fillcolor="#EDF5E9", color="#52734A",
+        width=3.2, margin="0.06,0.1"];
+  priors [label=<<B>PFT priors</B><BR/>soil PFT, plus a vegetation PFT<BR/>at cropped design points>];
+  inputs [label=<<B>Design points and drivers</B><BR/>100 design points; ERA5 meteorology,<BR/>initial conditions, management>];
+  points [label=<<B>Parameter values</B><BR/>median and 2.3, 15.9, 84.1,<BR/>97.7 percentiles of each prior>];
+  outputs [label=<<B>Model outputs</B><BR/>2016 to 2023 means of soil carbon,<BR/>nitrous oxide and methane>];
+  splines [label=<<B>Response curves</B><BR/>one spline per parameter,<BR/>output and design point>];
+  metrics [label=<<B>CV, elasticity, share</B><BR/>per parameter, output<BR/>and design point>];
+
+  // steps
+  node [shape=box, style="rounded,filled", fillcolor="#F0F5F8", color="#456579", width=3.9,
+        margin="0.18,0.12"];
+  sample [label=<<B>1. sample</B><BR/>Take five quantiles of each prior>];
+  run [label=<<B>2. run SIPNET</B><BR/>One parameter at a time,<BR/>all others at their median>];
+  fit [label=<<B>3. fit</B><BR/>Spline through the five outputs>];
+  decompose [label=<<B>4. decompose</B><BR/>Propagate each prior through its spline;<BR/>share = its variance / sum over parameters>];
+  select [label=<<B>5. select</B><BR/>Parameters over 5 percent share of<BR/>parameter variance go forward to calibration>];
+
+  // next step, not part of this report
+  node [style="rounded,dashed", fillcolor="white", color="#8A9BA6", fontcolor="#5B6B75"];
+  calibrate [label=<<B>next: calibrate</B><BR/>Constrain the selected parameters<BR/>with field observations>];
+
+  // figure callouts
+  node [shape=plaintext, style="", fontsize=11, fontcolor="#6B7B85", width=0, margin=0];
+  f_prior [label="Figure 5, density column"];
+  f_curve [label="Figures 5 to 7"];
+  f_metric [label="Figures 3 and 4"];
+
+  { rank=same; priors; inputs; f_prior; }
+  { rank=same; sample; points; }
+  { rank=same; run; outputs; }
+  { rank=same; fit; splines; f_curve; }
+  { rank=same; decompose; metrics; f_metric; }
+
+  priors -> sample;
+  inputs -> run;
+  sample -> points [style=dashed, arrowhead=none, color="#9DB39A"];
+  points -> run;
+  run -> outputs [style=dashed, arrowhead=none, color="#9DB39A"];
+  outputs -> fit;
+  fit -> splines [style=dashed, arrowhead=none, color="#9DB39A"];
+  splines -> decompose;
+  decompose -> metrics [style=dashed, arrowhead=none, color="#9DB39A"];
+  metrics -> select;
+  sample -> run -> fit -> decompose -> select [weight=10];
+  select -> calibrate [style=dashed, color="#8A9BA6"];
+  calibrate -> priors [style=dashed, color="#8A9BA6", constraint=false,
+                       label="  updated priors", fontname="Arial", fontsize=11,
+                       fontcolor="#6B7B85"];
+
+  edge [color="#B5C2CA", penwidth=0.8, arrowhead=none, style=solid];
+  priors -> f_prior;
+  splines -> f_curve;
+  metrics -> f_metric;
+}
