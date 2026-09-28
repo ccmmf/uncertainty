@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <pecan>
  <info>
-  <notes>statewide OAT sensitivity analysis</notes>
+  <notes>statewide Sobol global sensitivity analysis</notes>
   <userid>-1</userid>
   <username></username>
  </info>
@@ -11,42 +11,17 @@
  <pfts>
   <!-- inserted at config time, one entry per subdirectory of pft_dir -->
  </pfts>
- <sensitivity.analysis>
-  <quantiles>
-   <sigma>-2</sigma>
-   <sigma>-1</sigma>
-   <sigma>1</sigma>
-   <sigma>2</sigma>
-  </quantiles>
-  <variable>TotSoilCarb</variable>
-  <variable>AbvGrndWood</variable>
-  <variable>NEE</variable>
-  <variable>NPP</variable>
-  <variable>HeteroResp</variable>
-  <variable>Qle</variable>
-  <variable>SoilMoistFrac</variable>
-  <variable>CH4_flux</variable>
-  <variable>N2O_flux</variable>
-  <start.year><!-- inserted at config time --></start.year>
-  <end.year><!-- inserted at config time --></end.year>
- </sensitivity.analysis>
  <ensemble>
+  <!-- the Sobol base sample N. each site runs N * (k + 2) configs, with k the
+       entries in samplingspace below: parameters, met, poolinitcond, events -->
   <size><!-- inserted at config time --></size>
-  <!-- same list as the sensitivity analysis: the ensemble members run either
-       way, so reading them gives the total spread to compare the partial
-       variances against -->
   <variable>TotSoilCarb</variable>
   <variable>AbvGrndWood</variable>
   <variable>NEE</variable>
-  <variable>NPP</variable>
-  <variable>HeteroResp</variable>
-  <variable>Qle</variable>
-  <variable>SoilMoistFrac</variable>
-  <variable>CH4_flux</variable>
   <variable>N2O_flux</variable>
-  <!-- the OAT design emits one column per entry here and pins it to member 1;
-       an input missing from this list keeps all its paths and fails in
-       write.config.SIPNET -->
+  <variable>CH4_flux</variable>
+  <!-- every entry is one Sobol factor. an input with more than one path must
+       be listed or write.config.SIPNET gets all its paths -->
   <samplingspace>
    <parameters>
     <method>uniform</method>
@@ -68,7 +43,7 @@
   <id>99000000003</id>
   <type>SIPNET</type>
   <revision>2.2.0</revision>
-  <delete.raw>FALSE</delete.raw>
+  <delete.raw>TRUE</delete.raw>
   <binary><!-- inserted at config time --></binary>
   <options>
    <GDD>0</GDD>

@@ -1,0 +1,48 @@
+---
+title: "MAGiC uncertainty training"
+---
+
+This is the uncertainty component of the MAGiC system. It runs SIPNET at design points
+with the same meteorology, initial conditions, management events, and parameter priors
+as the ensemble workflow, and reports which of them the modeled soil carbon and nitrous
+oxide flux are most sensitive to.
+
+Two analyses are run:
+
+- A **local** (one-at-a-time) analysis moves each parameter in turn across its prior and
+  reports each parameter's share of the parameter variance.
+- A **global** (Sobol) analysis varies parameters, initial conditions, meteorology, and
+  management together and reports the share of output variance from each.
+
+Each notebook is a self-study demo to work through beforehand, then discuss in the live
+session.
+
+Topic | Audience | Objectives | Notes
+--|--|--|--
+[Environment setup](CARB-uncertainty-setup.md) | Everyone | Conda, AWS, and repository setup | Needed before the demo
+[Uncertainty demo](uncertainty_demo.qmd) | MAGiC users | Run both analyses at two design points and read their output | Demo data covers two design points
+
+## Commands
+
+Command | What it does
+--|--
+`prepare` | Stages the ensemble inputs into `run_dir` and builds the settings of both analyses.
+`local-sensitivity` | Runs the one-at-a-time analysis, computes each parameter's share of variance at each design point, and draws the figures.
+`global-sensitivity` | Runs the Sobol analysis, computes the indices with bootstrap intervals at each design point, and draws the figures.
+
+## Data flow
+
+```{mermaid}
+flowchart LR
+  ENS["ensemble inputs<br/>met, initial conditions,<br/>events, priors"] --> PREP["prepare"]
+  PREP --> LOC["local-sensitivity"]
+  PREP --> GLO["global-sensitivity"]
+```
+
+## Audiences
+
+Following the same roles as the [MAGiC training index](https://github.com/ccmmf/magic-training):
+
+* **Everyone**: environment setup.
+* **MAGiC users**: running the analyses and reading their output. Assumes the setup
+  page is done and you are comfortable on the command line.
