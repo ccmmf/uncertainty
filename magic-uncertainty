@@ -1,0 +1,451 @@
+#!/usr/bin/env bash
+# magic-uncertainty: CLI for the uncertainty workflows.
+# Usage: ./magic-uncertainty <command> [--verbose] --config <path>
+# Commands: help | prepare | local-sensitivity | global-sensitivity
+#
+# Uses the same manifest contract, user config and dispatch settings as the
+# ensemble workflow CLI, so a config written for one reads the same way in the
+# other.
+
+set -euo pipefail
+
+# --- Repo root, manifest, and invocation CWD ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$SCRIPT_DIR"
+MANIFEST="${REPO_ROOT}/uncertainty_manifest.yaml"
+INVOCATION_CWD="${INVOCATION_CWD:-$(pwd)}"
+
+# Minimum mikefarah/yq version: the manifest's inputs/outputs/params maps are
+# read with 'keys', which is not implemented in early v4 releases (e.g. 4.2.0).
+MIN_YQ_VERSION="4.53.4"
+
+usage() {
+  cat <<'EOF'
+Usage: ./magic-uncertainty <command> [global options]
+
+Commands:
+  help                 Print this usage and help (no scripts run).
+  prepare              Stage the inputs of a prepared ensemble run into run_dir and
+                       build the settings of both analyses.
+  local-sensitivity    One-at-a-time parameter sensitivity analysis: run the model,
+                       decompose variance per design point, aggregate, draw figures.
+  global-sensitivity   Sobol sensitivity analysis over parameters, meteorology, initial
+                       conditions and management: run the model, compute indices with
+                       bootstrap intervals per design point, aggregate, draw figures.
+
+Global options (after command):
+  --verbose       Echo each command before running.
+  --config <path> REQUIRED. Path to user YAML config (see example_user_config.yaml).
+
+Examples:
+  ./magic-uncertainty help
+  ./magic-uncertainty prepare --config my_config.yaml --verbose
+  ./magic-uncertainty local-sensitivity --config my_config.yaml
+  ./magic-uncertainty global-sensitivity --config my_config.yaml
+EOF
+}
+
+# --- Compare dotted version strings "a.b.c"; returns success (0) if $1 >= $2 ---
+version_at_least() {
+  local v1="$1" v2="$2"
+  local IFS=.
+  local -a v1parts=($v1) v2parts=($v2)
+  local i a b
+  for i in 0 1 2; do
+    a="${v1parts[i]:-0}"
+    b="${v2parts[i]:-0}"
+    if ((10#$a > 10#$b)); then return 0; fi
+    if ((10#$a < 10#$b)); then return 1; fi
+  done
+  return 0
+}
+
+# --- Require yq (mikefarah/yq, jq-style) at or above MIN_YQ_VERSION ---
+require_yq() {
+  if ! command -v yq &>/dev/null; then
+    echo "magic-uncertainty: yq is required to read YAML. Install mikefarah/yq: https://github.com/mikefarah/yq" >&2
+    exit 1
+  fi
+  if ! yq eval '.' "$MANIFEST" &>/dev/null; then
+    echo "magic-uncertainty: Could not parse manifest with yq. This CLI requires mikefarah/yq (jq-style). Your 'yq' may be a different implementation." >&2
+    exit 1
+  fi
+
+  local version_output found_version
+  version_output=$(yq --version 2>&1)
+  found_version=$(echo "$version_output" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  if [[ -z "$found_version" ]]; then
+    echo "magic-uncertainty: Could not determine yq version from '${version_output}'. This CLI requires mikefarah/yq >= ${MIN_YQ_VERSION}." >&2
+    exit 1
+  fi
+  if ! version_at_least "$found_version" "$MIN_YQ_VERSION"; then
+    echo "magic-uncertainty: yq ${found_version} is too old (found via '$(command -v yq)'). This CLI requires mikefarah/yq >= ${MIN_YQ_VERSION}." >&2
+    echo "magic-uncertainty: Obtain the newest pecan environment (it ships an up-to-date yq on PATH), or install mikefarah/yq >= ${MIN_YQ_VERSION} directly: https://github.com/mikefarah/yq" >&2
+    exit 1
+  fi
+}
+
+# --- Parse arguments: command first, then global options ---
+COMMAND=""
+VERBOSE=0
+CONFIG_FILE=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --verbose) VERBOSE=1; shift ;;
+    --config)
+      if [[ $# -lt 2 ]]; then echo "magic-uncertainty: --config requires <path>." >&2; usage >&2; exit 1; fi
+      CONFIG_FILE="$2"; shift 2
+      ;;
+    -*)
+      echo "magic-uncertainty: Unknown option: $1" >&2; usage >&2; exit 1
+      ;;
+    *)
+      if [[ -z "$COMMAND" ]]; then COMMAND="$1"; shift; continue; fi
+      echo "magic-uncertainty: Unexpected argument: $1" >&2; usage >&2; exit 1
+      ;;
+  esac
+done
+
+if [[ -n "$CONFIG_FILE" && "$CONFIG_FILE" != /* ]]; then
+  CONFIG_FILE="$(pwd)/${CONFIG_FILE}"
+fi
+
+if [[ -z "$COMMAND" || "$COMMAND" == "help" ]]; then
+  usage
+  exit 0
+fi
+
+require_yq
+if [[ ! -f "$MANIFEST" ]]; then
+  echo "magic-uncertainty: Workflow manifest not found: $MANIFEST" >&2
+  exit 1
+fi
+
+# the commands are the step lists of the manifest
+if [[ "$(yq eval ".steps | has(\"$COMMAND\")" "$MANIFEST")" != "true" ]]; then
+  echo "magic-uncertainty: Unknown command: $COMMAND" >&2
+  usage >&2
+  exit 1
+fi
+
+if [[ -z "$CONFIG_FILE" ]]; then
+  echo "magic-uncertainty: --config <path> is required for command '$COMMAND'." >&2
+  usage >&2
+  exit 1
+fi
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+  echo "magic-uncertainty: Config file not found: $CONFIG_FILE" >&2
+  exit 1
+fi
+
+# --- Effective config: user config first, then the manifest, then the fallback.
+# key is the full yq expression to evaluate (e.g. ".run_dir", ".paths.foo"). ---
+get_val() {
+  local key="$1"
+  local fallback="$2"
+  local v
+  v=$(yq eval "$key" "$CONFIG_FILE" 2>/dev/null)
+  if [[ -n "$v" && "$v" != "null" ]]; then
+    echo "$v"
+    return
+  fi
+  v=$(yq eval "$key" "$MANIFEST" 2>/dev/null)
+  if [[ -n "$v" && "$v" != "null" ]]; then
+    echo "$v"
+    return
+  fi
+  echo "$fallback"
+}
+
+# run_dir comes from the config only: the staging step reads it from there too
+run_dir=$(yq eval '.run_dir // ""' "$CONFIG_FILE")
+if [[ -z "$run_dir" ]]; then
+  echo "magic-uncertainty: run_dir is required in config $CONFIG_FILE" >&2
+  exit 1
+fi
+if [[ "$run_dir" == "/" ]]; then
+  echo "magic-uncertainty: run_dir cannot be the root directory (/)." >&2
+  exit 1
+fi
+# relative run_dir is taken from where the CLI was invoked
+if [[ "$run_dir" != /* ]]; then
+  run_dir="${INVOCATION_CWD}/${run_dir}"
+fi
+run_dir="${run_dir%/}"
+mkdir -p "$run_dir"
+
+n_workers=$(get_val ".n_workers" "1")
+pecan_parallelism_mode=$(get_val ".pecan_parallelism_mode" "")
+sbatch_additional_arguments=$(get_val ".sbatch_additional_arguments" "")
+srun_additional_arguments=$(get_val ".srun_additional_arguments" "")
+
+# workflow_parallelism_mode governs the CLI's own step-wrapping (distinct from
+# pecan_parallelism_mode, which governs how PEcAn submits the model runs):
+# "slurm-srun" wraps eligible steps (manifest slurm: true) in srun when
+# available; "local" forces every step to run unwrapped.
+workflow_parallelism_mode=$(get_val ".workflow_parallelism_mode" "slurm-srun")
+case "$workflow_parallelism_mode" in
+  local|slurm-srun) ;;
+  *)
+    echo "magic-uncertainty: Unknown workflow_parallelism_mode value '$workflow_parallelism_mode'. Valid options: local, slurm-srun" >&2
+    exit 1
+    ;;
+esac
+
+# Resolve manifest paths relative to run_dir.
+resolve_path() {
+  local key="$1" rel
+  rel=$(get_val ".paths.${key}" "")
+  if [[ -z "$rel" ]]; then
+    echo "magic-uncertainty: no path defined for key '${key}' in manifest" >&2
+    exit 1
+  fi
+  echo "${run_dir}/${rel}"
+}
+
+# --- Slurm: check whether srun is usable. Not fatal when unavailable: callers
+# run the step unwrapped. Memoized in globals, so never call it in $(...). ---
+SLURM_AVAILABLE_CHECKED=0
+SLURM_AVAILABLE=0
+check_slurm_available() {
+  if [[ $SLURM_AVAILABLE_CHECKED -eq 1 ]]; then
+    [[ $SLURM_AVAILABLE -eq 1 ]]
+    return
+  fi
+  SLURM_AVAILABLE_CHECKED=1
+  if command -v srun &>/dev/null; then
+    SLURM_AVAILABLE=1
+  elif command -v module &>/dev/null && module load slurm &>/dev/null && command -v srun &>/dev/null; then
+    SLURM_AVAILABLE=1
+  fi
+  [[ $SLURM_AVAILABLE -eq 1 ]]
+}
+
+# --- Populate STEPS/STEP_NAMES/STEP_SLURM for the current command. Index-aligned
+# with the manifest's step list; a step without 'slurm' defaults to false. ---
+get_steps_array() {
+  STEPS=()
+  STEP_NAMES=()
+  STEP_SLURM=()
+  local script name slurm
+  while IFS= read -r script; do
+    STEPS+=("$script")
+  done < <(yq eval ".steps.${COMMAND}[].script" "$MANIFEST")
+  while IFS= read -r name; do
+    STEP_NAMES+=("$name")
+  done < <(yq eval ".steps.${COMMAND}[].name" "$MANIFEST")
+  while IFS= read -r slurm; do
+    [[ -z "$slurm" || "$slurm" == "null" ]] && slurm="false"
+    STEP_SLURM+=("$slurm")
+  done < <(yq eval ".steps.${COMMAND}[].slurm" "$MANIFEST")
+  local i
+  for i in "${!STEPS[@]}"; do
+    if [[ "${STEPS[i]}" == "null" || "${STEP_NAMES[i]:-null}" == "null" ]]; then
+      echo "magic-uncertainty: manifest error: step $((i + 1)) of '${COMMAND}' needs both name and script." >&2
+      exit 1
+    fi
+  done
+}
+
+# --- Decide whether step i should be srun-wrapped: the manifest opts in, the
+# user config hasn't forced local, and srun is available. Sets SRUN_PREFIX. ---
+compute_srun_prefix() {
+  local i="$1"
+  SRUN_PREFIX=()
+  [[ "${STEP_SLURM[i]}" != "true" ]] && return
+  if [[ "$workflow_parallelism_mode" == "local" ]]; then
+    return
+  fi
+  if ! check_slurm_available; then
+    echo "magic-uncertainty: WARNING: step '${STEP_NAMES[i]}' is marked slurm: true, but srun is not available on this host -- running it locally." >&2
+    return
+  fi
+  # --job-name first so a job name in srun_additional_arguments wins
+  SRUN_PREFIX=(srun --job-name "MagicUA-${STEP_NAMES[i]}")
+  if [[ -n "$srun_additional_arguments" ]]; then
+    local -a extra
+    read -r -a extra <<< "$srun_additional_arguments"
+    SRUN_PREFIX+=("${extra[@]}")
+  fi
+}
+
+# --- Check every R library the command's steps need, in one R session ---
+check_r_libraries() {
+  local libs
+  libs=$(yq eval ".steps.${COMMAND}[].r_libraries[]" "$MANIFEST" | sort -u | paste -sd, -)
+  [[ -z "$libs" ]] && return 0
+  if ! Rscript -e "
+    libs <- strsplit('${libs}', ',')[[1]]
+    missing <- libs[!vapply(libs, requireNamespace, logical(1), quietly = TRUE)]
+    if (length(missing) > 0) {
+      message('missing R packages: ', paste(missing, collapse = ', '))
+      quit(status = 1)
+    }"; then
+    echo "magic-uncertainty: R library check failed. Install the packages above or activate the correct environment." >&2
+    exit 1
+  fi
+}
+
+# --- Create the directory an output key needs before its script runs.
+# Directory-valued keys (no '.' in the manifest value) are created directly;
+# file-valued keys have their parent directory created instead. ---
+ensure_output_dir() {
+  local key="$1" resolved="$2" rel
+  rel=$(get_val ".paths.${key}" "")
+  if [[ "$(basename "$rel")" == *.* ]]; then
+    mkdir -p "$(dirname "$resolved")"
+  else
+    mkdir -p "$resolved"
+  fi
+}
+
+# --- Validate pecan_parallelism_mode value against manifest options ---
+validate_pecan_parallelism_mode() {
+  if [[ -z "$pecan_parallelism_mode" ]] || \
+     ! yq eval ".pecan_parallelism_mode | has(\"$pecan_parallelism_mode\")" "$MANIFEST" | grep -q '^true$'; then
+    echo "magic-uncertainty: Unknown pecan_parallelism_mode value '$pecan_parallelism_mode'. Valid options:" >&2
+    yq eval '.pecan_parallelism_mode | keys | .[]' "$MANIFEST" >&2
+    exit 1
+  fi
+}
+
+# --- Replace the <host> block of a staged template with the one for the chosen
+# pecan_parallelism_mode ---
+patch_host_block() {
+  local template_key="$1" template_path
+  template_path=$(resolve_path "$template_key") || exit 1
+  if [[ ! -f "$template_path" ]]; then
+    echo "magic-uncertainty: staged template not found at $template_path" >&2
+    exit 1
+  fi
+  if ! command -v python3 &>/dev/null; then
+    echo "magic-uncertainty: python3 is required to patch <host> in $template_path." >&2
+    exit 1
+  fi
+
+  # Two adjacent placeholders that both resolve to "" leave a double space.
+  # PEcAn.remote::start_qsub() splits the qsub command on single spaces, so that
+  # becomes an empty argument that sbatch takes as the script to submit. Collapse
+  # inline runs of spaces and strip trailing ones.
+  local xml_block
+  xml_block=$(yq eval ".pecan_parallelism_mode[\"$pecan_parallelism_mode\"].host_xml" "$MANIFEST" \
+    | sed "s|@NCPUS@|${n_workers}|g" \
+    | sed "s|@EXTRA_ARGS@|${sbatch_additional_arguments}|g" \
+    | sed "s|@REPO_ROOT@|${REPO_ROOT}|g" \
+    | sed -E 's/([^[:blank:]])[[:blank:]]{2,}/\1 /g' \
+    | sed -E 's/[[:blank:]]+$//')
+
+  if [[ $VERBOSE -eq 1 ]]; then
+    echo "magic-uncertainty: patching <host> in $template_path with $pecan_parallelism_mode" >&2
+  fi
+  python3 "${REPO_ROOT}/scripts/patch_xml.py" "$template_path" "host" "$xml_block" --block
+}
+
+# --- Build STEP_ARGS for one named step of the current command, entirely from
+# the manifest's inputs/outputs/params. inputs/outputs/params are dicts of
+# {cli_flag: value_key}: the key is the flag the script takes, the value names a
+# 'paths' entry (inputs/outputs) or a config/manifest value (params). ---
+build_step_args() {
+  local name="$1"
+  STEP_ARGS=()
+  local step=".steps.${COMMAND}[] | select(.name == \"${name}\")"
+
+  # every command substitution is followed by "|| exit 1": set -e does not
+  # reliably propagate out of arr+=("$(cmd)")
+  local flag value_key resolved param_value
+  while IFS= read -r flag; do
+    [[ -z "$flag" ]] && continue
+    value_key=$(yq eval "${step} | .inputs[\"${flag}\"]" "$MANIFEST") || exit 1
+    resolved=$(resolve_path "$value_key") || exit 1
+    STEP_ARGS+=("--${flag}" "$resolved")
+  done < <(yq eval "${step} | .inputs | keys | .[]?" "$MANIFEST")
+
+  while IFS= read -r flag; do
+    [[ -z "$flag" ]] && continue
+    value_key=$(yq eval "${step} | .outputs[\"${flag}\"]" "$MANIFEST") || exit 1
+    resolved=$(resolve_path "$value_key") || exit 1
+    ensure_output_dir "$value_key" "$resolved"
+    # a flag can be both input and output (read-modify-write dirs); pass it once
+    if [[ " ${STEP_ARGS[*]} " != *" --${flag} "* ]]; then
+      STEP_ARGS+=("--${flag}" "$resolved")
+    fi
+  done < <(yq eval "${step} | .outputs | keys | .[]?" "$MANIFEST")
+
+  while IFS= read -r flag; do
+    [[ -z "$flag" ]] && continue
+    value_key=$(yq eval "${step} | .params[\"${flag}\"]" "$MANIFEST") || exit 1
+    param_value=$(get_val ".${value_key}" "") || exit 1
+    if [[ -z "$param_value" ]]; then
+      echo "magic-uncertainty: no value for '${value_key}' (step '${name}', --${flag}) in config or manifest" >&2
+      exit 1
+    fi
+    STEP_ARGS+=("--${flag}" "$param_value")
+  done < <(yq eval "${step} | .params | keys | .[]?" "$MANIFEST")
+}
+
+log_info() {
+  printf '%s %s : %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "INFO" "$1"
+}
+
+# --- Run one step: shell scripts get the staging arguments, R scripts the
+# manifest-built flags. CWD is REPO_ROOT, where the scripts source R/. ---
+run_step() {
+  local i="$1" script="${STEPS[$1]}" name="${STEP_NAMES[$1]}"
+  local script_path="${REPO_ROOT}/${script}"
+  if [[ ! -f "$script_path" ]]; then
+    echo "magic-uncertainty: Script not found: $script_path" >&2
+    exit 1
+  fi
+
+  if [[ "$script" == *.sh ]]; then
+    local -a args=(--repo-root "$REPO_ROOT" --manifest "$MANIFEST" --config "$CONFIG_FILE" --invocation-cwd "$INVOCATION_CWD")
+    [[ $VERBOSE -eq 1 ]] && echo "bash $script_path ${args[*]}" >&2
+    (cd "$REPO_ROOT" && bash "$script_path" "${args[@]}")
+    return
+  fi
+
+  build_step_args "$name"
+  compute_srun_prefix "$i"
+  if [[ $VERBOSE -eq 1 ]]; then
+    echo "${SRUN_PREFIX[*]-} (cd \"$REPO_ROOT\" && Rscript \"$script_path\" ${STEP_ARGS[*]})" >&2
+  fi
+  (cd "$REPO_ROOT" && ${SRUN_PREFIX[@]+"${SRUN_PREFIX[@]}"} Rscript "$script_path" "${STEP_ARGS[@]}")
+}
+
+# Generic handler for every command: step list, script paths, and arguments all
+# come from the manifest. Adding, removing, or reordering a step only requires
+# editing the manifest.
+run_manifest_command() {
+  local logfile="${run_dir}/${COMMAND}_$(date +'%Y%m%d_%H%M%S').log"
+  { # block for output redirection
+    get_steps_array
+    if [[ "$COMMAND" == "prepare" ]]; then
+      validate_pecan_parallelism_mode
+    fi
+    check_r_libraries
+
+    log_info "run_dir: ${run_dir}"
+    log_info "config: ${CONFIG_FILE}"
+    log_info "repository: $(git -C "$REPO_ROOT" describe --always --dirty 2>/dev/null || echo unknown)"
+    log_info "R version: $(Rscript --version 2>&1 | head -1)"
+
+    local total="${#STEPS[@]}" i
+    for i in "${!STEPS[@]}"; do
+      echo "magic-uncertainty: ${COMMAND} step $((i + 1)) of ${total}: ${STEPS[i]}"
+      run_step "$i"
+      if [[ "${STEP_NAMES[i]}" == "stage-inputs" ]]; then
+        echo "magic-uncertainty: patching templates with dispatch: $pecan_parallelism_mode"
+        local template_key
+        while IFS= read -r template_key; do
+          patch_host_block "$template_key"
+        done < <(yq eval '.templates[]' "$MANIFEST")
+      fi
+      echo "magic-uncertainty: ${COMMAND} step $((i + 1)) completed"
+    done
+    echo "magic-uncertainty: ${COMMAND} finished (${total} steps)"
+    echo "magic-uncertainty: output logged to ${logfile}."
+  } 2>&1 | tee -a "${logfile}"
+}
+
+run_manifest_command
