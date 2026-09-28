@@ -1,21 +1,22 @@
 #!/usr/bin/env Rscript
 
-# Write configs and run SIPNET for the statewide OAT design points. Results are
-# read per site by 012_site_results.R, which runs as an array, since reading all
-# runs serially here takes about 16 hours.
-# Resumable through the STATUS file in the output directory.
+# Write configs and run SIPNET for the one-at-a-time sensitivity analysis.
+# Results are read per site by 012_site_results.R, which runs sites in parallel,
+# since reading all runs serially here takes about 16 hours.
+# A rerun resumes from the STATUS file in the output directory; a fresh run
+# needs a fresh output directory.
 
 library(PEcAn.all)
 library(PEcAn.logger)
 
 options <- list(
   optparse::make_option(c("-s", "--settings"),
-    default = "data_raw/settings_sa.xml",
-    help = "path to multisite SA settings XML"
+    default = "settings.xml",
+    help = "path to multisite SA settings XML written by 001_build_xml.R"
   ),
-  optparse::make_option(c("-c", "--continue"),
-    action = "store_true", default = FALSE,
-    help = "resume an interrupted workflow"
+  optparse::make_option("--seed",
+    default = 1L,
+    help = "seed for the prior draws the quantiles are taken from"
   )
 ) |>
   purrr::modify(\(x) {
@@ -37,9 +38,6 @@ PEcAn.all::pecan_version()
 settings <- PEcAn.settings::read.settings(args$settings)
 dir.create(settings$outdir, recursive = TRUE, showWarnings = FALSE)
 
-status_file <- file.path(settings$outdir, "STATUS")
-if (!args$continue && file.exists(status_file)) file.remove(status_file)
-
 if (PEcAn.utils::status.check("CONFIG") == 0) {
   PEcAn.utils::status.start("CONFIG")
   # The design is built from the first site and shared, which is how every site
@@ -47,6 +45,7 @@ if (PEcAn.utils::status.check("CONFIG") == 0) {
   # run.write.configs do it internally is the documented path, and the internal
   # one reads no posteriors: it calls load_pft_posteriors with posterior.files
   # set to NA for every PFT, so the priors come back empty.
+  set.seed(args$seed)
   design <- PEcAn.uncertainty::generate_joint_ensemble_design(
     settings = settings[1],
     ensemble_size = settings$ensemble$size
