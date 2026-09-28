@@ -1,8 +1,3 @@
-# Taken unchanged from dlebauer's new_sensitivity_plot_function branch
-# (876ef8942fe4d46e129e0fe423ae5a33cb80626c) so this pass has one plot
-# implementation rather than two. ccmmf/uncertainty#9 can close once this
-# lands.
-
 #' Plot parameter densities and multi-output PEcAn sensitivities
 #'
 #' @param sensitivity.results Named list by output of PEcAn sensitivity.analysis
