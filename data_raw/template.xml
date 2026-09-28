@@ -1,30 +1,52 @@
 <?xml version="1.0"?>
 <pecan>
  <info>
-  <notes></notes>
+  <notes>statewide OAT sensitivity analysis</notes>
   <userid>-1</userid>
   <username></username>
  </info>
- <outdir>output</outdir>
- <modeloutdir>output/out</modeloutdir>
- <rundir>output/run</rundir>
+ <outdir><!-- inserted at config time --></outdir>
+ <modeloutdir><!-- inserted at config time --></modeloutdir>
+ <rundir><!-- inserted at config time --></rundir>
  <pfts>
-  <pft>
-   <name>temperate.deciduous</name>
-   <posterior.files>pfts/temperate.deciduous/post.distns.Rdata</posterior.files>
-  </pft>
-  <pft>
-   <name>grass</name>
-   <posterior.files>pfts/grass/post.distns.Rdata</posterior.files>
-  </pft>
+  <!-- inserted at config time, one entry per subdirectory of pft_dir -->
  </pfts>
- <ensemble>
-  <size><!-- inserted at config time --></size>
-  <variable>NPP</variable>
+ <sensitivity.analysis>
+  <quantiles>
+   <sigma>-2</sigma>
+   <sigma>-1</sigma>
+   <sigma>1</sigma>
+   <sigma>2</sigma>
+  </quantiles>
   <variable>TotSoilCarb</variable>
   <variable>AbvGrndWood</variable>
+  <variable>NEE</variable>
+  <variable>NPP</variable>
+  <variable>HeteroResp</variable>
   <variable>Qle</variable>
   <variable>SoilMoistFrac</variable>
+  <variable>CH4_flux</variable>
+  <variable>N2O_flux</variable>
+  <start.year><!-- inserted at config time --></start.year>
+  <end.year><!-- inserted at config time --></end.year>
+ </sensitivity.analysis>
+ <ensemble>
+  <size><!-- inserted at config time --></size>
+  <!-- same list as the sensitivity analysis: the ensemble members run either
+       way, so reading them gives the total spread to compare the partial
+       variances against -->
+  <variable>TotSoilCarb</variable>
+  <variable>AbvGrndWood</variable>
+  <variable>NEE</variable>
+  <variable>NPP</variable>
+  <variable>HeteroResp</variable>
+  <variable>Qle</variable>
+  <variable>SoilMoistFrac</variable>
+  <variable>CH4_flux</variable>
+  <variable>N2O_flux</variable>
+  <!-- the OAT design emits one column per entry here and pins it to member 1;
+       an input missing from this list keeps all its paths and fails in
+       write.config.SIPNET -->
   <samplingspace>
    <parameters>
     <method>uniform</method>
@@ -35,7 +57,9 @@
    <poolinitcond>
     <method>sampling</method>
    </poolinitcond>
-   <!-- TODO soil init cond here when ready -->
+   <events>
+    <method>sampling</method>
+   </events>
   </samplingspace>
   <start.year><!-- inserted at config time --></start.year>
   <end.year><!-- inserted at config time --></end.year>
@@ -43,10 +67,16 @@
  <model>
   <id>99000000003</id>
   <type>SIPNET</type>
-  <revision>git</revision>
+  <revision>2.2.0</revision>
   <delete.raw>FALSE</delete.raw>
-  <binary>sipnet.git</binary>
-  <prerun>cp data/events.in @RUNDIR@</prerun>
+  <binary><!-- inserted at config time --></binary>
+  <options>
+   <GDD>0</GDD>
+   <NITROGEN_CYCLE>1</NITROGEN_CYCLE>
+   <ANAEROBIC>1</ANAEROBIC>
+   <LITTER_POOL>1</LITTER_POOL>
+   <FLOODING>1</FLOODING>
+  </options>
  </model>
  <run>
   <site><!-- inserted at config time --></site>
@@ -56,26 +86,29 @@
     <path><!-- inserted at config time --></path>
    </met>
    <poolinitcond>
-     <source>RS_veg</source>
-     <output>poolinitcond</output>
-     <ensemble><!-- inserted at config time --></ensemble>
-     <path><!-- inserted at config time --></path>
+    <source>RS_veg</source>
+    <output>poolinitcond</output>
+    <ensemble><!-- inserted at config time --></ensemble>
+    <path><!-- inserted at config time --></path>
    </poolinitcond>
+   <events>
+    <path><!-- inserted at config time --></path>
+   </events>
   </inputs>
   <start.date><!-- inserted at config time --></start.date>
   <end.date><!-- inserted at config time --></end.date>
  </run>
  <host>
   <name>localhost</name>
-  <outdir>output/out</outdir>
-  <rundir>output/run</rundir>
-  <qsub>sbatch -J @NAME@ -o @STDOUT@ -e @STDERR@</qsub>
-  <qsub.jobid>.*job ([0-9]+).*</qsub.jobid>
-  <qstat>squeue -j @JOBID@ || echo DONE</qstat>
+  <outdir><!-- inserted at config time --></outdir>
+  <rundir><!-- inserted at config time --></rundir>
+  <qsub>qsub -V -cwd -N @NAME@ -j y -o /dev/null -S /bin/bash</qsub>
+  <qsub.jobid>Your job-array ([0-9]+).*</qsub.jobid>
+  <qstat>qstat -j @JOBID@ || echo DONE</qstat>
   <modellauncher>
-    <binary>slurm_array_submit.sh</binary>
-    <qsub.extra>-a 1-@NJOBS@</qsub.extra>
-    <Njobmax>1000</Njobmax>
+   <binary>./scripts/sge_array_launcher.sh</binary>
+   <qsub.extra>-t 1-@NJOBS@</qsub.extra>
+   <Njobmax>140</Njobmax>
   </modellauncher>
  </host>
 </pecan>

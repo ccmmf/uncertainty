@@ -47,3 +47,9 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# written by direct runs of scripts/001_build_xml.R
+data_raw/settings_sa.xml
+output/
+data/
+logs/
