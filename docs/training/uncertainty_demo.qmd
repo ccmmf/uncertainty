@@ -22,22 +22,22 @@ have been completed. Run all commands below from the uncertainty repository root
 
 ## Fetch demo data
 
-<!-- [check] demo bundle S3 key once it is uploaded -->
-
 ```bash
-aws s3 sync s3://carb/data/workflows/uncertainty/demo_data/ demo-data/uncertainty/
+aws s3 cp s3://carb/data_raw/magic_uncertainty_demo_20260928.tgz demo-data/
+mkdir -p demo-data/uncertainty
+tar -xzf demo-data/magic_uncertainty_demo_20260928.tgz -C demo-data/uncertainty
 aws s3 sync s3://carb/pfts/magic_v1.2/ demo-data/pfts/magic_v1.2/
 cp demo-data/uncertainty/demo_config.yaml config.yaml
 ```
 
-The first download holds the ensemble inputs for the two design points:
+The demo package holds the ensemble inputs for the two design points:
 
 - `site_info.csv`: the design points, one row each, with their PFT and ERA5 grid cell
 - `data/ERA5_SIPNET/`: 10 ERA5 meteorology members per grid cell
 - `IC_files/`: initial condition members per design point
 - `data/events/`: 20 management event members
 
-The second is the v1.2 parameterization package: one prior file per PFT, plus the
+The second download is the v1.2 parameterization package: one prior file per PFT, plus the
 package README.
 
 ## Explore the CLI
