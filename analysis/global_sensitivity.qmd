@@ -3,7 +3,6 @@ title: "Global Sensitivity Analysis"
 date: today
 format:
   html:
-    embed-resources: true
     toc: true
     toc-depth: 2
 execute:
@@ -50,7 +49,7 @@ input and are not ranked individually.
 
 ## Share of output variance by input
 
-![Share of output variance from each input at each design point, as first-order indices. Negative estimates are shown as 0. The grey segment is the variance the first-order indices leave unexplained.](figures/gsa_partition.png){#fig-partition width=100% fig-align="center" .lightbox fig-alt="Stacked horizontal bars, one per design point, showing the share of variance from parameters, initial conditions, management, meteorology, and an unexplained part, for soil carbon and nitrous oxide flux."}
+![Share of output variance from each input at each design point, as first-order indices. Negative estimates are shown as 0. The grey segment is the variance the first-order indices leave unexplained; where the estimates sum to more than 1, the bar runs past 1 and has no grey segment.](figures/gsa_partition.png){#fig-partition width=100% fig-align="center" .lightbox fig-alt="Stacked horizontal bars, one per design point, showing the share of variance from parameters, initial conditions, management, meteorology, and an unexplained part, for soil carbon and nitrous oxide flux."}
 
 | Output | Input | Median | Range across design points |
 |---|---|---:|---:|
