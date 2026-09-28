@@ -5,20 +5,19 @@
 library(PEcAn.settings)
 library(PEcAn.logger)
 
-source("000-config.R")
 source("R/local_sensitivity.R")
 
 options <- list(
   optparse::make_option(c("-s", "--settings"),
-    default = file.path(run_dir, "output", "pecan.CONFIGS.xml"),
+    default = "output/pecan.CONFIGS.xml",
     help = "settings written by 011_run_local_sensitivity.R"
   ),
   optparse::make_option(c("-o", "--output_file"),
-    default = file.path(run_dir, "statewide_sensitivity.csv"),
+    default = "local_sensitivity.csv",
     help = "path to write the aggregated table"
   ),
   optparse::make_option("--site_file",
-    default = "data_raw/statewide_sites.csv",
+    default = "site_info.csv",
     help = "site table, joined for location and PFT"
   )
 ) |>
