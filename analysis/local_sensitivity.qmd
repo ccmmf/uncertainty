@@ -1,219 +1,104 @@
 ---
 title: "Local Sensitivity Analysis"
-author: "Akash B V"
 date: today
 format:
   html:
     embed-resources: true
     toc: true
-    toc-depth: 3
-    theme: cosmo
-    number-sections: true
-    fig-cap-location: bottom
+    toc-depth: 2
 execute:
   echo: false
   warning: false
   message: false
+lightbox: true
 ---
 
-# Key Findings
+This report ranks the parameters of the SIPNET ecosystem model by their contribution to
+the uncertainty of modeled soil carbon and nitrous oxide flux. The analysis covers 100
+design points on California cropland over 2016 to 2023. Results are each parameter's
+share of parameter variance at each design point.
 
-This report presents a one-at-a-time (OAT) sensitivity analysis of the SIPNET ecosystem
-model at 100 design points on California cropland, for soil carbon, nitrous oxide flux,
-and methane flux.
+## Background
 
--   **Soil carbon.** Two soil parameters, the temperature sensitivity of soil
-    respiration and the soil organic matter (SOM) respiration rate, have median shares
-    of 62 and 28 percent of the parameter variance. Raising either lowers soil carbon at
-    all 100 design points.
--   **Nitrous oxide.** The same temperature sensitivity and the nitrogen volatilization
-    rate have median shares of 46 and 40 percent. In SIPNET the nitrous oxide output is
-    the nitrogen volatilization flux, which scales with both parameters.
--   **Methane.** Modeled methane is near zero at every design point; the soil methane
-    rate prior has a median of 1.4 × 10^-9^ day^-1^. Where methane is not exactly zero,
-    the soil methane rate has a median share of 99 percent.
--   **Plant parameters.** A single plant parameter exceeds 5 percent of the soil carbon
-    variance at 19 of the 96 cropped design points, 18 of them woody perennial. Plant
-    carbon inputs are small in these runs (see Limitations), which limits how much plant
-    parameters can affect soil carbon and nitrous oxide.
+A parameter matters for prediction when the model is sensitive to it and its value is
+uncertain. The analysis combines the two, following the PEcAn variance decomposition
+([LeBauer et al., 2013](references.html); [Dietze et al., 2014](references.html)).
 
-------------------------------------------------------------------------
+SIPNET is run with every parameter at its prior median, then with each parameter moved
+in turn to the 2.3, 15.9, 84.1, and 97.7 percentiles of its prior, all others at their
+median. A spline through the five outputs gives the response to that parameter, and the
+variance of the prior propagated through the spline is its contribution to the output
+variance. The share of parameter variance is that contribution over the sum across all
+plant and soil parameters at the design point. A parameter is treated as influential
+where its share exceeds 5 percent, the criterion Fer et al. (2018) used to select SIPNET
+parameters for calibration ([Fer et al., 2018](references.html)).
 
-# Background {#sec-background}
-
-## Why sensitivity and uncertainty analysis?
-
-Process-based ecosystem models encode how carbon, water, and nutrient cycles interact.
-When they are used for prediction, the reliability of the predictions depends on how well
-the model's parameters are known.
-
-Sensitivity analysis asks which parameters the model responds to most strongly. Sensitivity
-alone can mislead: a sensitive parameter with a narrow prior may contribute little to
-predictive uncertainty, while a moderately sensitive parameter with a wide prior can
-dominate it. Uncertainty analysis combines model sensitivity with prior parameter
-uncertainty to estimate each parameter's contribution to predictive variance (LeBauer et
-al., 2013; Dietze et al., 2014).
-
-## Approach {#sec-approach}
-
-The analysis uses the PEcAn variance decomposition workflow (LeBauer et al., 2013;
-@fig-workflow):
-
-1.  **Priors.** Each parameter has a prior distribution. Priors are set per plant
-    functional type (PFT), so all design points of a PFT share the same priors. This run
-    uses priors only; no meta-analysis was run to update them.
-2.  **One-at-a-time sensitivity runs.** SIPNET is run with every parameter at its prior
-    median, then with each parameter moved in turn to the 2.3, 15.9, 84.1, and 97.7
-    percentiles of its prior (the quantile equivalents of $\pm 1\sigma$ and
-    $\pm 2\sigma$), all other parameters at their median. A spline is fit through the
-    five outputs, and elasticity is computed from its slope at the median:
-
-    $$\varepsilon = \frac{\partial Y}{\partial X} \cdot \frac{X}{Y}$$
-
-    An elasticity of 2 means a 1 percent increase in the parameter produces a 2 percent
-    increase in the output. The sign gives the direction.
-
-3.  **Variance decomposition.** Each parameter's prior is propagated through its spline,
-    and the variance of the result is that parameter's contribution to predictive
-    variance. This report expresses each contribution as a **share of parameter
-    variance**: its variance over the sum across all plant and soil parameters at that
-    design point and output. PEcAn's own partial variance normalizes plant and soil
-    parameters separately; the joint share shows which group dominates an output.
-
-A parameter is treated as influential where its share exceeds 5 percent, the criterion
-Fer et al. (2018) used to select SIPNET parameters for calibration.
-
-![One-at-a-time sensitivity analysis. Steps are on the left and what each produces on the right, with the figures that show it. Steps 2 to 4 are repeated for every parameter, output, and design point. The dashed calibration loop is the next step and is not part of this report.](figures/oat_workflow.svg){#fig-workflow width=90% fig-align="center"}
-
-## Study design {#sec-design}
-
-The analysis covers the first 100 design points of the statewide design in
-farthest-point order (@fig-map). Each design point runs under its vegetation PFT from the
-statewide inventory site table, plus the soil PFT, which holds the soil biogeochemistry
-parameters: 67 woody perennial, 14 row crop, 6 grass, 4 alfalfa, 3 rice, 2 corn, and 4
-uncropped design points with the soil PFT only.
-
-![Design points, colored by the PFT they were run under, with the number of design points in brackets. Outlines are the Cal-Adapt climate regions.](figures/site_map.png){#fig-map width=70% fig-align="center"}
-
-Each cropped design point varies 34 parameters (21 plant, 13 soil) and each uncropped
-design point 13. Parameters whose prior has no spread are run but contribute no variance
-and are excluded from the decomposition.
+![Design points, colored by the PFT they were run under, with the number of design points in brackets. Outlines are the Cal-Adapt climate regions.](figures/site_map.png){#fig-map width=70% fig-align="center" .lightbox fig-alt="Map of California with 100 design points colored by plant functional type."}
 
 | Setting | Value |
 |---|---|
-| Model | SIPNET 2.2.0 (commit `3ccc41c`), nitrogen cycle and anaerobic processes on |
+| Model | SIPNET 2.2.0, nitrogen cycle and anaerobic processes on |
+| Design points | 100: 67 woody perennial, 14 row crop, 6 grass, 4 alfalfa, 3 rice, 2 corn, 4 uncropped |
 | Period | 2016 to 2023, reported as the mean over the period |
-| Outputs reported | Soil carbon stock, nitrous oxide flux, methane flux |
-| Parameter priors | PFT priors of the statewide inventory runs |
-| Inputs | Member 1 of the ERA5 meteorology, initial condition, and management ensembles |
-| Model runs | 13,364 (137 per cropped design point, 53 per uncropped design point) |
+| Parameters | 34 per cropped design point (21 plant, 13 soil), 13 per uncropped design point |
+| Priors | PFT priors of the statewide inventory runs |
+| Meteorology, initial conditions, management | member 1 of each inventory ensemble |
+| Model runs | 13,364 |
 
-: Configuration of the sensitivity runs. {#tbl-config}
+: Configuration of the analysis. {#tbl-config}
 
-------------------------------------------------------------------------
+## Share of parameter variance
 
-# Results {#sec-results}
+![Prior uncertainty (CV), sensitivity (elasticity), and share of parameter variance. Points are medians across design points and bars span the interquartile range.](figures/variance_components.png){#fig-components width=100% fig-align="center" .lightbox fig-alt="Dot plot of coefficient of variation, elasticity, and share of parameter variance for the influential parameters of soil carbon and nitrous oxide flux."}
 
-## Uncertainty, sensitivity, and share {#sec-components}
+| Output | Parameter | Median share (%) | Range (%) | Design points over 5 percent |
+|---|---|---:|---:|---:|
+| Soil carbon | Temperature sensitivity of soil respiration | 62 | 4 to 78 | 99 |
+| | Soil organic matter respiration rate | 28 | 2 to 42 | 98 |
+| Nitrous oxide flux | Temperature sensitivity of soil respiration | 46 | 17 to 81 | 100 |
+| | Nitrogen volatilization rate | 40 | 15 to 67 | 100 |
+| | Nitrogen leaching fraction | 8 | 0 to 20 | 76 |
 
-Which parameters contribute most to predictive uncertainty? @fig-components shows, for
-each influential parameter, its prior uncertainty (CV), the model's sensitivity to it
-(elasticity), and its share of parameter variance.
+: Share of parameter variance across the 100 design points, for parameters with a median share above 5 percent. {#tbl-shares}
 
-![Prior uncertainty (CV), sensitivity (elasticity), and share of parameter variance. Points are medians across design points and bars span the interquartile range. CV is the same at every design point because each parameter has one prior. Plant parameters are summarized over all 96 cropped design points, so their medians are near zero. Methane elasticities use only the 16 design points where the median run produces methane. Rows are soil parameters over 5 percent at any design point and plant parameters over 5 percent at five or more.](figures/variance_components.png){#fig-components width=100% fig-align="center"}
+Two soil parameters account for most of the parameter variance in soil carbon, and
+raising either lowers soil carbon at all 100 design points. A plant parameter exceeds 5
+percent of the soil carbon variance at 19 of the 96 cropped design points, 18 of them
+woody perennial, and at none for nitrous oxide.
 
-## Variation across design points and PFTs {#sec-variability}
+## Variation across design points and PFTs
 
-How much do the shares vary across design points, and do they differ between PFTs?
-@fig-pft shows the distribution of each parameter's share across design points and its
-mean share by PFT.
+![Share of parameter variance across design points. Upper panels: distribution across design points, with the mean marked by the green bar. Lower panels: mean share by PFT.](figures/share_by_pft.png){#fig-pft width=100% fig-align="center" .lightbox fig-alt="Box plots of share of parameter variance across design points and bar charts of mean share by plant functional type, for soil carbon and nitrous oxide flux."}
 
-![Share of parameter variance across design points. Upper panels: distribution across design points, with the number of design points in brackets and the mean marked by the green bar; methane omits the 11 design points where it is zero in every run. Lower panels: mean share by PFT (alfalfa 4, corn 2, grass 6, rice 3, row crop 14, woody perennial 67, uncropped 4 design points). Uncropped design points have no plant parameters.](figures/share_by_pft.png){#fig-pft width=100% fig-align="center"}
+The two parameters with the largest mean share are the same in every PFT for each
+output.
 
-## Response curves {#sec-curves}
+## Response to each parameter
 
-@fig-panel shows the prior and the model response for the soil parameters at one design
-point, a row crop design point in the San Joaquin Valley whose soil parameter shares lie
-close to the median across all 100. @fig-curves-soc and @fig-curves-n2o show the response at
-every design point, relative to each design point's median run.
+![Prior density and model response for the soil parameters at one row crop design point in the San Joaquin Valley. Points are the five runs, the larger point the median run, and the line PEcAn's spline.](figures/response_curves_soil.png){#fig-panel width=80% fig-align="center" .lightbox fig-alt="Grid of prior densities and response curves of soil carbon and nitrous oxide flux for four soil parameters."}
 
-![Prior density and model response at the median design point. The density shades the 5 to 95 and 25 to 75 percentiles and marks the median; points are the five runs, the larger point the median run, and the line PEcAn's spline. Y axes are shared down each column and labeled at their limits. Rows are the soil parameters whose PEcAn partial variance, the share of parameter variance within the soil PFT alone, exceeds 5 percent in any output.](figures/response_curves_soil.png){#fig-panel width=80% fig-align="center"}
+![Response of soil carbon at every design point, as output over the design point's median run, from the 2.3 to the 97.7 percentile of each prior.](figures/response_curves_TotSoilCarb.png){#fig-curves-soc width=100% fig-align="center" .lightbox fig-alt="Response curves of soil carbon at every design point for the influential parameters."}
 
-![Response of soil carbon at every design point, as output over the design point's median run, from the 2.3 to the 97.7 percentile of each prior.](figures/response_curves_TotSoilCarb.png){#fig-curves-soc width=100% fig-align="center"}
+![Response of nitrous oxide flux at every design point, as in @fig-curves-soc.](figures/response_curves_N2O_flux.png){#fig-curves-n2o width=100% fig-align="center" .lightbox fig-alt="Response curves of nitrous oxide flux at every design point for the influential parameters."}
 
-![Response of nitrous oxide flux at every design point, as in @fig-curves-soc. Methane is not shown because its median run is zero at 84 design points.](figures/response_curves_N2O_flux.png){#fig-curves-n2o width=100% fig-align="center"}
+## Reporting scope
 
-------------------------------------------------------------------------
+Shares are reported for soil carbon and nitrous oxide flux. Methane and six other outputs
+were also computed. Modeled methane is near the precision of the model output, and plant
+carbon is low in these runs, with net primary productivity below 20 g C m^-2^ yr^-1^ at
+the median design point of every PFT; shares for these outputs are not presented.
 
-# Implications {#sec-insights}
+## Interpretation
 
--   **Soil carbon** responds mainly to the two soil respiration parameters. The prior for
-    the temperature sensitivity is uniform from 1.4 to 5.0, and its share depends on that
-    width.
--   **Nitrous oxide** responds mainly to the temperature sensitivity and the nitrogen
-    volatilization rate. In SIPNET 2.2.0 the nitrous oxide output is the total nitrogen
-    volatilization flux: the volatilization rate times soil mineral nitrogen times a
-    temperature effect of Q10^(T/10) times a moisture effect. Calibrating the
-    volatilization rate against measured nitrous oxide would treat all volatilized
-    nitrogen as nitrous oxide.
--   **Methane** results describe a flux that is near zero at every design point,
-    including the rice design points. In SIPNET, methane production scales with the soil
-    methane rate, whose prior median is 1.4 × 10^-9^ day^-1^, so these results do not
-    identify which parameters control methane where it is produced.
--   **The temperature sensitivity of soil respiration** is influential for soil carbon
-    and nitrous oxide at nearly every design point, and for methane at 21 of the 89
-    design points with methane variance.
+These are model-derived results. Parameters are drawn from priors that have not been
+updated with observations, so each share depends on the prior widths; the prior for the
+temperature sensitivity of soil respiration is uniform from 1.4 to 5.0.
 
-------------------------------------------------------------------------
+Each parameter is varied with all others at their medians, so the shares divide the sum
+of single-parameter contributions and do not include interactions
+([Saltelli et al., 2019](references.html)). Meteorology, initial conditions, and
+management are held at one ensemble member; the global sensitivity analysis compares
+those inputs with the parameters. In SIPNET 2.2.0 the nitrous oxide output is the total
+nitrogen volatilization flux.
 
-# Appendix: Technical Details {#sec-technical}
-
-## Sensitivity metrics
-
--   **Coefficient of variation** (CV): standard deviation of the prior over its median, as
-    PEcAn computes it.
--   **Elasticity** ($\varepsilon$): $\frac{\partial Y}{\partial X} \cdot \frac{X}{Y}$ at
-    the median. The sign gives the direction; PEcAn divides by the median output, so
-    elasticity is undefined where that output is zero.
--   **Share of parameter variance**: a parameter's variance contribution over the sum
-    across all plant and soil parameters at that design point and output.
-
-## Limitations of OAT analysis
-
-1.  **No interaction effects.** Each parameter is varied with all others at their
-    medians. The shares divide the sum of single-parameter contributions rather than the
-    total predictive variance and can misstate parameter uncertainty where parameters
-    interact (Saltelli et al., 2019).
-2.  **One input realization.** Meteorology, initial conditions, and management are held
-    at one ensemble member, and model structural error is not represented.
-3.  **Prior dependence.** Shares depend on prior widths.
-4.  **One PFT per design point.** Each design point runs under one vegetation PFT for the
-    whole period, while the statewide inventory changes PFT at each planting.
-5.  **Low plant carbon.** At the median parameter values, NPP at the median design point
-    of every PFT is below 20 g C m^-2^ yr^-1^, and it is negative at some design points.
-    Plant parameters reach soil carbon and nitrous oxide through plant inputs, so their
-    shares for those outputs may be low for this reason.
-
-## Excluded variables
-
-Six other outputs were computed and are not reported: NPP, aboveground woody biomass,
-heterotrophic respiration, net ecosystem exchange, latent heat flux, and soil moisture. NPP
-and aboveground woody biomass are excluded because of the low plant carbon noted above.
-
-## References {#sec-references}
-
-Dietze, M. C., Serbin, S. P., Davidson, C., et al. (2014). A quantitative assessment of a terrestrial biosphere model's data needs across
-North American biomes. *Journal of Geophysical Research: Biogeosciences*, 119, 286-300.
-https://doi.org/10.1002/2013JG002392
-
-Fer, I., Kelly, R., Moorcroft, P. R., et al. (2018). Linking big models to big data: efficient ecosystem model calibration through
-Bayesian model emulation. *Biogeosciences*, 15, 5801-5830.
-https://doi.org/10.5194/bg-15-5801-2018
-
-LeBauer, D. S., Wang, D., Richter, K. T., et al. (2013).
-Facilitating feedbacks between field measurements and ecosystem models. *Ecological
-Monographs*, 83(2), 133-154. https://doi.org/10.1890/12-0137.1
-
-Saltelli, A., Aleksankina, K., Becker, W., et al. (2019). Why so many published sensitivity analyses are false: a systematic review
-of sensitivity analysis practices. *Environmental Modelling & Software*, 114, 29-39.
-https://doi.org/10.1016/j.envsoft.2019.01.012
+See [References](references.html) for the cited sources.
