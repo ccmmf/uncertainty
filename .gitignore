@@ -39,11 +39,23 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# pkgdown site
-docs/
-
 # translation temp files
 po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# written by direct runs of scripts/001_build_xml.R
+data_raw/settings_sa.xml
+output/
+data/
+logs/
+
+/.quarto/
+
+**/*.quarto_ipynb
+
+# rendered site
+_site/
+.quarto/
+_freeze/

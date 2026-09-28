@@ -1,0 +1,60 @@
+# Example user config for the uncertainty workflows.
+# Copy this file and edit before running. Keys left out fall back to the
+# defaults in uncertainty_manifest.yaml.
+#
+# The analyses run on the inputs of a prepared ensemble run: the run directory
+# the ensemble workflow's prepare step built (site list, met, initial
+# conditions, management events, PFT priors and the SIPNET binary). Point
+# external_paths at it below.
+#
+# Run with:
+#   ./magic-uncertainty prepare            --config <this file>
+#   ./magic-uncertainty local-sensitivity  --config <this file>
+#   ./magic-uncertainty global-sensitivity --config <this file>
+
+run_dir: "uncertainty-run-directory/"
+
+start_date: "2016-01-01"
+end_date: "2023-12-31"
+
+# design points, taken from the top of site_info.csv
+n_sites_local: 100
+n_sites_global: 10
+# base sample N of the Sobol design; each design point runs N * 6 configs
+sobol_sample_size: 1000
+# members available in the ensemble run's input ensembles; n_ic and n_event
+# may be smaller than what the run holds, the first members are used
+n_ens: 20
+n_met: 10
+n_ic: 20
+n_event: 20
+# design point whose response curves are drawn; must be one of the first
+# n_sites_local rows of site_info.csv
+example_site: "284301"
+
+# workers for the steps that read model output, one design point per worker
+n_workers: 1
+
+#### Workflow Parallelism
+# set to local to run every step in the current shell or job
+workflow_parallelism_mode: slurm-srun
+# passed to srun for the steps that read model output; give it as many CPUs as n_workers
+srun_additional_arguments: "--cpus-per-task=1 --mem=16G --time=12:00:00"
+
+# Pecan parallelism: how PEcAn submits the model runs
+# one of local-gnu-parallel, slurm-sbatch, sge-qsub
+pecan_parallelism_mode: slurm-sbatch
+# sbatch_additional_arguments: ""  # extra flags for sbatch, e.g. "-p cpu --account=foo"
+
+external_paths:
+  copy_to_rundir:
+    local_template: "data_raw/template.xml"
+    global_template: "data_raw/template_gsa.xml"
+    climregions_file: "data_raw/caladapt_climregions.gpkg"
+  link_in_place:
+    site_info_file: "ensemble-run-directory/site_info.csv"
+    met_dir: "ensemble-run-directory/data/ERA5_SIPNET"
+    ic_dir: "ensemble-run-directory/IC_files"
+    event_dir: "ensemble-run-directory/data/events"
+    pft_dir: "ensemble-run-directory/data_raw/pfts"
+    sipnet_binary: "ensemble-run-directory/sipnet.git"

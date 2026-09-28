@@ -1,0 +1,291 @@
+# Workflow manifest: fixed paths and step I/O (internal, not user-facing).
+# CLI loads this automatically; do not pass via --config.
+#
+# Paths: All entries under 'paths' are inside the run directory. Keys are
+# referenced by name in steps (inputs/outputs). At runtime the CLI resolves each
+# path as run_dir + "/" + value. The inputs of the analyses (site list, met,
+# initial conditions, management events, PFT priors, SIPNET binary) come from a
+# prepared ensemble run and are staged into these paths by 'prepare' from the
+# user config's external_paths.
+#
+# Steps: Each command has a list of step objects. Each step has:
+#   name:        Short identifier for this step
+#   script:      Script path (relative to repo root)
+#   slurm:       Whether this step's invocation should be wrapped in `srun` when
+#                srun is available and workflow_parallelism_mode is not "local".
+#                Defaults to false; must never be true for the staging step.
+#   r_libraries: R packages to check before running this script
+#   inputs:      Dict of {cli_flag: path_key} for path-valued flags this script reads
+#   outputs:     Dict of {cli_flag: path_key} for path-valued flags this script
+#                creates or writes
+#   params:      Dict of {cli_flag: value_key} for scalar flags this script needs;
+#                value_key is resolved from the user config, falling back to the
+#                manifest's own top-level value
+#
+# The model runs of each analysis are dispatched by PEcAn, not by the CLI: the
+# <host> block chosen by pecan_parallelism_mode is patched into the staged
+# templates listed under 'templates' during prepare.
+
+steps:
+    prepare:
+        - name: stage-inputs
+          script: "scripts/00_stage_external_inputs.sh"
+          slurm: false
+          r_libraries: []
+          inputs: {}
+          params: {}
+          outputs: {}
+
+        - name: build-xml-local
+          script: "scripts/001_build_xml.R"
+          slurm: false
+          r_libraries: [PEcAn.settings]
+          inputs:
+              site_file: site_info_file
+              template_file: local_template
+              met_dir: met_dir
+              ic_dir: ic_dir
+              event_dir: event_dir
+              pft_dir: pft_dir
+              binary: sipnet_binary
+          params:
+              n_sites: n_sites_local
+              n_ens: n_ens
+              n_met: n_met
+              n_ic: n_ic
+              n_event: n_event
+              start_date: start_date
+              end_date: end_date
+          outputs:
+              output_file: local_settings
+              output_dir: local_outdir
+
+        - name: build-xml-global
+          script: "scripts/001_build_xml.R"
+          slurm: false
+          r_libraries: [PEcAn.settings]
+          inputs:
+              site_file: site_info_file
+              template_file: global_template
+              met_dir: met_dir
+              ic_dir: ic_dir
+              event_dir: event_dir
+              pft_dir: pft_dir
+              binary: sipnet_binary
+          params:
+              n_sites: n_sites_global
+              n_ens: sobol_sample_size
+              n_met: n_met
+              n_ic: n_ic
+              n_event: n_event
+              start_date: start_date
+              end_date: end_date
+          outputs:
+              output_file: global_settings
+              output_dir: global_outdir
+
+    local-sensitivity:
+        - name: run-model
+          script: "scripts/011_run_local_sensitivity.R"
+          slurm: false  # submits the model runs and waits on them
+          r_libraries: [PEcAn.all]
+          inputs:
+              settings: local_settings
+          params:
+              seed: seed
+          outputs: {}
+
+        - name: site-results
+          script: "scripts/012_site_results.R"
+          slurm: true
+          r_libraries: [PEcAn.all, future, furrr]
+          inputs:
+              settings: local_configs
+          params:
+              n_cores: n_workers
+          outputs: {}
+
+        - name: aggregate
+          script: "scripts/013_aggregate_sensitivity.R"
+          slurm: false
+          r_libraries: [PEcAn.settings, dplyr]
+          inputs:
+              settings: local_configs
+              site_file: site_info_file
+          params: {}
+          outputs:
+              output_file: local_table
+
+        - name: figures
+          script: "analysis/local_sensitivity_figures.R"
+          slurm: false
+          r_libraries: [ggplot2, patchwork, sf, PEcAn.settings, PEcAn.utils]
+          inputs:
+              table: local_table
+              settings: local_configs
+              climregions: climregions_file
+          params:
+              example_site: example_site
+          outputs:
+              outdir: local_figures
+
+    global-sensitivity:
+        - name: run-model
+          script: "scripts/021_run_global_sensitivity.R"
+          slurm: false  # submits the model runs and waits on them
+          r_libraries: [PEcAn.all, sensitivity]
+          inputs:
+              settings: global_settings
+          params:
+              seed: seed
+          outputs: {}
+
+        - name: site-indices
+          script: "scripts/022_site_sobol.R"
+          slurm: true
+          r_libraries: [PEcAn.all, sensitivity, future, furrr]
+          inputs:
+              settings: global_configs
+          params:
+              nboot: nboot
+              seed: seed
+              n_cores: n_workers
+          outputs:
+              sobol_dir: global_sobol_dir
+
+        - name: aggregate
+          script: "scripts/023_aggregate_sobol.R"
+          slurm: false
+          r_libraries: [PEcAn.settings, dplyr]
+          inputs:
+              settings: global_configs
+              sobol_dir: global_sobol_dir
+              site_file: site_info_file
+          params: {}
+          outputs:
+              output_file: global_table
+
+        - name: figures
+          script: "analysis/global_sensitivity_figures.R"
+          slurm: false
+          r_libraries: [ggplot2, patchwork, ggrepel, sf, sensitivity, PEcAn.settings, PEcAn.uncertainty]
+          inputs:
+              intervals: global_table
+              settings: global_configs
+              climregions: climregions_file
+              site_file: site_info_file
+          params: {}
+          outputs:
+              outdir: global_figures
+
+# Path definitions: all contained within the run directory.
+# Values are relative to run_dir; CLI resolves as run_dir + "/" + value.
+paths:
+    # staged from a prepared ensemble run (see external_paths in the user config)
+    site_info_file: "site_info.csv"
+    met_dir: "data/ERA5_SIPNET"
+    ic_dir: "IC_files"
+    event_dir: "data/events"
+    pft_dir: "data_raw/pfts"
+    sipnet_binary: "sipnet.git"
+    climregions_file: "data_raw/caladapt_climregions.gpkg"
+    local_template: "template_local.xml"
+    global_template: "template_global.xml"
+    # one-at-a-time analysis
+    local_settings: "local/settings.xml"
+    local_outdir: "local/output"
+    local_configs: "local/output/pecan.CONFIGS.xml"
+    local_table: "local/local_sensitivity.csv"
+    local_figures: "local/figures"
+    # global (Sobol) analysis
+    global_settings: "global/settings.xml"
+    global_outdir: "global/output"
+    global_configs: "global/output/pecan.CONFIGS.xml"
+    global_sobol_dir: "global/output/sobol"
+    global_table: "global/global_sensitivity.csv"
+    global_figures: "global/figures"
+
+# path keys of the staged settings templates, one per analysis
+templates: [local_template, global_template]
+
+# Fixed workflow values (not user overrides)
+seed: 1
+nboot: 1000
+
+# Defaults that the user really _should_ set in their config,
+# provided here as fallbacks
+start_date: "2016-01-01"
+end_date: "2023-12-31"
+# design points taken from the top of site_info.csv, which is in farthest point
+# sampling order, so any prefix is space filling
+n_sites_local: 100
+n_sites_global: 10
+# base sample N of the Sobol design; each site runs N * (k + 2) configs, with k
+# the entries in the template's samplingspace
+sobol_sample_size: 1000
+# members available in the staged input ensembles
+n_ens: 20
+n_met: 10
+n_ic: 20
+n_event: 20
+n_workers: 1
+# design point whose response curves are drawn; must be in the local run
+example_site: "284301"
+
+# Governs the CLI's own step-wrapping: "slurm-srun" wraps steps the manifest
+# marks slurm: true whenever srun is available; "local" forces every step to
+# run unwrapped. Does not affect pecan_parallelism_mode's own submission of the
+# model runs, which is a separate mechanism.
+workflow_parallelism_mode: "slurm-srun"
+# Free-form extra flags appended to every srun invocation (e.g. "-p cpu
+# --mem=16G --time=04:00:00 --cpus-per-task=8").
+srun_additional_arguments: ""
+# Free-form extra flags appended to every sbatch invocation issued by
+# pecan_parallelism_mode: slurm-sbatch for the model runs (e.g. "-p cpu
+# --account=foo").
+sbatch_additional_arguments: ""
+
+# Dispatch options for the model runs. The user config selects one by name via
+# pecan_parallelism_mode. host_xml is the complete <host>...</host> block injected
+# into the staged templates before the settings are built.
+pecan_parallelism_mode:
+    local-gnu-parallel:
+        description: "Run model runs locally using GNU parallel (no scheduler required)"
+        host_xml: |
+            <host>
+             <name>localhost</name>
+             <modellauncher>
+              <binary>parallel --will-cite -j @NCPUS@ --skip-first-line '{}/job.sh' ::::</binary>
+              <Njobmax>1000</Njobmax>
+             </modellauncher>
+            </host>
+    # one run per array task, in arrays of up to Njobmax runs: the global analysis
+    # alone is 60,000 runs of seconds each, too many to submit one job per run
+    slurm-sbatch:
+        description: "Submit model runs to Slurm as array jobs via sbatch"
+        host_xml: |
+            <host>
+             <name>localhost</name>
+             <qsub>sbatch -J @NAME@ -o @STDOUT@ -e @STDERR@ @EXTRA_ARGS@</qsub>
+             <qsub.jobid>Submitted batch job ([0-9]+)</qsub.jobid>
+             <qstat>if test -z "$(squeue -h -j @JOBID@)"; then echo "DONE"; fi</qstat>
+             <modellauncher>
+              <binary>@REPO_ROOT@/scripts/slurm_array_submit.sh</binary>
+              <qsub.extra>--array=1-@NJOBS@</qsub.extra>
+              <Njobmax>1000</Njobmax>
+             </modellauncher>
+            </host>
+    sge-qsub:
+        description: "Submit model runs to SGE as array jobs (BU SCC)"
+        host_xml: |
+            <host>
+             <name>localhost</name>
+             <qsub>qsub -V -cwd -N @NAME@ -j y -o /dev/null -S /bin/bash</qsub>
+             <qsub.jobid>Your job-array ([0-9]+).*</qsub.jobid>
+             <qstat>qstat -j @JOBID@ || echo DONE</qstat>
+             <modellauncher>
+              <binary>@REPO_ROOT@/scripts/sge_array_launcher.sh</binary>
+              <qsub.extra>-t 1-@NJOBS@</qsub.extra>
+              <Njobmax>140</Njobmax>
+             </modellauncher>
+            </host>
