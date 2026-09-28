@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.313">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Akash B V">
+<meta name="dcterms.date" content="2026-09-28">
+
+<title>MAGiC Uncertainty - Sensitivity analysis of a MAGiC ensemble</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../analysis/references.html" rel="next">
+<link href="../../docs/training/CARB-uncertainty-setup.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar docked">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+    <div class="container-fluid d-flex justify-content-between">
+      <h1 class="quarto-secondary-nav-title">Sensitivity analysis of a MAGiC ensemble</h1>
+      <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../../">MAGiC Uncertainty</a> 
+        <div class="sidebar-tools-main">
+    <a href="" title="Status: Draft" class="sidebar-tool px-1"><i class="bi bi-exclamation-octagon"></i></a>
+    <a href="https://github.com/ccmmf/uncertainty" title="" class="sidebar-tool px-1"><i class="bi bi-github"></i></a>
+</div>
+    </div>
+      </div>
+      <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">Home</a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">Reports</a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-expanded="true">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../analysis/local_sensitivity.html" class="sidebar-item-text sidebar-link">Local Sensitivity</a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../analysis/global_sensitivity.html" class="sidebar-item-text sidebar-link">Global Sensitivity</a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">Training</a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-expanded="true">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs/training/index.html" class="sidebar-item-text sidebar-link">Overview</a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs/training/CARB-uncertainty-setup.html" class="sidebar-item-text sidebar-link">Environment Setup</a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs/training/uncertainty_demo.html" class="sidebar-item-text sidebar-link active">Uncertainty Demo</a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true">Docs</a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-expanded="true">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../analysis/references.html" class="sidebar-item-text sidebar-link">References</a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul class="collapse">
+  <li><a href="#fetch-demo-data" id="toc-fetch-demo-data" class="nav-link active" data-scroll-target="#fetch-demo-data">Fetch demo data</a></li>
+  <li><a href="#explore-the-cli" id="toc-explore-the-cli" class="nav-link" data-scroll-target="#explore-the-cli">Explore the CLI</a></li>
+  <li><a href="#explore-the-configuration-file" id="toc-explore-the-configuration-file" class="nav-link" data-scroll-target="#explore-the-configuration-file">Explore the configuration file</a></li>
+  <li><a href="#prepare" id="toc-prepare" class="nav-link" data-scroll-target="#prepare">Prepare</a></li>
+  <li><a href="#local-sensitivity" id="toc-local-sensitivity" class="nav-link" data-scroll-target="#local-sensitivity">Local sensitivity</a></li>
+  <li><a href="#global-sensitivity" id="toc-global-sensitivity" class="nav-link" data-scroll-target="#global-sensitivity">Global sensitivity</a></li>
+  <li><a href="#scaling-beyond-the-demo" id="toc-scaling-beyond-the-demo" class="nav-link" data-scroll-target="#scaling-beyond-the-demo">Scaling beyond the demo</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title d-none d-lg-block">Sensitivity analysis of a MAGiC ensemble</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Akash B V </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 28, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<p>This tutorial runs the two sensitivity analyses of the MAGiC uncertainty workflow on a small demo dataset. The demo covers two design points: a corn field in the Sacramento-Delta and a woody perennial field in the San Joaquin Valley, over 2016 to 2023.</p>
+<p>Both analyses use the inputs of an ensemble run: meteorology, initial conditions, management events, and the PFT priors. The local analysis moves each parameter in turn; the global analysis varies all four inputs together.</p>
+<p>This documentation assumes that the steps in <a href="../../docs/training/CARB-uncertainty-setup.html">Environment setup</a> have been completed. Run all commands below from the uncertainty repository root.</p>
+<section id="fetch-demo-data" class="level2">
+<h2 class="anchored" data-anchor-id="fetch-demo-data">Fetch demo data</h2>
+<!-- [check] demo bundle S3 key once it is uploaded -->
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> s3 sync s3://carb/data/workflows/uncertainty/demo_data/ demo-data/uncertainty/</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> s3 sync s3://carb/pfts/magic_v1.2/ demo-data/pfts/magic_v1.2/</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> demo-data/uncertainty/demo_config.yaml config.yaml</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The first download holds the ensemble inputs for the two design points:</p>
+<ul>
+<li><code>site_info.csv</code>: the design points, one row each, with their PFT and ERA5 grid cell</li>
+<li><code>data/ERA5_SIPNET/</code>: 10 ERA5 meteorology members per grid cell</li>
+<li><code>IC_files/</code>: initial condition members per design point</li>
+<li><code>data/events/</code>: 20 management event members</li>
+</ul>
+<p>The second is the v1.2 parameterization package: one prior file per PFT, plus the package README.</p>
+</section>
+<section id="explore-the-cli" class="level2">
+<h2 class="anchored" data-anchor-id="explore-the-cli">Explore the CLI</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./magic-uncertainty</span> help</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Key points:</p>
+<ul>
+<li><code>prepare</code>, <code>local-sensitivity</code>, and <code>global-sensitivity</code> each run a fixed list of steps, and each step calls one script.</li>
+<li>Every setting reaches a script as a command line argument; scripts do not read configuration files or environment variables.</li>
+<li><code>--verbose</code> prints the exact call issued for each step.</li>
+<li>Each command writes a log to <code>run_dir</code>.</li>
+</ul>
+</section>
+<section id="explore-the-configuration-file" class="level2">
+<h2 class="anchored" data-anchor-id="explore-the-configuration-file">Explore the configuration file</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">less</span> config.yaml</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The demo configuration uses these values:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">run_dir</span><span class="kw">:</span><span class="at"> </span><span class="st">"uncertainty-demo-run/"</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">n_sites_local</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">n_sites_global</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sobol_sample_size</span><span class="kw">:</span><span class="at"> </span><span class="dv">30</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">example_site</span><span class="kw">:</span><span class="at"> </span><span class="st">"328163"</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">n_workers</span><span class="kw">:</span><span class="at"> </span><span class="dv">4</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">workflow_parallelism_mode</span><span class="kw">:</span><span class="at"> local</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">pecan_parallelism_mode</span><span class="kw">:</span><span class="at"> local-gnu-parallel</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><code>n_sites_local</code> and <code>n_sites_global</code> take the design points from the top of <code>site_info.csv</code>. <code>sobol_sample_size</code> is the base sample of the global analysis; each design point runs six times that number. <code>pecan_parallelism_mode: local-gnu-parallel</code> runs the model with GNU parallel in the current allocation, on <code>n_workers</code> cores. On a Slurm cluster, <code>slurm-sbatch</code> submits the runs as array jobs instead.</p>
+<p>The <code>external_paths</code> block points at the downloaded inputs and at the SIPNET binary. Set <code>sipnet_binary</code> to the <code>sipnet.git</code> in your ensemble run directory.</p>
+</section>
+<section id="prepare" class="level2">
+<h2 class="anchored" data-anchor-id="prepare">Prepare</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./magic-uncertainty</span> prepare <span class="at">--verbose</span> <span class="at">--config</span> config.yaml</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ul>
+<li>links the demo inputs into <code>run_dir</code>, so large files are not copied</li>
+<li>copies the two settings templates and inserts the run dispatch chosen in the configuration</li>
+<li>builds one settings file for each analysis, under <code>run_dir/local/</code> and <code>run_dir/global/</code></li>
+</ul>
+</section>
+<section id="local-sensitivity" class="level2">
+<h2 class="anchored" data-anchor-id="local-sensitivity">Local sensitivity</h2>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./magic-uncertainty</span> local-sensitivity <span class="at">--verbose</span> <span class="at">--config</span> config.yaml</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>SIPNET is run with every parameter at its prior median, then with each parameter moved in turn to four percentiles of its prior. That is 157 runs at the corn design point. The command then fits a spline through each parameter’s runs, computes each parameter’s share of the parameter variance at each design point, and draws the figures.</p>
+<p>Results are in <code>run_dir/local/</code>: <code>local_sensitivity.csv</code> holds every parameter at every design point, and <code>figures/</code> holds the report figures and <code>parameter_shares.csv</code>.</p>
+<div id="tbl-demo-shares" class="anchored">
+<table class="table">
+<caption>Table&nbsp;1: Parameters with a median share above 5 percent across the two demo design points.</caption>
+<thead>
+<tr class="header">
+<th>Output</th>
+<th>Parameter</th>
+<th style="text-align: right;">Median share (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Soil carbon</td>
+<td>Soil respiration Q10</td>
+<td style="text-align: right;">63</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Base soil respiration rate (0 °C, saturated soil)</td>
+<td style="text-align: right;">28</td>
+</tr>
+<tr class="odd">
+<td>Nitrous oxide flux</td>
+<td>Soil respiration Q10</td>
+<td style="text-align: right;">48</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>Nitrogen volatilization rate constant</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>Nitrogen leaching fraction</td>
+<td style="text-align: right;">11</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="fig-demo-components" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="figures/demo_variance_components.png" class="lightbox img-fluid figure-img" alt="Dot plot of coefficient of variation, elasticity, and share of parameter variance for the parameters of soil carbon and nitrous oxide flux at the two demo design points."></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;1: Prior uncertainty (CV), sensitivity (elasticity), and share of parameter variance across the two demo design points.</figcaption><p></p>
+</figure>
+</div>
+</section>
+<section id="global-sensitivity" class="level2">
+<h2 class="anchored" data-anchor-id="global-sensitivity">Global sensitivity</h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./magic-uncertainty</span> global-sensitivity <span class="at">--verbose</span> <span class="at">--config</span> config.yaml</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The command draws two samples of 30 rows, each row holding one draw of every parameter and one member of each input ensemble, and recombines them into a design of 180 rows. It runs SIPNET for every row at each design point, then computes the first-order and total-order index of each input with bootstrap intervals.</p>
+<p>Results are in <code>run_dir/global/</code>: <code>global_sensitivity.csv</code> holds the indices and intervals, and <code>figures/</code> holds the report figures and tables.</p>
+<p>With a base sample of 30 the intervals are wide, and some estimates fall below 0 or above 1. The reported analysis uses a base sample of 1,000.</p>
+</section>
+<section id="scaling-beyond-the-demo" class="level2">
+<h2 class="anchored" data-anchor-id="scaling-beyond-the-demo">Scaling beyond the demo</h2>
+<p>The same three commands run the full analyses. Point <code>external_paths</code> at the inputs of a full ensemble run and set the sizes used in the reports:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">n_sites_local</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">n_sites_global</span><span class="kw">:</span><span class="at"> </span><span class="dv">10</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sobol_sample_size</span><span class="kw">:</span><span class="at"> </span><span class="dv">1000</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The local analysis then writes 13,364 runs and the global analysis 60,000. On a cluster, set <code>pecan_parallelism_mode: slurm-sbatch</code> so the model runs are submitted as array jobs, and run the CLI itself on a compute node with <code>n_workers</code> set to the cores available.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../docs/training/CARB-uncertainty-setup.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Environment Setup</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../analysis/references.html" class="pagination-link">
+        <span class="nav-page-text">References</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+</body></html>

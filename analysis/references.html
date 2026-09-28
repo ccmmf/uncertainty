@@ -7,9 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Akash B V">
-<meta name="dcterms.date" content="2026-09-28">
 
-<title>MAGiC Uncertainty - Global Sensitivity Analysis</title>
+<title>MAGiC Uncertainty - References</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -32,8 +31,7 @@ ul.task-list li input[type="checkbox"] {
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
-<link href="../docs/training/index.html" rel="next">
-<link href="../analysis/local_sensitivity.html" rel="prev">
+<link href="../docs/training/uncertainty_demo.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
@@ -72,7 +70,7 @@ ul.task-list li input[type="checkbox"] {
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title">Global Sensitivity Analysis</h1>
+      <h1 class="quarto-secondary-nav-title">References</h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -119,7 +117,7 @@ ul.task-list li input[type="checkbox"] {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../analysis/global_sensitivity.html" class="sidebar-item-text sidebar-link active">Global Sensitivity</a>
+  <a href="../analysis/global_sensitivity.html" class="sidebar-item-text sidebar-link">Global Sensitivity</a>
   </div>
 </li>
       </ul>
@@ -159,7 +157,7 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../analysis/references.html" class="sidebar-item-text sidebar-link">References</a>
+  <a href="../analysis/references.html" class="sidebar-item-text sidebar-link active">References</a>
   </div>
 </li>
       </ul>
@@ -169,25 +167,14 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul class="collapse">
-  <li><a href="#background" id="toc-background" class="nav-link active" data-scroll-target="#background">Background</a></li>
-  <li><a href="#share-of-output-variance-by-input" id="toc-share-of-output-variance-by-input" class="nav-link" data-scroll-target="#share-of-output-variance-by-input">Share of output variance by input</a></li>
-  <li><a href="#variation-across-design-points" id="toc-variation-across-design-points" class="nav-link" data-scroll-target="#variation-across-design-points">Variation across design points</a></li>
-  <li><a href="#precision-of-the-indices" id="toc-precision-of-the-indices" class="nav-link" data-scroll-target="#precision-of-the-indices">Precision of the indices</a></li>
-  <li><a href="#reporting-scope" id="toc-reporting-scope" class="nav-link" data-scroll-target="#reporting-scope">Reporting scope</a></li>
-  <li><a href="#interpretation" id="toc-interpretation" class="nav-link" data-scroll-target="#interpretation">Interpretation</a></li>
-  </ul>
-</nav>
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block">Global Sensitivity Analysis</h1>
+<h1 class="title d-none d-lg-block">References</h1>
 </div>
 
 
@@ -201,12 +188,6 @@ ul.task-list li input[type="checkbox"] {
           </div>
   </div>
     
-    <div>
-    <div class="quarto-title-meta-heading">Published</div>
-    <div class="quarto-title-meta-contents">
-      <p class="date">September 28, 2026</p>
-    </div>
-  </div>
   
     
   </div>
@@ -214,173 +195,15 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<p>This report partitions the variance of modeled soil carbon and nitrous oxide flux among four inputs: model parameters, initial conditions, meteorology, and management. The analysis covers 10 design points on California cropland over 2016 to 2023. Results are indices with 95 percent intervals at each design point.</p>
-<section id="background" class="level2">
-<h2 class="anchored" data-anchor-id="background">Background</h2>
-<p>The one-at-a-time analysis, reported separately, ranks individual parameters but holds meteorology, initial conditions, and management at one realization. A variance-based global sensitivity analysis varies all four inputs together and assigns each a share of the output variance (<a href="references.html">Saltelli et al., 2008</a>).</p>
-<p>Two indices are reported for each input. The first-order index is the share of output variance from that input alone. The total-order index adds its interactions with the other inputs. Both are estimated with the Jansen estimators on the design of Saltelli et al.&nbsp;(2010), in which two independent samples of 1,000 rows are recombined so that each input varies alone (<a href="references.html">Jansen, 1999</a>). Parameters are treated as one input and are not ranked individually.</p>
-<div id="fig-map" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="figures/gsa_site_map.png" class="lightbox img-fluid figure-img" style="width:70.0%" alt="Map of California with 10 labeled design points: four row crop and one corn in the Sacramento-Delta, four woody perennial and one row crop in the San Joaquin Valley, and one alfalfa in the Sonora Desert."></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;1: Design points, colored by the PFT they were run under. Labels identify the design points in the figures that follow. Outlines are the Cal-Adapt climate regions.</figcaption><p></p>
-</figure>
-</div>
-<div id="tbl-config" class="anchored">
-<table class="table">
-<caption>Table&nbsp;1: Configuration of the analysis.</caption>
-<thead>
-<tr class="header">
-<th>Setting</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Model</td>
-<td>SIPNET 2.2.0, nitrogen cycle and anaerobic processes on</td>
-</tr>
-<tr class="even">
-<td>Design points</td>
-<td>10: 4 woody perennial, 4 row crop, 1 corn, 1 alfalfa</td>
-</tr>
-<tr class="odd">
-<td>Period</td>
-<td>2016 to 2023, reported as the mean over the period</td>
-</tr>
-<tr class="even">
-<td>Parameters</td>
-<td>PFT priors of the statewide inventory runs</td>
-</tr>
-<tr class="odd">
-<td>Meteorology</td>
-<td>10 ERA5 ensemble members</td>
-</tr>
-<tr class="even">
-<td>Initial conditions</td>
-<td>first 20 of the 50 inventory members</td>
-</tr>
-<tr class="odd">
-<td>Management</td>
-<td>20 inventory ensemble members</td>
-</tr>
-<tr class="even">
-<td>Model runs</td>
-<td>6,000 per design point</td>
-</tr>
-<tr class="odd">
-<td>Intervals</td>
-<td>95 percent, from 1,000 bootstrap resamples</td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="share-of-output-variance-by-input" class="level2">
-<h2 class="anchored" data-anchor-id="share-of-output-variance-by-input">Share of output variance by input</h2>
-<div id="fig-partition" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="figures/gsa_partition.png" class="lightbox img-fluid figure-img" style="width:100.0%" alt="Stacked horizontal bars, one per design point, showing the share of variance from parameters, initial conditions, management, meteorology, and an unexplained part, for soil carbon and nitrous oxide flux."></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;2: Share of output variance from each input at each design point, as first-order indices. Negative estimates are shown as 0. The grey segment is the variance the first-order indices leave unexplained; where the estimates sum to more than 1, the bar runs past 1 and has no grey segment.</figcaption><p></p>
-</figure>
-</div>
-<div id="tbl-indices" class="anchored">
-<table class="table">
-<caption>Table&nbsp;2: Total-order index of each input across the 10 design points.</caption>
-<thead>
-<tr class="header">
-<th>Output</th>
-<th>Input</th>
-<th style="text-align: right;">Median</th>
-<th style="text-align: right;">Range across design points</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Soil carbon</td>
-<td>Initial conditions</td>
-<td style="text-align: right;">0.91</td>
-<td style="text-align: right;">0.56 to 1.08</td>
-</tr>
-<tr class="even">
-<td></td>
-<td>Parameters</td>
-<td style="text-align: right;">0.13</td>
-<td style="text-align: right;">0.00 to 0.44</td>
-</tr>
-<tr class="odd">
-<td></td>
-<td>Management</td>
-<td style="text-align: right;">0.00</td>
-<td style="text-align: right;">0.00 to 0.01</td>
-</tr>
-<tr class="even">
-<td></td>
-<td>Meteorology</td>
-<td style="text-align: right;">0.00</td>
-<td style="text-align: right;">0.00 to 0.00</td>
-</tr>
-<tr class="odd">
-<td>Nitrous oxide flux</td>
-<td>Parameters</td>
-<td style="text-align: right;">1.00</td>
-<td style="text-align: right;">0.97 to 1.05</td>
-</tr>
-<tr class="even">
-<td></td>
-<td>Management</td>
-<td style="text-align: right;">0.03</td>
-<td style="text-align: right;">0.01 to 0.07</td>
-</tr>
-<tr class="odd">
-<td></td>
-<td>Initial conditions</td>
-<td style="text-align: right;">0.00</td>
-<td style="text-align: right;">0.00 to 0.03</td>
-</tr>
-<tr class="even">
-<td></td>
-<td>Meteorology</td>
-<td style="text-align: right;">0.00</td>
-<td style="text-align: right;">0.00 to 0.00</td>
-</tr>
-</tbody>
-</table>
-</div>
-<p>Initial conditions account for most of the variance in soil carbon, and parameters for most of the variance in nitrous oxide, at every design point. Management and meteorology together have first-order indices of at most 0.06 for either output.</p>
-</section>
-<section id="variation-across-design-points" class="level2">
-<h2 class="anchored" data-anchor-id="variation-across-design-points">Variation across design points</h2>
-<div id="fig-sites" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="figures/gsa_indices_by_site.png" class="lightbox img-fluid figure-img" style="width:100.0%" alt="First-order and total-order indices with 95 percent intervals at each of the 10 design points, for each input and for soil carbon and nitrous oxide flux."></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;3: First-order and total-order index of each input at each design point. Points are estimates and bars are 95 percent bootstrap intervals. Vertical lines mark 0 and 1.</figcaption><p></p>
-</figure>
-</div>
-<p>For soil carbon, the total-order index of parameters is 0.23 to 0.44 at the five design points in the San Joaquin Valley and at most 0.03 at the other five. For nitrous oxide, the index of parameters is 0.97 to 1.05 at every design point.</p>
-<p>The intervals of the largest indices are 0.11 to 0.20 wide for soil carbon and 0.24 to 0.40 wide for nitrous oxide. Estimates above 1 or below 0 have intervals that include that bound.</p>
-</section>
-<section id="precision-of-the-indices" class="level2">
-<h2 class="anchored" data-anchor-id="precision-of-the-indices">Precision of the indices</h2>
-<div id="fig-convergence" class="quarto-figure quarto-figure-center anchored">
-<figure class="figure">
-<p><img src="figures/gsa_convergence.png" class="lightbox img-fluid figure-img" style="width:100.0%" alt="Line plots of total-order index and interval width against base sample size from 100 to 1,000, one line per design point, for parameters and initial conditions and for soil carbon and nitrous oxide flux."></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;4: Total-order index (left) and width of its 95 percent interval (right) against base sample size, for parameters and initial conditions. Each line is one design point.</figcaption><p></p>
-</figure>
-</div>
-<p>The input with the largest index at each design point and output is the same at every base sample size from 100 to 1,000. Index values are reported with their intervals.</p>
-</section>
-<section id="reporting-scope" class="level2">
-<h2 class="anchored" data-anchor-id="reporting-scope">Reporting scope</h2>
-<p>Indices are reported for soil carbon and nitrous oxide flux. Methane, aboveground biomass, and net ecosystem exchange were also computed. Modeled methane at these design points is near the precision of the model output, and plant carbon is low in these runs, with median aboveground biomass below 0.4 kg C m<sup>-2</sup> at every design point; indices for these three outputs are not presented.</p>
-</section>
-<section id="interpretation" class="level2">
-<h2 class="anchored" data-anchor-id="interpretation">Interpretation</h2>
-<p>These are model-derived results. Parameters are drawn from priors that have not been updated with observations, and each index depends on the prior widths and on the spread of the input ensembles.</p>
-<p>The meteorology index measures the spread among the 10 ERA5 members, which differ by at most 0.10 °C in mean air temperature; it is not a sensitivity to climate. The management index measures the spread among the 20 management members; it is not the effect of a change in practice. Initial nitrogen and litter pools are the same in every run, so the initial condition index does not include uncertainty in those pools.</p>
-<p>See <a href="references.html">References</a> for the cited sources.</p>
+<p>Dietze, M. C., Serbin, S. P., Davidson, C., et al.&nbsp;(2014). A quantitative assessment of a terrestrial biosphere model’s data needs across North American biomes. <em>Journal of Geophysical Research: Biogeosciences</em>, 119, 286-300. https://doi.org/10.1002/2013JG002392</p>
+<p>Fer, I., Kelly, R., Moorcroft, P. R., et al.&nbsp;(2018). Linking big models to big data: efficient ecosystem model calibration through Bayesian model emulation. <em>Biogeosciences</em>, 15, 5801-5830. https://doi.org/10.5194/bg-15-5801-2018</p>
+<p>Jansen, M. J. W. (1999). Analysis of variance designs for model output. <em>Computer Physics Communications</em>, 117, 35-43. https://doi.org/10.1016/S0010-4655(98)00154-4</p>
+<p>LeBauer, D. S., Wang, D., Richter, K. T., et al.&nbsp;(2013). Facilitating feedbacks between field measurements and ecosystem models. <em>Ecological Monographs</em>, 83(2), 133-154. https://doi.org/10.1890/12-0137.1</p>
+<p>Saltelli, A., Ratto, M., Andres, T., et al.&nbsp;(2008). <em>Global Sensitivity Analysis: The Primer</em>. Wiley. https://doi.org/10.1002/9780470725184</p>
+<p>Saltelli, A., Annoni, P., Azzini, I., et al.&nbsp;(2010). Variance based sensitivity analysis of model output. Design and estimator for the total sensitivity index. <em>Computer Physics Communications</em>, 181, 259-270. https://doi.org/10.1016/j.cpc.2009.09.018</p>
+<p>Saltelli, A., Aleksankina, K., Becker, W., et al.&nbsp;(2019). Why so many published sensitivity analyses are false: a systematic review of sensitivity analysis practices. <em>Environmental Modelling &amp; Software</em>, 114, 29-39. https://doi.org/10.1016/j.envsoft.2019.01.012</p>
 
 
-</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -518,14 +341,11 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../analysis/local_sensitivity.html" class="pagination-link">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Local Sensitivity</span>
+      <a href="../docs/training/uncertainty_demo.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Uncertainty Demo</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../docs/training/index.html" class="pagination-link">
-        <span class="nav-page-text">Overview</span> <i class="bi bi-arrow-right-short"></i>
-      </a>
   </div>
 </nav>
 </div> <!-- /content -->

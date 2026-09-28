@@ -8,7 +8,7 @@
 
 <meta name="author" content="Akash B V">
 
-<title>MAGiC Uncertainty</title>
+<title>MAGiC Uncertainty - MAGiC uncertainty training</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -24,23 +24,24 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<link href="./analysis/local_sensitivity.html" rel="next">
-<script src="site_libs/quarto-html/quarto.js"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<link href="../../docs/training/CARB-uncertainty-setup.html" rel="next">
+<link href="../../analysis/global_sensitivity.html" rel="prev">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -60,6 +61,9 @@ ul.task-list li input[type="checkbox"] {
     "search-submit-button-title": "Submit"
   }
 }</script>
+<script src="../../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
 
 </head>
@@ -70,7 +74,7 @@ ul.task-list li input[type="checkbox"] {
   <header id="quarto-header" class="headroom fixed-top">
   <nav class="quarto-secondary-nav" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
     <div class="container-fluid d-flex justify-content-between">
-      <h1 class="quarto-secondary-nav-title">MAGiC Uncertainty</h1>
+      <h1 class="quarto-secondary-nav-title">MAGiC uncertainty training</h1>
       <button type="button" class="quarto-btn-toggle btn" aria-label="Show secondary navigation">
         <i class="bi bi-chevron-right"></i>
       </button>
@@ -83,7 +87,7 @@ ul.task-list li input[type="checkbox"] {
   <nav id="quarto-sidebar" class="sidebar collapse sidebar-navigation docked overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
-      <a href="./">MAGiC Uncertainty</a> 
+      <a href="../../">MAGiC Uncertainty</a> 
         <div class="sidebar-tools-main">
     <a href="" title="Status: Draft" class="sidebar-tool px-1"><i class="bi bi-exclamation-octagon"></i></a>
     <a href="https://github.com/ccmmf/uncertainty" title="" class="sidebar-tool px-1"><i class="bi bi-github"></i></a>
@@ -99,7 +103,7 @@ ul.task-list li input[type="checkbox"] {
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active">Home</a>
+  <a href="../../index.html" class="sidebar-item-text sidebar-link">Home</a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -112,12 +116,12 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./analysis/local_sensitivity.html" class="sidebar-item-text sidebar-link">Local Sensitivity</a>
+  <a href="../../analysis/local_sensitivity.html" class="sidebar-item-text sidebar-link">Local Sensitivity</a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./analysis/global_sensitivity.html" class="sidebar-item-text sidebar-link">Global Sensitivity</a>
+  <a href="../../analysis/global_sensitivity.html" class="sidebar-item-text sidebar-link">Global Sensitivity</a>
   </div>
 </li>
       </ul>
@@ -132,17 +136,17 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./docs/training/index.html" class="sidebar-item-text sidebar-link">Overview</a>
+  <a href="../../docs/training/index.html" class="sidebar-item-text sidebar-link active">Overview</a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./docs/training/CARB-uncertainty-setup.html" class="sidebar-item-text sidebar-link">Environment Setup</a>
+  <a href="../../docs/training/CARB-uncertainty-setup.html" class="sidebar-item-text sidebar-link">Environment Setup</a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./docs/training/uncertainty_demo.html" class="sidebar-item-text sidebar-link">Uncertainty Demo</a>
+  <a href="../../docs/training/uncertainty_demo.html" class="sidebar-item-text sidebar-link">Uncertainty Demo</a>
   </div>
 </li>
       </ul>
@@ -157,7 +161,7 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./analysis/references.html" class="sidebar-item-text sidebar-link">References</a>
+  <a href="../../analysis/references.html" class="sidebar-item-text sidebar-link">References</a>
   </div>
 </li>
       </ul>
@@ -167,14 +171,22 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#commands" id="toc-commands" class="nav-link active" data-scroll-target="#commands">Commands</a></li>
+  <li><a href="#data-flow" id="toc-data-flow" class="nav-link" data-scroll-target="#data-flow">Data flow</a></li>
+  <li><a href="#audiences" id="toc-audiences" class="nav-link" data-scroll-target="#audiences">Audiences</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title d-none d-lg-block">MAGiC Uncertainty</h1>
+<h1 class="title d-none d-lg-block">MAGiC uncertainty training</h1>
 </div>
 
 
@@ -195,14 +207,95 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<p>This site reports the sensitivity and uncertainty analyses of the SIPNET ecosystem model used in the MAGiC inventory runs for California cropland.</p>
+<p>This is the uncertainty component of the MAGiC system. It runs SIPNET at design points with the same meteorology, initial conditions, management events, and parameter priors as the ensemble workflow, and reports which of them the modeled soil carbon and nitrous oxide flux are most sensitive to.</p>
+<p>Two analyses are run:</p>
 <ul>
-<li><a href="./analysis/local_sensitivity.html">Local Sensitivity</a> ranks the model parameters by their contribution to the variance of modeled soil carbon and nitrous oxide flux at 100 design points.</li>
-<li><a href="./analysis/global_sensitivity.html">Global Sensitivity</a> partitions that variance among parameters, initial conditions, meteorology, and management at 10 design points.</li>
+<li>A <strong>local</strong> (one-at-a-time) analysis moves each parameter in turn across its prior and reports each parameter’s share of the parameter variance.</li>
+<li>A <strong>global</strong> (Sobol) analysis varies parameters, initial conditions, meteorology, and management together and reports the share of output variance from each.</li>
 </ul>
-<p>The <a href="./docs/training/index.html">training</a> pages show how to run both analyses on the inputs of an ensemble run.</p>
+<p>Each notebook is a self-study demo to work through beforehand, then discuss in the live session.</p>
+<table class="table">
+<thead>
+<tr class="header">
+<th>Topic</th>
+<th>Audience</th>
+<th>Objectives</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="../../docs/training/CARB-uncertainty-setup.html">Environment setup</a></td>
+<td>Everyone</td>
+<td>Conda, AWS, and repository setup</td>
+<td>Needed before the demo</td>
+</tr>
+<tr class="even">
+<td><a href="../../docs/training/uncertainty_demo.html">Uncertainty demo</a></td>
+<td>MAGiC users</td>
+<td>Run both analyses at two design points and read their output</td>
+<td>Demo data covers two design points</td>
+</tr>
+</tbody>
+</table>
+<section id="commands" class="level2">
+<h2 class="anchored" data-anchor-id="commands">Commands</h2>
+<table class="table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>prepare</code></td>
+<td>Stages the ensemble inputs into <code>run_dir</code> and builds the settings of both analyses.</td>
+</tr>
+<tr class="even">
+<td><code>local-sensitivity</code></td>
+<td>Runs the one-at-a-time analysis, computes each parameter’s share of variance at each design point, and draws the figures.</td>
+</tr>
+<tr class="odd">
+<td><code>global-sensitivity</code></td>
+<td>Runs the Sobol analysis, computes the indices with bootstrap intervals at each design point, and draws the figures.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="data-flow" class="level2">
+<h2 class="anchored" data-anchor-id="data-flow">Data flow</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<p>
+</p><pre class="mermaid mermaid-js" data-tooltip-selector="#mermaid-tooltip-1">flowchart LR
+  ENS["ensemble inputs&lt;br/&gt;met, initial conditions,&lt;br/&gt;events, priors"] --&gt; PREP["prepare"]
+  PREP --&gt; LOC["local-sensitivity"]
+  PREP --&gt; GLO["global-sensitivity"]
+</pre>
+<div id="mermaid-tooltip-1" class="mermaidTooltip">
+
+</div>
+<p></p>
+</div>
+</div>
+</div>
+</section>
+<section id="audiences" class="level2">
+<h2 class="anchored" data-anchor-id="audiences">Audiences</h2>
+<p>Following the same roles as the <a href="https://github.com/ccmmf/magic-training">MAGiC training index</a>:</p>
+<ul>
+<li><strong>Everyone</strong>: environment setup.</li>
+<li><strong>MAGiC users</strong>: running the analyses and reading their output. Assumes the setup page is done and you are comfortable on the command line.</li>
+</ul>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -340,10 +433,13 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
+      <a href="../../analysis/global_sensitivity.html" class="pagination-link">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Global Sensitivity</span>
+      </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./analysis/local_sensitivity.html" class="pagination-link">
-        <span class="nav-page-text">Local Sensitivity</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../../docs/training/CARB-uncertainty-setup.html" class="pagination-link">
+        <span class="nav-page-text">Environment Setup</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
