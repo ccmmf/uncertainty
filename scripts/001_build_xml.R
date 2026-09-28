@@ -1,49 +1,52 @@
 #!/usr/bin/env Rscript
 
-# Build the multisite PEcAn settings for the statewide OAT sensitivity analysis.
-# Met, initial conditions and events come from the production ensemble's own
-# input tree, so the decomposition describes the runs CARB is getting.
+# Build the multisite PEcAn settings for one sensitivity analysis from its
+# template. Met, initial conditions, events and priors are the inputs of a
+# prepared ensemble run, so the analysis describes the runs being delivered.
 
 library(PEcAn.settings)
 library(PEcAn.logger)
 
-source("000-config.R")
-
 options <- list(
   optparse::make_option("--site_file",
-    default = "data_raw/statewide_sites.csv",
+    default = "site_info.csv",
     help = "CSV of sites: id, lat, lon, site.pft, ERA5_grid_cell"
   ),
+  optparse::make_option("--n_sites",
+    default = 100L,
+    help = paste("design points to run, taken from the top of site_file, which is",
+                 "in farthest point sampling order so any prefix is space filling")
+  ),
   optparse::make_option("--template_file",
-    default = "data_raw/template.xml",
+    default = "template.xml",
     help = "XML file containing whole-run settings"
   ),
   optparse::make_option("--output_file",
-    default = "data_raw/settings_sa.xml",
+    default = "settings.xml",
     help = "path to write output XML"
   ),
   optparse::make_option("--output_dir",
-    default = file.path(run_dir, "output"),
+    default = "output",
     help = "path the settings should declare as output directory"
   ),
   optparse::make_option("--met_dir",
-    default = file.path(input_dir, "data", "ERA5_SIPNET"),
+    default = "data/ERA5_SIPNET",
     help = "directory of ERA5 .clim files, one subdirectory per grid cell"
   ),
   optparse::make_option("--ic_dir",
-    default = file.path(input_dir, "IC_files"),
+    default = "IC_files",
     help = "directory of initial condition netCDFs, one subdirectory per site"
   ),
   optparse::make_option("--event_dir",
-    default = file.path(input_dir, "data", "events"),
+    default = "data/events",
     help = "directory of management files, one subdirectory per ensemble member"
   ),
   optparse::make_option("--pft_dir",
-    default = file.path(input_dir, "data_raw", "pfts"),
+    default = "data_raw/pfts",
     help = "directory of PFT posteriors, one subdirectory per PFT"
   ),
   optparse::make_option("--binary",
-    default = sipnet_binary,
+    default = "sipnet.git",
     help = "SIPNET executable"
   ),
   optparse::make_option("--n_ens", default = 20, help = "ensemble members"),
@@ -67,8 +70,10 @@ PEcAn.logger::logger.setLevel("INFO")
 site_info <- utils::read.csv(args$site_file)
 stopifnot(
   length(unique(site_info$id)) == nrow(site_info),
-  all(c("lat", "lon", "site.pft", "ERA5_grid_cell") %in% names(site_info))
+  all(c("id", "lat", "lon", "site.pft", "ERA5_grid_cell") %in% names(site_info)),
+  args$n_sites <= nrow(site_info)
 )
+site_info <- site_info[seq_len(args$n_sites), c("id", "lat", "lon", "site.pft", "ERA5_grid_cell")]
 
 # The restart code changes working directory and gets confused by relative
 # paths, and dirs that don't exist yet need the getwd() because normalizePath
