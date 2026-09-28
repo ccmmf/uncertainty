@@ -1,0 +1,59 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - index.qmd
+    - analysis/local_sensitivity.qmd
+    - analysis/global_sensitivity.qmd
+    - analysis/references.qmd
+    - docs/training/index.qmd
+    - docs/training/CARB-uncertainty-setup.md
+    - docs/training/uncertainty_demo.qmd
+
+website:
+  title: "MAGiC Uncertainty"
+  search: true
+  page-navigation: true
+  sidebar:
+    style: docked
+    collapse-level: 2
+    contents:
+      - href: index.qmd
+        text: Home
+      - section: Reports
+        contents:
+          - href: analysis/local_sensitivity.qmd
+            text: Local Sensitivity
+          - href: analysis/global_sensitivity.qmd
+            text: Global Sensitivity
+      - section: Training
+        contents:
+          - href: docs/training/index.qmd
+            text: Overview
+          - href: docs/training/CARB-uncertainty-setup.md
+            text: Environment Setup
+          - href: docs/training/uncertainty_demo.qmd
+            text: Uncertainty Demo
+      - section: Docs
+        contents:
+          - href: analysis/references.qmd
+            text: References
+    tools:
+      - icon: exclamation-octagon
+        text: "Status: Draft"
+      - icon: github
+        href: https://github.com/ccmmf/uncertainty
+
+lightbox: auto
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    self-contained: false
+
+execute:
+  echo: false
+  freeze: auto
+
+author: "Akash B V"
