@@ -56,4 +56,6 @@ execute:
   echo: false
   freeze: auto
 
-author: "Akash B V"
+author:
+  - "Akash B V"
+  - "David LeBauer"
