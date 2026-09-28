@@ -39,9 +39,6 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# pkgdown site
-docs/
-
 # translation temp files
 po/*~
 
@@ -53,3 +50,12 @@ data_raw/settings_sa.xml
 output/
 data/
 logs/
+
+/.quarto/
+
+**/*.quarto_ipynb
+
+# rendered site
+_site/
+.quarto/
+_freeze/
