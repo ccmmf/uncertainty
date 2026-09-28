@@ -13,19 +13,17 @@ library(PEcAn.logger)
 library(ggplot2)
 library(patchwork)
 
-source("000-config.R")
-
 options <- list(
   optparse::make_option("--table",
-    default = file.path(run_dir, "statewide_sensitivity.csv"),
+    default = "local_sensitivity.csv",
     help = "aggregated table written by 013_aggregate_sensitivity.R"
   ),
-  optparse::make_option("--sa_dir",
-    default = file.path(run_dir, "output"),
-    help = "OAT run output directory"
+  optparse::make_option("--settings",
+    default = "output/pecan.CONFIGS.xml",
+    help = "settings written by 011_run_local_sensitivity.R"
   ),
   optparse::make_option("--climregions",
-    default = climregions_file,
+    default = "data_raw/caladapt_climregions.gpkg",
     help = "Cal-Adapt climate regions, drawn under the site map"
   ),
   optparse::make_option("--example_site",
@@ -33,7 +31,7 @@ options <- list(
     help = "site for the response curve figure"
   ),
   optparse::make_option("--outdir",
-    default = "analysis/figures",
+    default = "figures",
     help = "where figures and the table go"
   )
 ) |>
@@ -47,8 +45,9 @@ args <- optparse::OptionParser(option_list = options) |>
 
 source("R/plot_sensitivities_multi.R")
 
-OUTPUTS <- c(TotSoilCarb = "Soil carbon", N2O_flux = "Nitrous oxide flux",
-             CH4_flux = "Methane flux")
+# methane is near the precision of the model output in most runs, so shares are drawn
+# for soil carbon and nitrous oxide only
+OUTPUTS <- c(TotSoilCarb = "Soil carbon", N2O_flux = "Nitrous oxide flux")
 THRESHOLD <- 0.05
 
 # traits missing from PEcAn's trait dictionary, plus turn_over_time, which the
@@ -118,15 +117,21 @@ keep <- tab |>
 utils::write.csv(keep, file.path(args$outdir, "parameter_shares.csv"), row.names = FALSE)
 
 # figure: response curves at one site, soil PFT
-settings <- PEcAn.settings::read.settings(file.path(args$sa_dir, "pecan.CONFIGS.xml"))
+settings <- PEcAn.settings::read.settings(args$settings)
+sa_dir <- settings$outdir
+# result files are named by ensemble id, variable and the years of the analysis
+sa_file <- function(what, eid, v) {
+  file.path(sa_dir, sprintf("%s.%s.%s.%s.%s.Rdata", what, eid, v,
+                            settings[[1]]$sensitivity.analysis$start.year,
+                            settings[[1]]$sensitivity.analysis$end.year))
+}
 ids <- vapply(settings, function(s) as.character(s$run$site$id), character(1))
 if (!args$example_site %in% ids) logger.severe("site", args$example_site, "not in the run")
 eid <- settings[[match(args$example_site, ids)]]$sensitivity.analysis$ensemble.id
 results <- lapply(stats::setNames(nm = names(OUTPUTS)), function(v) {
-  f <- file.path(args$sa_dir, sprintf("sensitivity.results.%s.%s.2016.2023.Rdata", eid, v))
-  PEcAn.utils::load_local(f)$sensitivity.results$soil
+  PEcAn.utils::load_local(sa_file("sensitivity.results", eid, v))$sensitivity.results$soil
 })
-samples <- PEcAn.utils::load_local(file.path(args$sa_dir, "samples.Rdata"))$trait.samples$soil
+samples <- PEcAn.utils::load_local(file.path(sa_dir, "samples.Rdata"))$trait.samples$soil
 ggsave(file.path(args$outdir, "response_curves_soil.png"),
        plot_sensitivities_multi(results, samples, threshold = THRESHOLD),
        width = 7.5, height = 7, dpi = 300)
@@ -162,8 +167,6 @@ p <- ggplot() +
 ggsave(file.path(args$outdir, "site_map.png"), p, width = 6.5, height = 6, dpi = 300)
 
 # figure: share across sites and by PFT, Dietze et al. 2014 fig 2
-# methane has no variance to share at design points where it is zero under every run,
-# so those design points drop out of its panel
 dietze2 <- function(v) {
   d <- tab |>
     dplyr::semi_join(dplyr::filter(fig_rows, .data$variable == v), by = c("variable", "parameter")) |>
@@ -189,23 +192,13 @@ dietze2 <- function(v) {
     labs(x = "share of parameter variance (%)", y = NULL)
   a / b + patchwork::plot_layout(heights = c(1, 1.6))
 }
-p <- (dietze2("TotSoilCarb") | dietze2("N2O_flux") | dietze2("CH4_flux")) +
+p <- (dietze2("TotSoilCarb") | dietze2("N2O_flux")) +
   patchwork::plot_layout(guides = "collect")
-ggsave(file.path(args$outdir, "share_by_pft.png"), p, width = 13, height = 8, dpi = 300)
+ggsave(file.path(args$outdir, "share_by_pft.png"), p, width = 9, height = 8, dpi = 300)
 
 # figure: CV, elasticity and share across sites, LeBauer et al. 2013 fig 7
 metric_levels <- c("CV (%)", "elasticity", "share of parameter\nvariance (%)")
-# elasticity divides by the median output, so it is undefined for methane at sites
-# whose median run produces none; PEcAn returns 0 or NaN there
-ch4_median <- vapply(ids, function(site) {
-  eid <- settings[[match(site, ids)]]$sensitivity.analysis$ensemble.id
-  f <- file.path(args$sa_dir, sprintf("sensitivity.output.%s.CH4_flux.2016.2023.Rdata", eid))
-  PEcAn.utils::load_local(f)$sensitivity.output$soil["50", 1]
-}, numeric(1))
-no_ch4 <- ids[ch4_median == 0]
 comp <- tab |>
-  dplyr::mutate(elasticity = ifelse(.data$variable == "CH4_flux" & .data$site_id %in% no_ch4,
-                                    NA, .data$elasticity)) |>
   dplyr::semi_join(fig_rows, by = c("variable", "parameter")) |>
   dplyr::mutate(share = 100 * .data$share, coef_var = 100 * .data$coef_var) |>
   tidyr::pivot_longer(c("coef_var", "elasticity", "share"), names_to = "metric") |>
@@ -245,15 +238,12 @@ ggsave(file.path(args$outdir, "variance_components.png"), p, width = 9, height =
 # figure: response curves at every site, LeBauer et al. 2013 fig 6
 # each site's output is divided by its own median run, so sites whose soil carbon
 # differs by an order of magnitude share one axis
-# methane's median run is zero at many sites, so a ratio to it is undefined there
-CURVE_OUTPUTS <- setdiff(names(OUTPUTS), "CH4_flux")
 curves <- purrr::map(ids, function(site) {
   s <- settings[[match(site, ids)]]
   veg <- unique(tab$veg_pft[tab$site_id == site])
   eid <- s$sensitivity.analysis$ensemble.id
-  purrr::map(CURVE_OUTPUTS, function(v) {
-    f <- file.path(args$sa_dir, sprintf("sensitivity.results.%s.%s.2016.2023.Rdata", eid, v))
-    res <- PEcAn.utils::load_local(f)$sensitivity.results
+  purrr::map(names(OUTPUTS), function(v) {
+    res <- PEcAn.utils::load_local(sa_file("sensitivity.results", eid, v))$sensitivity.results
     wanted <- fig_rows$parameter[fig_rows$variable == v]
     purrr::map(wanted, function(p) {
       pft <- if (p %in% names(res$soil$sensitivity.output$sa.splines)) "soil" else veg
@@ -273,7 +263,7 @@ curves$pft_f <- label_pft(curves$veg_pft)
 curves <- curves[order(curves$veg_pft != "woody_perennial"), ]
 curves$site_f <- factor(curves$site_id, levels = unique(curves$site_id))
 
-for (v in CURVE_OUTPUTS) {
+for (v in names(OUTPUTS)) {
   d <- curves[curves$variable == v, ]
   d$lab <- factor(prior_lab[d$parameter], levels = prior_lab[fig_params])
   p <- ggplot(d, aes(.data$x, .data$y, group = .data$site_f, color = .data$pft_f)) +
