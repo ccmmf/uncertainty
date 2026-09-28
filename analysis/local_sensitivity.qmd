@@ -3,7 +3,6 @@ title: "Local Sensitivity Analysis"
 date: today
 format:
   html:
-    embed-resources: true
     toc: true
     toc-depth: 2
 execute:
@@ -53,10 +52,10 @@ parameters for calibration ([Fer et al., 2018](references.html)).
 
 | Output | Parameter | Median share (%) | Range (%) | Design points over 5 percent |
 |---|---|---:|---:|---:|
-| Soil carbon | Temperature sensitivity of soil respiration | 62 | 4 to 78 | 99 |
-| | Soil organic matter respiration rate | 28 | 2 to 42 | 98 |
-| Nitrous oxide flux | Temperature sensitivity of soil respiration | 46 | 17 to 81 | 100 |
-| | Nitrogen volatilization rate | 40 | 15 to 67 | 100 |
+| Soil carbon | Soil respiration Q10 | 62 | 4 to 78 | 99 |
+| | Base soil respiration rate (0 °C, saturated soil) | 28 | 2 to 42 | 98 |
+| Nitrous oxide flux | Soil respiration Q10 | 46 | 17 to 81 | 100 |
+| | Nitrogen volatilization rate constant | 40 | 15 to 67 | 100 |
 | | Nitrogen leaching fraction | 8 | 0 to 20 | 76 |
 
 : Share of parameter variance across the 100 design points, for parameters with a median share above 5 percent. {#tbl-shares}
@@ -92,7 +91,7 @@ the median design point of every PFT; shares for these outputs are not presented
 
 These are model-derived results. Parameters are drawn from priors that have not been
 updated with observations, so each share depends on the prior widths; the prior for the
-temperature sensitivity of soil respiration is uniform from 1.4 to 5.0.
+soil respiration Q10 is uniform from 1.4 to 5.0.
 
 Each parameter is varied with all others at their medians, so the shares divide the sum
 of single-parameter contributions and do not include interactions
