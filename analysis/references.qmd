@@ -1,8 +1,5 @@
 ---
 title: "References"
-format:
-  html:
-    embed-resources: true
 ---
 
 Dietze, M. C., Serbin, S. P., Davidson, C., et al. (2014). A quantitative assessment of a
