@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<pecan>
+ <info>
+  <notes>statewide Sobol global sensitivity analysis</notes>
+  <userid>-1</userid>
+  <username></username>
+ </info>
+ <outdir><!-- inserted at config time --></outdir>
+ <modeloutdir><!-- inserted at config time --></modeloutdir>
+ <rundir><!-- inserted at config time --></rundir>
+ <pfts>
+  <!-- inserted at config time, one entry per subdirectory of pft_dir -->
+ </pfts>
+ <ensemble>
+  <!-- the Sobol base sample N. each site runs N * (k + 2) configs, with k the
+       entries in samplingspace below: parameters, met, poolinitcond, events -->
+  <size><!-- inserted at config time --></size>
+  <variable>TotSoilCarb</variable>
+  <variable>AbvGrndWood</variable>
+  <variable>NEE</variable>
+  <variable>N2O_flux</variable>
+  <variable>CH4_flux</variable>
+  <!-- every entry is one Sobol factor. an input with more than one path must
+       be listed or write.config.SIPNET gets all its paths -->
+  <samplingspace>
+   <parameters>
+    <method>uniform</method>
+   </parameters>
+   <met>
+    <method>sampling</method>
+   </met>
+   <poolinitcond>
+    <method>sampling</method>
+   </poolinitcond>
+   <events>
+    <method>sampling</method>
+   </events>
+  </samplingspace>
+  <start.year><!-- inserted at config time --></start.year>
+  <end.year><!-- inserted at config time --></end.year>
+ </ensemble>
+ <model>
+  <id>99000000003</id>
+  <type>SIPNET</type>
+  <revision>2.2.0</revision>
+  <delete.raw>TRUE</delete.raw>
+  <binary><!-- inserted at config time --></binary>
+  <options>
+   <GDD>0</GDD>
+   <NITROGEN_CYCLE>1</NITROGEN_CYCLE>
+   <ANAEROBIC>1</ANAEROBIC>
+   <LITTER_POOL>1</LITTER_POOL>
+   <FLOODING>1</FLOODING>
+  </options>
+ </model>
+ <run>
+  <site><!-- inserted at config time --></site>
+  <inputs>
+   <met>
+    <id></id>
+    <path><!-- inserted at config time --></path>
+   </met>
+   <poolinitcond>
+    <source>RS_veg</source>
+    <output>poolinitcond</output>
+    <ensemble><!-- inserted at config time --></ensemble>
+    <path><!-- inserted at config time --></path>
+   </poolinitcond>
+   <events>
+    <path><!-- inserted at config time --></path>
+   </events>
+  </inputs>
+  <start.date><!-- inserted at config time --></start.date>
+  <end.date><!-- inserted at config time --></end.date>
+ </run>
+ <host>
+  <name>localhost</name>
+  <outdir><!-- inserted at config time --></outdir>
+  <rundir><!-- inserted at config time --></rundir>
+  <qsub>qsub -V -cwd -N @NAME@ -j y -o /dev/null -S /bin/bash</qsub>
+  <qsub.jobid>Your job-array ([0-9]+).*</qsub.jobid>
+  <qstat>qstat -j @JOBID@ || echo DONE</qstat>
+  <modellauncher>
+   <binary>./scripts/sge_array_launcher.sh</binary>
+   <qsub.extra>-t 1-@NJOBS@</qsub.extra>
+   <Njobmax>140</Njobmax>
+  </modellauncher>
+ </host>
+</pecan>
