@@ -42,25 +42,25 @@ read_sa_file <- function(sa_file, site_ids) {
 #'
 #' @description
 #' PEcAn names each result file by ensemble id alone, so the site comes from
-#' `settings$sensitivity.analysis`, whose per-site entries are named
-#' `site.<id>` and carry that site's ensemble id.
+#' each site's settings, which carry its sensitivity analysis ensemble id.
 #'
 #' @param settings A MultiSettings read from `pecan.CONFIGS.xml`.
 #' @return Data frame of variance decomposition metrics for every site, PFT,
 #'   variable and parameter.
 #' @export
 aggregate_sensitivity <- function(settings) {
-  sa <- settings$sensitivity.analysis
-  per_site <- grep("^site\\.", names(sa), value = TRUE)
-  if (length(per_site) == 0) {
+  # read per site: a MultiSettings merges a value shared by every site, so with a
+  # single site sensitivity.analysis is not split into site.<id> entries
+  ensemble_ids <- lapply(settings, function(s) s$sensitivity.analysis$ensemble.id)
+  if (any(vapply(ensemble_ids, is.null, logical(1)))) {
     PEcAn.logger::logger.severe(
-      "settings has no per-site sensitivity.analysis entries; ",
+      "settings has no sensitivity analysis ensemble id for some sites; ",
       "run 011_run_local_sensitivity.R first"
     )
   }
   site_ids <- stats::setNames(
-    sub("^site\\.", "", per_site),
-    vapply(sa[per_site], function(x) x$ensemble.id, character(1))
+    vapply(settings, function(s) as.character(s$run$site$id), character(1)),
+    unlist(ensemble_ids)
   )
 
   sa_files <- list.files(settings$outdir, "^sensitivity\\.results\\..*\\.Rdata$",
