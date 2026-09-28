@@ -1,0 +1,33 @@
+---
+title: "References"
+format:
+  html:
+    embed-resources: true
+---
+
+Dietze, M. C., Serbin, S. P., Davidson, C., et al. (2014). A quantitative assessment of a
+terrestrial biosphere model's data needs across North American biomes. *Journal of
+Geophysical Research: Biogeosciences*, 119, 286-300. https://doi.org/10.1002/2013JG002392
+
+Fer, I., Kelly, R., Moorcroft, P. R., et al. (2018). Linking big models to big data:
+efficient ecosystem model calibration through Bayesian model emulation. *Biogeosciences*,
+15, 5801-5830. https://doi.org/10.5194/bg-15-5801-2018
+
+Jansen, M. J. W. (1999). Analysis of variance designs for model output. *Computer Physics
+Communications*, 117, 35-43. https://doi.org/10.1016/S0010-4655(98)00154-4
+
+LeBauer, D. S., Wang, D., Richter, K. T., et al. (2013). Facilitating feedbacks between
+field measurements and ecosystem models. *Ecological Monographs*, 83(2), 133-154.
+https://doi.org/10.1890/12-0137.1
+
+Saltelli, A., Ratto, M., Andres, T., et al. (2008). *Global Sensitivity Analysis: The
+Primer*. Wiley. https://doi.org/10.1002/9780470725184
+
+Saltelli, A., Annoni, P., Azzini, I., et al. (2010). Variance based sensitivity analysis
+of model output. Design and estimator for the total sensitivity index. *Computer Physics
+Communications*, 181, 259-270. https://doi.org/10.1016/j.cpc.2009.09.018
+
+Saltelli, A., Aleksankina, K., Becker, W., et al. (2019). Why so many published
+sensitivity analyses are false: a systematic review of sensitivity analysis practices.
+*Environmental Modelling & Software*, 114, 29-39.
+https://doi.org/10.1016/j.envsoft.2019.01.012
