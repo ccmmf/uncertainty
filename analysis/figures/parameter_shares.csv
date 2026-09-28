@@ -1,6 +1,4 @@
 "variable","kind","parameter","median","low","high","sites_over","sites","negative"
-"CH4_flux","soil","soil_methane_rate",0.985823084398238,0.859828102099935,1,89,100,0
-"CH4_flux","soil","soil_respiration_Q10",0.0141728948894042,0,0.131364893604589,21,100,0
 "N2O_flux","soil","soil_respiration_Q10",0.460869986436245,0.171508698647927,0.810014053351306,100,100,0
 "N2O_flux","soil","n_volatilization_rate",0.397884787504843,0.153217204024995,0.665030019914773,100,100,0
 "N2O_flux","soil","n_leaching_frac",0.0779090738352202,6.46754610214237e-34,0.202831227540976,76,100,92
