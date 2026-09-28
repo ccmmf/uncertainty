@@ -283,18 +283,19 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>This documentation assumes that the steps in <a href="../../docs/training/CARB-uncertainty-setup.html">Environment setup</a> have been completed. Run all commands below from the uncertainty repository root.</p>
 <section id="fetch-demo-data" class="level2">
 <h2 class="anchored" data-anchor-id="fetch-demo-data">Fetch demo data</h2>
-<!-- [check] demo bundle S3 key once it is uploaded -->
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> s3 sync s3://carb/data/workflows/uncertainty/demo_data/ demo-data/uncertainty/</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> s3 sync s3://carb/pfts/magic_v1.2/ demo-data/pfts/magic_v1.2/</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> demo-data/uncertainty/demo_config.yaml config.yaml</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>The first download holds the ensemble inputs for the two design points:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> s3 cp s3://carb/data_raw/magic_uncertainty_demo_20260928.tgz demo-data/</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> demo-data/uncertainty</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tar</span> <span class="at">-xzf</span> demo-data/magic_uncertainty_demo_20260928.tgz <span class="at">-C</span> demo-data/uncertainty</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">aws</span> s3 sync s3://carb/pfts/magic_v1.2/ demo-data/pfts/magic_v1.2/</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> demo-data/uncertainty/demo_config.yaml config.yaml</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The demo package holds the ensemble inputs for the two design points:</p>
 <ul>
 <li><code>site_info.csv</code>: the design points, one row each, with their PFT and ERA5 grid cell</li>
 <li><code>data/ERA5_SIPNET/</code>: 10 ERA5 meteorology members per grid cell</li>
 <li><code>IC_files/</code>: initial condition members per design point</li>
 <li><code>data/events/</code>: 20 management event members</li>
 </ul>
-<p>The second is the v1.2 parameterization package: one prior file per PFT, plus the package README.</p>
+<p>The second download is the v1.2 parameterization package: one prior file per PFT, plus the package README.</p>
 </section>
 <section id="explore-the-cli" class="level2">
 <h2 class="anchored" data-anchor-id="explore-the-cli">Explore the CLI</h2>

@@ -158,7 +158,7 @@
     "href": "docs/training/uncertainty_demo.html#fetch-demo-data",
     "title": "Sensitivity analysis of a MAGiC ensemble",
     "section": "Fetch demo data",
-    "text": "Fetch demo data\n\naws s3 sync s3://carb/data/workflows/uncertainty/demo_data/ demo-data/uncertainty/\naws s3 sync s3://carb/pfts/magic_v1.2/ demo-data/pfts/magic_v1.2/\ncp demo-data/uncertainty/demo_config.yaml config.yaml\nThe first download holds the ensemble inputs for the two design points:\n\nsite_info.csv: the design points, one row each, with their PFT and ERA5 grid cell\ndata/ERA5_SIPNET/: 10 ERA5 meteorology members per grid cell\nIC_files/: initial condition members per design point\ndata/events/: 20 management event members\n\nThe second is the v1.2 parameterization package: one prior file per PFT, plus the package README."
+    "text": "Fetch demo data\naws s3 cp s3://carb/data_raw/magic_uncertainty_demo_20260928.tgz demo-data/\nmkdir -p demo-data/uncertainty\ntar -xzf demo-data/magic_uncertainty_demo_20260928.tgz -C demo-data/uncertainty\naws s3 sync s3://carb/pfts/magic_v1.2/ demo-data/pfts/magic_v1.2/\ncp demo-data/uncertainty/demo_config.yaml config.yaml\nThe demo package holds the ensemble inputs for the two design points:\n\nsite_info.csv: the design points, one row each, with their PFT and ERA5 grid cell\ndata/ERA5_SIPNET/: 10 ERA5 meteorology members per grid cell\nIC_files/: initial condition members per design point\ndata/events/: 20 management event members\n\nThe second download is the v1.2 parameterization package: one prior file per PFT, plus the package README."
   },
   {
     "objectID": "docs/training/uncertainty_demo.html#explore-the-cli",
