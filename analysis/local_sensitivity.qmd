@@ -12,6 +12,18 @@ execute:
 lightbox: true
 ---
 
+<style>
+@media (max-width: 575.98px) {
+  table.table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+</style>
+
 This report ranks SIPNET parameters by their contribution to the variance of modeled
 soil carbon and N₂O-N flux at 100 California cropland design points from 2016 to 2023.
 Methane results are reported for the 11 design points with at least one recorded rice
