@@ -39,8 +39,6 @@ website:
           - href: analysis/references.qmd
             text: References
     tools:
-      - icon: exclamation-octagon
-        text: "Status: Draft"
       - icon: github
         href: https://github.com/ccmmf/uncertainty
 
