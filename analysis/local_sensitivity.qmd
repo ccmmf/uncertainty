@@ -12,10 +12,11 @@ execute:
 lightbox: true
 ---
 
-This report ranks the parameters of the SIPNET ecosystem model by their contribution to
-the uncertainty of modeled soil carbon and nitrous oxide flux. The analysis covers 100
-design points on California cropland over 2016 to 2023. Results are each parameter's
-share of parameter variance at each design point.
+This report ranks SIPNET parameters by their contribution to the variance of modeled
+soil carbon and N₂O-N flux at 100 California cropland design points from 2016 to 2023.
+Methane results are reported for the 11 design points with at least one recorded rice
+season. Each result is a parameter's share of modeled parameter
+variance at a design point, conditional on the current parameter priors.
 
 ## Background
 
@@ -48,13 +49,13 @@ parameters for calibration ([Fer et al., 2018](references.html)).
 
 ## Share of parameter variance
 
-![Prior uncertainty (CV), sensitivity (elasticity), and share of parameter variance. Points are medians across design points and bars span the interquartile range.](figures/variance_components.png){#fig-components width=100% fig-align="center" .lightbox fig-alt="Dot plot of coefficient of variation, elasticity, and share of parameter variance for the influential parameters of soil carbon and nitrous oxide flux."}
+![Prior uncertainty (CV), sensitivity (elasticity), and share of parameter variance. Points are medians across design points and bars span the interquartile range.](figures/variance_components.png){#fig-components width=100% fig-align="center" .lightbox fig-alt="Dot plot of coefficient of variation, elasticity, and share of parameter variance for the influential parameters of soil carbon and modeled N2O-N flux."}
 
 | Output | Parameter | Median share (%) | Range (%) | Design points over 5 percent |
 |---|---|---:|---:|---:|
 | Soil carbon | Soil respiration Q10 | 62 | 4 to 78 | 99 |
 | | Base soil respiration rate (0 °C, saturated soil) | 28 | 2 to 42 | 98 |
-| Nitrous oxide flux | Soil respiration Q10 | 46 | 17 to 81 | 100 |
+| Modeled N₂O-N flux | Soil respiration Q10 | 46 | 17 to 81 | 100 |
 | | Nitrogen volatilization rate constant | 40 | 15 to 67 | 100 |
 | | Nitrogen leaching fraction | 8 | 0 to 20 | 76 |
 
@@ -63,29 +64,46 @@ parameters for calibration ([Fer et al., 2018](references.html)).
 Two soil parameters account for most of the parameter variance in soil carbon, and
 raising either lowers soil carbon at all 100 design points. A plant parameter exceeds 5
 percent of the soil carbon variance at 19 of the 96 cropped design points, 18 of them
-woody perennial, and at none for nitrous oxide.
+woody perennial, and at none for modeled N₂O-N flux.
 
 ## Variation across design points and PFTs
 
-![Share of parameter variance across design points. Upper panels: distribution across design points, with the mean marked by the green bar. Lower panels: mean share by PFT.](figures/share_by_pft.png){#fig-pft width=100% fig-align="center" .lightbox fig-alt="Box plots of share of parameter variance across design points and bar charts of mean share by plant functional type, for soil carbon and nitrous oxide flux."}
+![Share of parameter variance, shown separately for soil carbon and modeled N₂O-N flux. Upper panels show the distribution across design points; green marks show the mean. Each lower bar is the average share among design points assigned to that plant functional type (PFT), not a contribution from the PFT itself.](figures/share_by_pft.png){#fig-pft width=100% fig-align="center" .lightbox fig-alt="For soil carbon and modeled N2O-N flux, upper boxplots show parameter shares across design points; lower bars show the average share within each plant functional type."}
 
-The two parameters with the largest mean share are the same in every PFT for each
-output.
+The two parameters with the largest mean share for soil carbon and modeled N₂O-N
+flux are the same in every plant functional type.
+
+## Methane at sites with rice history
+
+The methane analysis includes 11 design points with at least one recorded rice season
+during 2016–2023. Plant functional type labels and irrigation events do not establish
+crop history. The figure shows the two parameters that exceed the 5 percent screening
+threshold at any of these design points.
+
+![Share of methane parameter variance across 11 design points with recorded rice seasons. Points represent design points; boxes show the median and interquartile range. The dashed line marks the 5 percent screening threshold.](figures/methane_oat_parameter_shares.png){#fig-methane-oat width=85% fig-align="center" .lightbox fig-alt="Soil methane rate accounts for about 90 to 100 percent of methane parameter variance across 11 design points with rice history; soil respiration Q10 accounts for 0 to 10 percent."}
+
+The soil methane rate accounts for a median 94 percent of methane parameter variance
+(range 90–100 percent). Soil respiration Q10 accounts for a median 5.7 percent
+(range 0–10 percent) and exceeds the screening threshold at eight design points.
+These shares describe sensitivity under the current priors, not parameter
+identifiability or agreement with observed methane. A reliable global variance
+partition is not available for methane.
 
 ## Response to each parameter
 
-![Prior density and model response for the soil parameters at one row crop design point in the San Joaquin Valley. Points are the five runs, the larger point the median run, and the line PEcAn's spline.](figures/response_curves_soil.png){#fig-panel width=80% fig-align="center" .lightbox fig-alt="Grid of prior densities and response curves of soil carbon and nitrous oxide flux for four soil parameters."}
+![Prior density and model response for the soil parameters at one row crop design point in the San Joaquin Valley. Points are the five runs, the larger point the median run, and the line PEcAn's spline.](figures/response_curves_soil.png){#fig-panel width=80% fig-align="center" .lightbox fig-alt="Grid of prior densities and response curves of soil carbon and modeled N2O-N flux for four soil parameters."}
 
 ![Response of soil carbon at every design point, as output over the design point's median run, from the 2.3 to the 97.7 percentile of each prior.](figures/response_curves_TotSoilCarb.png){#fig-curves-soc width=100% fig-align="center" .lightbox fig-alt="Response curves of soil carbon at every design point for the influential parameters."}
 
-![Response of nitrous oxide flux at every design point, as in @fig-curves-soc.](figures/response_curves_N2O_flux.png){#fig-curves-n2o width=100% fig-align="center" .lightbox fig-alt="Response curves of nitrous oxide flux at every design point for the influential parameters."}
+![Response of modeled N₂O-N flux at every design point, as in @fig-curves-soc.](figures/response_curves_N2O_flux.png){#fig-curves-n2o width=100% fig-align="center" .lightbox fig-alt="Response curves of modeled N2O-N flux at every design point for the influential parameters."}
 
 ## Reporting scope
 
-Shares are reported for soil carbon and nitrous oxide flux. Methane and six other outputs
-were also computed. Modeled methane is near the precision of the model output, and plant
-carbon is low in these runs, with net primary productivity below 20 g C m^-2^ yr^-1^ at
-the median design point of every PFT; shares for these outputs are not presented.
+Shares are reported for soil carbon and modeled N₂O-N flux at
+all 100 design points, and for methane at the 11 design points with recorded rice
+seasons. Six other outputs were also computed. Plant carbon is low in these runs, with
+net primary productivity below 20 g C m^-2^ yr^-1^ at the median design point of every
+PFT; shares for these outputs are not presented.
 
 ## Interpretation
 
@@ -97,7 +115,6 @@ Each parameter is varied with all others at their medians, so the shares divide 
 of single-parameter contributions and do not include interactions
 ([Saltelli et al., 2019](references.html)). Meteorology, initial conditions, and
 management are held at one ensemble member; the global sensitivity analysis compares
-those inputs with the parameters. In SIPNET 2.2.0 the nitrous oxide output is the total
-nitrogen volatilization flux.
+those inputs with the parameters.
 
 See [References](references.html) for the cited sources.

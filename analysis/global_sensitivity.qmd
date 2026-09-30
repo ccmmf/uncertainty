@@ -12,10 +12,10 @@ execute:
 lightbox: true
 ---
 
-This report partitions the variance of modeled soil carbon and nitrous oxide flux among
-four inputs: model parameters, initial conditions, meteorology, and management. The
-analysis covers 10 design points on California cropland over 2016 to 2023. Results are
-indices with 95 percent intervals at each design point.
+This report partitions the variance of modeled soil carbon and N₂O-N flux among four
+inputs: model parameters, initial conditions, meteorology, and management. The analysis
+covers 10 design points on California cropland over 2016 to 2023. Results are indices
+with 95 percent bootstrap intervals at each design point.
 
 ## Background
 
@@ -26,10 +26,10 @@ the output variance ([Saltelli et al., 2008](references.html)).
 
 Two indices are reported for each input. The first-order index is the share of output
 variance from that input alone. The total-order index adds its interactions with the
-other inputs. Both are estimated with the Jansen estimators on the design of Saltelli
-et al. (2010), in which two independent samples of 1,000 rows are recombined so that
-each input varies alone ([Jansen, 1999](references.html)). Parameters are treated as one
-input and are not ranked individually.
+other inputs. The indices use a variance-based Sobol design with two independent base
+samples of 1,000 rows that are recombined to vary each input separately
+([Jansen, 1999](references.html); [Saltelli et al., 2010](references.html)). Parameters
+are treated as one input and are not ranked individually.
 
 ![Design points, colored by the PFT they were run under. Labels identify the design points in the figures that follow. Outlines are the Cal-Adapt climate regions.](figures/gsa_site_map.png){#fig-map width=70% fig-align="center" .lightbox fig-alt="Map of California with 10 labeled design points: four row crop and one corn in the Sacramento-Delta, four woody perennial and one row crop in the San Joaquin Valley, and one alfalfa in the Sonora Desert."}
 
@@ -49,7 +49,7 @@ input and are not ranked individually.
 
 ## Share of output variance by input
 
-![Share of output variance from each input at each design point, as first-order indices. Negative estimates are shown as 0. The grey segment is the variance the first-order indices leave unexplained; where the estimates sum to more than 1, the bar runs past 1 and has no grey segment.](figures/gsa_partition.png){#fig-partition width=100% fig-align="center" .lightbox fig-alt="Stacked horizontal bars, one per design point, showing the share of variance from parameters, initial conditions, management, meteorology, and an unexplained part, for soil carbon and nitrous oxide flux."}
+![Share of output variance from each input at each design point, as first-order indices. Negative estimates are shown as 0. The grey segment is the variance the first-order indices leave unexplained; where the estimates sum to more than 1, the bar runs past 1 and has no grey segment.](figures/gsa_partition.png){#fig-partition width=100% fig-align="center" .lightbox fig-alt="Stacked horizontal bars, one per design point, showing the share of variance from parameters, initial conditions, management, meteorology, and an unexplained part, for soil carbon and modeled N2O-N flux."}
 
 | Output | Input | Median | Range across design points |
 |---|---|---:|---:|
@@ -57,43 +57,44 @@ input and are not ranked individually.
 | | Parameters | 0.13 | 0.00 to 0.44 |
 | | Management | 0.00 | 0.00 to 0.01 |
 | | Meteorology | 0.00 | 0.00 to 0.00 |
-| Nitrous oxide flux | Parameters | 1.00 | 0.97 to 1.05 |
+| Modeled N₂O-N flux | Parameters | 1.00 | 0.97 to 1.05 |
 | | Management | 0.03 | 0.01 to 0.07 |
 | | Initial conditions | 0.00 | 0.00 to 0.03 |
 | | Meteorology | 0.00 | 0.00 to 0.00 |
 
 : Total-order index of each input across the 10 design points. {#tbl-indices}
 
-Initial conditions account for most of the variance in soil carbon, and parameters for
-most of the variance in nitrous oxide, at every design point. Management and meteorology
-together have first-order indices of at most 0.06 for either output.
+Initial conditions account for most of the variance in mean soil-carbon stock, and
+parameters for most of the variance in modeled N₂O-N flux, at every design point.
+Management and meteorology together have first-order indices of at most 0.06
+for either output.
 
 ## Variation across design points
 
-![First-order and total-order index of each input at each design point. Points are estimates and bars are 95 percent bootstrap intervals. Vertical lines mark 0 and 1.](figures/gsa_indices_by_site.png){#fig-sites width=100% fig-align="center" .lightbox fig-alt="First-order and total-order indices with 95 percent intervals at each of the 10 design points, for each input and for soil carbon and nitrous oxide flux."}
+![First-order and total-order index of each input at each design point. Points are estimates and bars are 95 percent bootstrap intervals. Vertical lines mark 0 and 1.](figures/gsa_indices_by_site.png){#fig-sites width=100% fig-align="center" .lightbox fig-alt="First-order and total-order indices with 95 percent intervals at each of the 10 design points, for each input and for soil carbon and modeled N2O-N flux."}
 
 For soil carbon, the total-order index of parameters is 0.23 to 0.44 at the five design
-points in the San Joaquin Valley and at most 0.03 at the other five. For nitrous oxide,
+points in the San Joaquin Valley and at most 0.03 at the other five. For modeled N₂O-N flux,
 the index of parameters is 0.97 to 1.05 at every design point.
 
 The intervals of the largest indices are 0.11 to 0.20 wide for soil carbon and 0.24 to
-0.40 wide for nitrous oxide. Estimates above 1 or below 0 have intervals that include
+0.40 wide for modeled N₂O-N flux. Estimates above 1 or below 0 have intervals that include
 that bound.
 
 ## Precision of the indices
 
-![Total-order index (left) and width of its 95 percent interval (right) against base sample size, for parameters and initial conditions. Each line is one design point.](figures/gsa_convergence.png){#fig-convergence width=100% fig-align="center" .lightbox fig-alt="Line plots of total-order index and interval width against base sample size from 100 to 1,000, one line per design point, for parameters and initial conditions and for soil carbon and nitrous oxide flux."}
+![Total-order index (left) and width of its 95 percent interval (right) against base sample size, for parameters and initial conditions. Each line is one design point.](figures/gsa_convergence.png){#fig-convergence width=100% fig-align="center" .lightbox fig-alt="Line plots of total-order index and interval width against base sample size from 100 to 1,000, one line per design point, for parameters and initial conditions and for soil carbon and modeled N2O-N flux."}
 
 The input with the largest index at each design point and output is the same at every
 base sample size from 100 to 1,000. Index values are reported with their intervals.
 
 ## Reporting scope
 
-Indices are reported for soil carbon and nitrous oxide flux. Methane, aboveground
-biomass, and net ecosystem exchange were also computed. Modeled methane at these design
-points is near the precision of the model output, and plant carbon is low in these runs,
-with median aboveground biomass below 0.4 kg C m^-2^ at every design point; indices for these
-three outputs are not presented.
+Indices are reported for soil carbon and modeled N₂O-N flux. Methane is addressed in
+the local analysis only; this global analysis does not establish a reliable methane
+variance partition. Aboveground biomass and net ecosystem exchange were also computed.
+Plant carbon is low in these runs, with median aboveground biomass below 0.4 kg C m^-2^
+at every design point; indices for these two outputs are not presented.
 
 ## Interpretation
 
