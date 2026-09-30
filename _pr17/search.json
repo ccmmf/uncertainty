@@ -1,0 +1,386 @@
+[
+  {
+    "objectID": "docs/training/uncertainty_demo.html",
+    "href": "docs/training/uncertainty_demo.html",
+    "title": "Sensitivity analysis of a MAGiC ensemble",
+    "section": "",
+    "text": "This tutorial runs the two sensitivity analyses of the MAGiC uncertainty workflow on a small demo dataset. The demo covers two design points: a corn field in the Sacramento-Delta and a woody perennial field in the San Joaquin Valley, over 2016 to 2023.\nBoth analyses use the inputs of an ensemble run: meteorology, initial conditions, management events, and the PFT priors. The local analysis moves each parameter in turn; the global analysis varies all four inputs together.\nThis documentation assumes that the steps in Environment setup have been completed. Run all commands below from the uncertainty repository root.",
+    "crumbs": [
+      "Training",
+      "Uncertainty Demo"
+    ]
+  },
+  {
+    "objectID": "docs/training/uncertainty_demo.html#fetch-demo-data",
+    "href": "docs/training/uncertainty_demo.html#fetch-demo-data",
+    "title": "Sensitivity analysis of a MAGiC ensemble",
+    "section": "Fetch demo data",
+    "text": "Fetch demo data\naws s3 cp s3://carb/data_raw/magic_uncertainty_demo_20260928.tgz demo-data/\nmkdir -p demo-data/uncertainty\ntar -xzf demo-data/magic_uncertainty_demo_20260928.tgz -C demo-data/uncertainty\naws s3 sync s3://carb/pfts/magic_v1.2/ demo-data/pfts/magic_v1.2/\ncp demo-data/uncertainty/demo_config.yaml config.yaml\nThe demo package holds the ensemble inputs for the two design points:\n\nsite_info.csv: the design points, one row each, with their PFT and ERA5 grid cell\ndata/ERA5_SIPNET/: 10 ERA5 meteorology members per grid cell\nIC_files/: initial condition members per design point\ndata/events/: 20 management event members\n\nThe second download is the v1.2 parameterization package: one prior file per PFT, plus the package README.",
+    "crumbs": [
+      "Training",
+      "Uncertainty Demo"
+    ]
+  },
+  {
+    "objectID": "docs/training/uncertainty_demo.html#explore-the-cli",
+    "href": "docs/training/uncertainty_demo.html#explore-the-cli",
+    "title": "Sensitivity analysis of a MAGiC ensemble",
+    "section": "Explore the CLI",
+    "text": "Explore the CLI\n./magic-uncertainty help\nKey points:\n\nprepare, local-sensitivity, and global-sensitivity each run a fixed list of steps, and each step calls one script.\nEvery setting reaches a script as a command line argument; scripts do not read configuration files or environment variables.\n--verbose prints the exact call issued for each step.\nEach command writes a log to run_dir.",
+    "crumbs": [
+      "Training",
+      "Uncertainty Demo"
+    ]
+  },
+  {
+    "objectID": "docs/training/uncertainty_demo.html#explore-the-configuration-file",
+    "href": "docs/training/uncertainty_demo.html#explore-the-configuration-file",
+    "title": "Sensitivity analysis of a MAGiC ensemble",
+    "section": "Explore the configuration file",
+    "text": "Explore the configuration file\nless config.yaml\nThe demo configuration uses these values:\nrun_dir: \"uncertainty-demo-run/\"\nn_sites_local: 2\nn_sites_global: 2\nsobol_sample_size: 30\nexample_site: \"328163\"\nn_workers: 4\nworkflow_parallelism_mode: local\npecan_parallelism_mode: local-gnu-parallel\nn_sites_local and n_sites_global take the design points from the top of site_info.csv. sobol_sample_size is the base sample of the global analysis; each design point runs six times that number. pecan_parallelism_mode: local-gnu-parallel runs the model with GNU parallel in the current allocation, on n_workers cores. On a Slurm cluster, slurm-sbatch submits the runs as array jobs instead.\nThe external_paths block points at the downloaded inputs and at the SIPNET binary. Set sipnet_binary to the sipnet.git in your ensemble run directory.",
+    "crumbs": [
+      "Training",
+      "Uncertainty Demo"
+    ]
+  },
+  {
+    "objectID": "docs/training/uncertainty_demo.html#prepare",
+    "href": "docs/training/uncertainty_demo.html#prepare",
+    "title": "Sensitivity analysis of a MAGiC ensemble",
+    "section": "Prepare",
+    "text": "Prepare\n./magic-uncertainty prepare --verbose --config config.yaml\n\nlinks the demo inputs into run_dir, so large files are not copied\ncopies the two settings templates and inserts the run dispatch chosen in the configuration\nbuilds one settings file for each analysis, under run_dir/local/ and run_dir/global/",
+    "crumbs": [
+      "Training",
+      "Uncertainty Demo"
+    ]
+  },
+  {
+    "objectID": "docs/training/uncertainty_demo.html#local-sensitivity",
+    "href": "docs/training/uncertainty_demo.html#local-sensitivity",
+    "title": "Sensitivity analysis of a MAGiC ensemble",
+    "section": "Local sensitivity",
+    "text": "Local sensitivity\n./magic-uncertainty local-sensitivity --verbose --config config.yaml\nSIPNET is run with every parameter at its prior median, then with each parameter moved in turn to four percentiles of its prior. That is 157 runs at the corn design point. The command then fits a spline through each parameter’s runs, computes each parameter’s share of the parameter variance at each design point, and draws the figures.\nResults are in run_dir/local/: local_sensitivity.csv holds every parameter at every design point, and figures/ holds the report figures and parameter_shares.csv.\n\n\n\nTable 1: Parameters with a median share above 5 percent across the two demo design points.\n\n\n\n\n\nOutput\nParameter\nMedian share (%)\n\n\n\n\nSoil carbon\nSoil respiration Q10\n63\n\n\n\nBase soil respiration rate (0 °C, saturated soil)\n28\n\n\nNitrous oxide flux\nSoil respiration Q10\n48\n\n\n\nNitrogen volatilization rate constant\n36\n\n\n\nNitrogen leaching fraction\n11\n\n\n\n\n\n\n\n\n\n\n\n\nFigure 1: Prior uncertainty (CV), sensitivity (elasticity), and share of parameter variance across the two demo design points.",
+    "crumbs": [
+      "Training",
+      "Uncertainty Demo"
+    ]
+  },
+  {
+    "objectID": "docs/training/uncertainty_demo.html#global-sensitivity",
+    "href": "docs/training/uncertainty_demo.html#global-sensitivity",
+    "title": "Sensitivity analysis of a MAGiC ensemble",
+    "section": "Global sensitivity",
+    "text": "Global sensitivity\n./magic-uncertainty global-sensitivity --verbose --config config.yaml\nThe command draws two samples of 30 rows, each row holding one draw of every parameter and one member of each input ensemble, and recombines them into a design of 180 rows. It runs SIPNET for every row at each design point, then computes the first-order and total-order index of each input with bootstrap intervals.\nResults are in run_dir/global/: global_sensitivity.csv holds the indices and intervals, and figures/ holds the report figures and tables.\nWith a base sample of 30 the intervals are wide, and some estimates fall below 0 or above 1. The reported analysis uses a base sample of 1,000.",
+    "crumbs": [
+      "Training",
+      "Uncertainty Demo"
+    ]
+  },
+  {
+    "objectID": "docs/training/uncertainty_demo.html#scaling-beyond-the-demo",
+    "href": "docs/training/uncertainty_demo.html#scaling-beyond-the-demo",
+    "title": "Sensitivity analysis of a MAGiC ensemble",
+    "section": "Scaling beyond the demo",
+    "text": "Scaling beyond the demo\nThe same three commands run the full analyses. Point external_paths at the inputs of a full ensemble run and set the sizes used in the reports:\nn_sites_local: 100\nn_sites_global: 10\nsobol_sample_size: 1000\nThe local analysis then writes 13,364 runs and the global analysis 60,000. On a cluster, set pecan_parallelism_mode: slurm-sbatch so the model runs are submitted as array jobs, and run the CLI itself on a compute node with n_workers set to the cores available.",
+    "crumbs": [
+      "Training",
+      "Uncertainty Demo"
+    ]
+  },
+  {
+    "objectID": "docs/training/index.html",
+    "href": "docs/training/index.html",
+    "title": "MAGiC uncertainty training",
+    "section": "",
+    "text": "This is the uncertainty component of the MAGiC system. It runs SIPNET at design points with the same meteorology, initial conditions, management events, and parameter priors as the ensemble workflow, and reports which of them the modeled soil carbon and nitrous oxide flux are most sensitive to.\nTwo analyses are run:\nEach notebook is a self-study demo to work through beforehand, then discuss in the live session.",
+    "crumbs": [
+      "Training",
+      "Overview"
+    ]
+  },
+  {
+    "objectID": "docs/training/index.html#commands",
+    "href": "docs/training/index.html#commands",
+    "title": "MAGiC uncertainty training",
+    "section": "Commands",
+    "text": "Commands\n\n\n\n\n\n\n\nCommand\nWhat it does\n\n\n\n\nprepare\nStages the ensemble inputs into run_dir and builds the settings of both analyses.\n\n\nlocal-sensitivity\nRuns the one-at-a-time analysis, computes each parameter’s share of variance at each design point, and draws the figures.\n\n\nglobal-sensitivity\nRuns the Sobol analysis, computes the indices with bootstrap intervals at each design point, and draws the figures.",
+    "crumbs": [
+      "Training",
+      "Overview"
+    ]
+  },
+  {
+    "objectID": "docs/training/index.html#data-flow",
+    "href": "docs/training/index.html#data-flow",
+    "title": "MAGiC uncertainty training",
+    "section": "Data flow",
+    "text": "Data flow\n\n\n\n\n\nflowchart LR\n  ENS[\"ensemble inputs&lt;br/&gt;met, initial conditions,&lt;br/&gt;events, priors\"] --&gt; PREP[\"prepare\"]\n  PREP --&gt; LOC[\"local-sensitivity\"]\n  PREP --&gt; GLO[\"global-sensitivity\"]",
+    "crumbs": [
+      "Training",
+      "Overview"
+    ]
+  },
+  {
+    "objectID": "docs/training/index.html#audiences",
+    "href": "docs/training/index.html#audiences",
+    "title": "MAGiC uncertainty training",
+    "section": "Audiences",
+    "text": "Audiences\nFollowing the same roles as the MAGiC training index:\n\nEveryone: environment setup.\nMAGiC users: running the analyses and reading their output. Assumes the setup page is done and you are comfortable on the command line.",
+    "crumbs": [
+      "Training",
+      "Overview"
+    ]
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html",
+    "href": "analysis/global_sensitivity.html",
+    "title": "Global Sensitivity Analysis",
+    "section": "",
+    "text": "This report partitions the variance of modeled soil carbon and N₂O-N flux among four inputs: model parameters, initial conditions, meteorology, and management. The analysis covers 10 design points on California cropland over 2016 to 2023. Results are indices with 95 percent bootstrap intervals at each design point.",
+    "crumbs": [
+      "Reports",
+      "Global Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html#background",
+    "href": "analysis/global_sensitivity.html#background",
+    "title": "Global Sensitivity Analysis",
+    "section": "Background",
+    "text": "Background\nThe one-at-a-time analysis, reported separately, ranks individual parameters but holds meteorology, initial conditions, and management at one realization. A variance-based global sensitivity analysis varies all four inputs together and assigns each a share of the output variance (Saltelli et al., 2008).\nTwo indices are reported for each input. The first-order index is the share of output variance from that input alone. The total-order index adds its interactions with the other inputs. The indices use a variance-based Sobol design with two independent base samples of 1,000 rows that are recombined to vary each input separately (Jansen, 1999; Saltelli et al., 2010). Parameters are treated as one input and are not ranked individually.\n\n\n\n\n\n\nFigure 1: Design points, colored by the PFT they were run under. Labels identify the design points in the figures that follow. Outlines are the Cal-Adapt climate regions.\n\n\n\n\n\n\nTable 1: Configuration of the analysis.\n\n\n\n\n\nSetting\nValue\n\n\n\n\nModel\nSIPNET 2.2.0, nitrogen cycle and anaerobic processes on\n\n\nDesign points\n10: 4 woody perennial, 4 row crop, 1 corn, 1 alfalfa\n\n\nPeriod\n2016 to 2023, reported as the mean over the period\n\n\nParameters\nPFT priors of the statewide inventory runs\n\n\nMeteorology\n10 ERA5 ensemble members\n\n\nInitial conditions\nfirst 20 of the 50 inventory members\n\n\nManagement\n20 inventory ensemble members\n\n\nModel runs\n6,000 per design point\n\n\nIntervals\n95 percent, from 1,000 bootstrap resamples",
+    "crumbs": [
+      "Reports",
+      "Global Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html#share-of-output-variance-by-input",
+    "href": "analysis/global_sensitivity.html#share-of-output-variance-by-input",
+    "title": "Global Sensitivity Analysis",
+    "section": "Share of output variance by input",
+    "text": "Share of output variance by input\n\n\n\n\n\n\nFigure 2: Share of output variance from each input at each design point, as first-order indices. Negative estimates are shown as 0. The grey segment is the variance the first-order indices leave unexplained; where the estimates sum to more than 1, the bar runs past 1 and has no grey segment.\n\n\n\n\n\n\nTable 2: Total-order index of each input across the 10 design points.\n\n\n\n\n\nOutput\nInput\nMedian\nRange across design points\n\n\n\n\nSoil carbon\nInitial conditions\n0.91\n0.56 to 1.08\n\n\n\nParameters\n0.13\n0.00 to 0.44\n\n\n\nManagement\n0.00\n0.00 to 0.01\n\n\n\nMeteorology\n0.00\n0.00 to 0.00\n\n\nModeled N₂O-N flux\nParameters\n1.00\n0.97 to 1.05\n\n\n\nManagement\n0.03\n0.01 to 0.07\n\n\n\nInitial conditions\n0.00\n0.00 to 0.03\n\n\n\nMeteorology\n0.00\n0.00 to 0.00\n\n\n\n\n\n\nInitial conditions account for most of the variance in mean soil-carbon stock, and parameters for most of the variance in modeled N₂O-N flux, at every design point. Management and meteorology together have first-order indices of at most 0.06 for either output.",
+    "crumbs": [
+      "Reports",
+      "Global Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html#variation-across-design-points",
+    "href": "analysis/global_sensitivity.html#variation-across-design-points",
+    "title": "Global Sensitivity Analysis",
+    "section": "Variation across design points",
+    "text": "Variation across design points\n\n\n\n\n\n\nFigure 3: First-order and total-order index of each input at each design point. Points are estimates and bars are 95 percent bootstrap intervals. Vertical lines mark 0 and 1.\n\n\n\nFor soil carbon, the total-order index of parameters is 0.23 to 0.44 at the five design points in the San Joaquin Valley and at most 0.03 at the other five. For modeled N₂O-N flux, the index of parameters is 0.97 to 1.05 at every design point.\nThe intervals of the largest indices are 0.11 to 0.20 wide for soil carbon and 0.24 to 0.40 wide for modeled N₂O-N flux. Estimates above 1 or below 0 have intervals that include that bound.",
+    "crumbs": [
+      "Reports",
+      "Global Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html#precision-of-the-indices",
+    "href": "analysis/global_sensitivity.html#precision-of-the-indices",
+    "title": "Global Sensitivity Analysis",
+    "section": "Precision of the indices",
+    "text": "Precision of the indices\n\n\n\n\n\n\nFigure 4: Total-order index (left) and width of its 95 percent interval (right) against base sample size, for parameters and initial conditions. Each line is one design point.\n\n\n\nThe input with the largest index at each design point and output is the same at every base sample size from 100 to 1,000. Index values are reported with their intervals.",
+    "crumbs": [
+      "Reports",
+      "Global Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html#reporting-scope",
+    "href": "analysis/global_sensitivity.html#reporting-scope",
+    "title": "Global Sensitivity Analysis",
+    "section": "Reporting scope",
+    "text": "Reporting scope\nIndices are reported for soil carbon and modeled N₂O-N flux. Methane is addressed in the local analysis only; this global analysis does not establish a reliable methane variance partition. Aboveground biomass and net ecosystem exchange were also computed. Plant carbon is low in these runs, with median aboveground biomass below 0.4 kg C m-2 at every design point; indices for these two outputs are not presented.",
+    "crumbs": [
+      "Reports",
+      "Global Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/global_sensitivity.html#interpretation",
+    "href": "analysis/global_sensitivity.html#interpretation",
+    "title": "Global Sensitivity Analysis",
+    "section": "Interpretation",
+    "text": "Interpretation\nThese are model-derived results. Parameters are drawn from priors that have not been updated with observations, and each index depends on the prior widths and on the spread of the input ensembles.\nThe meteorology index measures the spread among the 10 ERA5 members, which differ by at most 0.10 °C in mean air temperature; it is not a sensitivity to climate. The management index measures the spread among the 20 management members; it is not the effect of a change in practice. Initial nitrogen and litter pools are the same in every run, so the initial condition index does not include uncertainty in those pools.\nSee References for the cited sources.",
+    "crumbs": [
+      "Reports",
+      "Global Sensitivity"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "MAGiC Uncertainty",
+    "section": "",
+    "text": "This site reports the sensitivity and uncertainty analyses of the SIPNET ecosystem model used in the MAGiC inventory runs for California cropland.\n\nLocal Sensitivity ranks the model parameters by their contribution to the variance of modeled soil carbon and nitrous oxide flux at 100 design points, and methane at 11 design points with recorded rice seasons.\nGlobal Sensitivity partitions the modeled soil-carbon and nitrous-oxide output variance among parameters, initial conditions, meteorology, and management at 10 design points.\n\nThe training pages show how to run both analyses on the inputs of an ensemble run.",
+    "crumbs": [
+      "Home"
+    ]
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html",
+    "href": "analysis/local_sensitivity.html",
+    "title": "Local Sensitivity Analysis",
+    "section": "",
+    "text": "This report ranks SIPNET parameters by their contribution to the variance of modeled soil carbon and N₂O-N flux at 100 California cropland design points from 2016 to 2023. Methane results are reported for the 11 design points with at least one recorded rice season. Each result is a parameter’s share of modeled parameter variance at a design point, conditional on the current parameter priors.",
+    "crumbs": [
+      "Reports",
+      "Local Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#background",
+    "href": "analysis/local_sensitivity.html#background",
+    "title": "Local Sensitivity Analysis",
+    "section": "Background",
+    "text": "Background\nA parameter matters for prediction when the model is sensitive to it and its value is uncertain. The analysis combines the two, following the PEcAn variance decomposition (LeBauer et al., 2013; Dietze et al., 2014).\nSIPNET is run with every parameter at its prior median, then with each parameter moved in turn to the 2.3, 15.9, 84.1, and 97.7 percentiles of its prior, all others at their median. A spline through the five outputs gives the response to that parameter, and the variance of the prior propagated through the spline is its contribution to the output variance. The share of parameter variance is that contribution over the sum across all plant and soil parameters at the design point. A parameter is treated as influential where its share exceeds 5 percent, the criterion Fer et al. (2018) used to select SIPNET parameters for calibration (Fer et al., 2018).\n\n\n\n\n\n\nFigure 1: Design points, colored by the PFT they were run under, with the number of design points in brackets. Outlines are the Cal-Adapt climate regions.\n\n\n\n\n\n\nTable 1: Configuration of the analysis.\n\n\n\n\n\n\n\n\n\nSetting\nValue\n\n\n\n\nModel\nSIPNET 2.2.0, nitrogen cycle and anaerobic processes on\n\n\nDesign points\n100: 67 woody perennial, 14 row crop, 6 grass, 4 alfalfa, 3 rice, 2 corn, 4 uncropped\n\n\nPeriod\n2016 to 2023, reported as the mean over the period\n\n\nParameters\n34 per cropped design point (21 plant, 13 soil), 13 per uncropped design point\n\n\nPriors\nPFT priors of the statewide inventory runs\n\n\nMeteorology, initial conditions, management\nmember 1 of each inventory ensemble\n\n\nModel runs\n13,364",
+    "crumbs": [
+      "Reports",
+      "Local Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#share-of-parameter-variance",
+    "href": "analysis/local_sensitivity.html#share-of-parameter-variance",
+    "title": "Local Sensitivity Analysis",
+    "section": "Share of parameter variance",
+    "text": "Share of parameter variance\n\n\n\n\n\n\nFigure 2: Prior uncertainty (CV), sensitivity (elasticity), and share of parameter variance. Points are medians across design points and bars span the interquartile range.\n\n\n\n\n\n\nTable 2: Share of parameter variance across the 100 design points, for parameters with a median share above 5 percent.\n\n\n\n\n\n\n\n\n\n\n\n\nOutput\nParameter\nMedian share (%)\nRange (%)\nDesign points over 5 percent\n\n\n\n\nSoil carbon\nSoil respiration Q10\n62\n4 to 78\n99\n\n\n\nBase soil respiration rate (0 °C, saturated soil)\n28\n2 to 42\n98\n\n\nModeled N₂O-N flux\nSoil respiration Q10\n46\n17 to 81\n100\n\n\n\nNitrogen volatilization rate constant\n40\n15 to 67\n100\n\n\n\nNitrogen leaching fraction\n8\n0 to 20\n76\n\n\n\n\n\n\nTwo soil parameters account for most of the parameter variance in soil carbon, and raising either lowers soil carbon at all 100 design points. A plant parameter exceeds 5 percent of the soil carbon variance at 19 of the 96 cropped design points, 18 of them woody perennial, and at none for modeled N₂O-N flux.",
+    "crumbs": [
+      "Reports",
+      "Local Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#variation-across-design-points-and-pfts",
+    "href": "analysis/local_sensitivity.html#variation-across-design-points-and-pfts",
+    "title": "Local Sensitivity Analysis",
+    "section": "Variation across design points and PFTs",
+    "text": "Variation across design points and PFTs\n\n\n\n\n\n\nFigure 3: Share of parameter variance, shown separately for soil carbon and modeled N₂O-N flux. Upper panels show the distribution across design points; green marks show the mean. Each lower bar is the average share among design points assigned to that plant functional type (PFT), not a contribution from the PFT itself.\n\n\n\nThe two parameters with the largest mean share for soil carbon and modeled N₂O-N flux are the same in every plant functional type.",
+    "crumbs": [
+      "Reports",
+      "Local Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#methane-at-sites-with-rice-history",
+    "href": "analysis/local_sensitivity.html#methane-at-sites-with-rice-history",
+    "title": "Local Sensitivity Analysis",
+    "section": "Methane at sites with rice history",
+    "text": "Methane at sites with rice history\nThe methane analysis includes 11 design points with at least one recorded rice season during 2016–2023. Plant functional type labels and irrigation events do not establish crop history. The figure shows the two parameters that exceed the 5 percent screening threshold at any of these design points.\n\n\n\n\n\n\nFigure 4: Share of methane parameter variance across 11 design points with recorded rice seasons. Points represent design points; boxes show the median and interquartile range. The dashed line marks the 5 percent screening threshold.\n\n\n\nThe soil methane rate accounts for a median 94 percent of methane parameter variance (range 90–100 percent). Soil respiration Q10 accounts for a median 5.7 percent (range 0–10 percent) and exceeds the screening threshold at eight design points. These shares describe sensitivity under the current priors, not parameter identifiability or agreement with observed methane. A reliable global variance partition is not available for methane.",
+    "crumbs": [
+      "Reports",
+      "Local Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#response-to-each-parameter",
+    "href": "analysis/local_sensitivity.html#response-to-each-parameter",
+    "title": "Local Sensitivity Analysis",
+    "section": "Response to each parameter",
+    "text": "Response to each parameter\n\n\n\n\n\n\nFigure 5: Prior density and model response for the soil parameters at one row crop design point in the San Joaquin Valley. Points are the five runs, the larger point the median run, and the line PEcAn’s spline.\n\n\n\n\n\n\n\n\n\nFigure 6: Response of soil carbon at every design point, as output over the design point’s median run, from the 2.3 to the 97.7 percentile of each prior.\n\n\n\n\n\n\n\n\n\nFigure 7: Response of modeled N₂O-N flux at every design point, as in Figure 6.",
+    "crumbs": [
+      "Reports",
+      "Local Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#reporting-scope",
+    "href": "analysis/local_sensitivity.html#reporting-scope",
+    "title": "Local Sensitivity Analysis",
+    "section": "Reporting scope",
+    "text": "Reporting scope\nShares are reported for soil carbon and modeled N₂O-N flux at all 100 design points, and for methane at the 11 design points with recorded rice seasons. Six other outputs were also computed. Plant carbon is low in these runs, with net primary productivity below 20 g C m-2 yr-1 at the median design point of every PFT; shares for these outputs are not presented.",
+    "crumbs": [
+      "Reports",
+      "Local Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#interpretation",
+    "href": "analysis/local_sensitivity.html#interpretation",
+    "title": "Local Sensitivity Analysis",
+    "section": "Interpretation",
+    "text": "Interpretation\nThese are model-derived results. Parameters are drawn from priors that have not been updated with observations, so each share depends on the prior widths; the prior for the soil respiration Q10 is uniform from 1.4 to 5.0.\nEach parameter is varied with all others at their medians, so the shares divide the sum of single-parameter contributions and do not include interactions (Saltelli et al., 2019). Meteorology, initial conditions, and management are held at one ensemble member; the global sensitivity analysis compares those inputs with the parameters.\nSee References for the cited sources.",
+    "crumbs": [
+      "Reports",
+      "Local Sensitivity"
+    ]
+  },
+  {
+    "objectID": "analysis/references.html",
+    "href": "analysis/references.html",
+    "title": "References",
+    "section": "",
+    "text": "Dietze, M. C., Serbin, S. P., Davidson, C., et al. (2014). A quantitative assessment of a terrestrial biosphere model’s data needs across North American biomes. Journal of Geophysical Research: Biogeosciences, 119, 286-300. https://doi.org/10.1002/2013JG002392\nFer, I., Kelly, R., Moorcroft, P. R., et al. (2018). Linking big models to big data: efficient ecosystem model calibration through Bayesian model emulation. Biogeosciences, 15, 5801-5830. https://doi.org/10.5194/bg-15-5801-2018\nJansen, M. J. W. (1999). Analysis of variance designs for model output. Computer Physics Communications, 117, 35-43. https://doi.org/10.1016/S0010-4655(98)00154-4\nLeBauer, D. S., Wang, D., Richter, K. T., et al. (2013). Facilitating feedbacks between field measurements and ecosystem models. Ecological Monographs, 83(2), 133-154. https://doi.org/10.1890/12-0137.1\nSaltelli, A., Ratto, M., Andres, T., et al. (2008). Global Sensitivity Analysis: The Primer. Wiley. https://doi.org/10.1002/9780470725184\nSaltelli, A., Annoni, P., Azzini, I., et al. (2010). Variance based sensitivity analysis of model output. Design and estimator for the total sensitivity index. Computer Physics Communications, 181, 259-270. https://doi.org/10.1016/j.cpc.2009.09.018\nSaltelli, A., Aleksankina, K., Becker, W., et al. (2019). Why so many published sensitivity analyses are false: a systematic review of sensitivity analysis practices. Environmental Modelling & Software, 114, 29-39. https://doi.org/10.1016/j.envsoft.2019.01.012",
+    "crumbs": [
+      "Docs",
+      "References"
+    ]
+  },
+  {
+    "objectID": "docs/training/CARB-uncertainty-setup.html",
+    "href": "docs/training/CARB-uncertainty-setup.html",
+    "title": "Environment setup",
+    "section": "",
+    "text": "Conda, the AWS CLI, and the S3 profile are set up once for all of MAGiC, and are documented in CARB PEcAn Environment Setup. Follow that first.\nThis page covers the steps specific to the uncertainty workflow.\n\n\ngit clone https://github.com/ccmmf/uncertainty\ncd uncertainty\nThe rest of the instructions assume that you are working inside the uncertainty repository directory.\n\n\n\nReturn to the uncertainty repository directory and activate conda before continuing.\ncd /path/to/uncertainty\nconda activate ~/.conda/envs/pecan-all/\nexport AWS_PROFILE=magic\n\n\n\nThe analyses run the SIPNET binary that the ensemble workflow builds. After a magic-ensemble prepare step, it is at sipnet.git in that run directory; the configuration file points to it.\n\n\n\nThe uncertainty CLI uses a configuration file to control the workflow. For the demo, the configuration file is provided with the demo data. For your own runs, copy and edit example_user_config.yaml.\n\n\n\n./magic-uncertainty help            # CLI runs\naws s3 ls s3://carb/pfts/           # bucket reads\nIf either fails, fix it before starting the demo.\nThe model runs and the steps that read their output should run on a compute node.\n\nNext: Uncertainty demo.\nOverview: MAGiC uncertainty training.",
+    "crumbs": [
+      "Training",
+      "Environment Setup"
+    ]
+  },
+  {
+    "objectID": "docs/training/CARB-uncertainty-setup.html#clone-the-repository",
+    "href": "docs/training/CARB-uncertainty-setup.html#clone-the-repository",
+    "title": "Environment setup",
+    "section": "",
+    "text": "git clone https://github.com/ccmmf/uncertainty\ncd uncertainty\nThe rest of the instructions assume that you are working inside the uncertainty repository directory.",
+    "crumbs": [
+      "Training",
+      "Environment Setup"
+    ]
+  },
+  {
+    "objectID": "docs/training/CARB-uncertainty-setup.html#every-time-you-start-a-new-terminal-session",
+    "href": "docs/training/CARB-uncertainty-setup.html#every-time-you-start-a-new-terminal-session",
+    "title": "Environment setup",
+    "section": "",
+    "text": "Return to the uncertainty repository directory and activate conda before continuing.\ncd /path/to/uncertainty\nconda activate ~/.conda/envs/pecan-all/\nexport AWS_PROFILE=magic",
+    "crumbs": [
+      "Training",
+      "Environment Setup"
+    ]
+  },
+  {
+    "objectID": "docs/training/CARB-uncertainty-setup.html#sipnet",
+    "href": "docs/training/CARB-uncertainty-setup.html#sipnet",
+    "title": "Environment setup",
+    "section": "",
+    "text": "The analyses run the SIPNET binary that the ensemble workflow builds. After a magic-ensemble prepare step, it is at sipnet.git in that run directory; the configuration file points to it.",
+    "crumbs": [
+      "Training",
+      "Environment Setup"
+    ]
+  },
+  {
+    "objectID": "docs/training/CARB-uncertainty-setup.html#the-configuration-file",
+    "href": "docs/training/CARB-uncertainty-setup.html#the-configuration-file",
+    "title": "Environment setup",
+    "section": "",
+    "text": "The uncertainty CLI uses a configuration file to control the workflow. For the demo, the configuration file is provided with the demo data. For your own runs, copy and edit example_user_config.yaml.",
+    "crumbs": [
+      "Training",
+      "Environment Setup"
+    ]
+  },
+  {
+    "objectID": "docs/training/CARB-uncertainty-setup.html#confirm-setup",
+    "href": "docs/training/CARB-uncertainty-setup.html#confirm-setup",
+    "title": "Environment setup",
+    "section": "",
+    "text": "./magic-uncertainty help            # CLI runs\naws s3 ls s3://carb/pfts/           # bucket reads\nIf either fails, fix it before starting the demo.\nThe model runs and the steps that read their output should run on a compute node.\n\nNext: Uncertainty demo.\nOverview: MAGiC uncertainty training.",
+    "crumbs": [
+      "Training",
+      "Environment Setup"
+    ]
+  }
+]
