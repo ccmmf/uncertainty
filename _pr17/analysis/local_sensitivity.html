@@ -247,12 +247,23 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<style>
+@media (max-width: 575.98px) {
+  table.table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+</style>
 <p>This report ranks SIPNET parameters by their contribution to the variance of modeled soil carbon and N₂O-N flux at 100 California cropland design points from 2016 to 2023. Methane results are reported for the 11 design points with at least one recorded rice season. Each result is a parameter’s share of modeled parameter variance at a design point, conditional on the current parameter priors.</p>
 <section id="background" class="level2">
 <h2 class="anchored" data-anchor-id="background">Background</h2>
 <p>A parameter matters for prediction when the model is sensitive to it and its value is uncertain. The analysis combines the two, following the PEcAn variance decomposition (<a href="references.html">LeBauer et al., 2013</a>; <a href="references.html">Dietze et al., 2014</a>).</p>
 <p>SIPNET is run with every parameter at its prior median, then with each parameter moved in turn to the 2.3, 15.9, 84.1, and 97.7 percentiles of its prior, all others at their median. A spline through the five outputs gives the response to that parameter, and the variance of the prior propagated through the spline is its contribution to the output variance. The share of parameter variance is that contribution over the sum across all plant and soil parameters at the design point. A parameter is treated as influential where its share exceeds 5 percent, the criterion Fer et al.&nbsp;(2018) used to select SIPNET parameters for calibration (<a href="references.html">Fer et al., 2018</a>).</p>
-<div id="fig-map" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" alt="Map of California with 100 design points colored by plant functional type.">
+<div id="fig-map" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" alt="Map of California with 100 design points colored by plant functional type." data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="figures/site_map.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: Design points, colored by the PFT they were run under, with the number of design points in brackets. Outlines are the Cal-Adapt climate regions."><img src="figures/site_map.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:70.0%" alt="Map of California with 100 design points colored by plant functional type."></a>
@@ -316,7 +327,7 @@ Table&nbsp;1: Configuration of the analysis.
 </section>
 <section id="share-of-parameter-variance" class="level2">
 <h2 class="anchored" data-anchor-id="share-of-parameter-variance">Share of parameter variance</h2>
-<div id="fig-components" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" alt="Dot plot of coefficient of variation, elasticity, and share of parameter variance for the influential parameters of soil carbon and modeled N2O-N flux.">
+<div id="fig-components" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" alt="Dot plot of coefficient of variation, elasticity, and share of parameter variance for the influential parameters of soil carbon and modeled N2O-N flux." data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-components-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="figures/variance_components.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;2: Prior uncertainty (CV), sensitivity (elasticity), and share of parameter variance. Points are medians across design points and bars span the interquartile range."><img src="figures/variance_components.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%" alt="Dot plot of coefficient of variation, elasticity, and share of parameter variance for the influential parameters of soil carbon and modeled N2O-N flux."></a>
@@ -394,7 +405,7 @@ Table&nbsp;2: Share of parameter variance across the 100 design points, for para
 </section>
 <section id="variation-across-design-points-and-pfts" class="level2">
 <h2 class="anchored" data-anchor-id="variation-across-design-points-and-pfts">Variation across design points and PFTs</h2>
-<div id="fig-pft" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" alt="For soil carbon and modeled N2O-N flux, upper boxplots show parameter shares across design points; lower bars show the average share within each plant functional type.">
+<div id="fig-pft" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" alt="For soil carbon and modeled N2O-N flux, upper boxplots show parameter shares across design points; lower bars show the average share within each plant functional type." data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-pft-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="figures/share_by_pft.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: Share of parameter variance, shown separately for soil carbon and modeled N₂O-N flux. Upper panels show the distribution across design points; green marks show the mean. Each lower bar is the average share among design points assigned to that plant functional type (PFT), not a contribution from the PFT itself."><img src="figures/share_by_pft.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%" alt="For soil carbon and modeled N2O-N flux, upper boxplots show parameter shares across design points; lower bars show the average share within each plant functional type."></a>
@@ -409,7 +420,7 @@ Figure&nbsp;3: Share of parameter variance, shown separately for soil carbon and
 <section id="methane-at-sites-with-rice-history" class="level2">
 <h2 class="anchored" data-anchor-id="methane-at-sites-with-rice-history">Methane at sites with rice history</h2>
 <p>The methane analysis includes 11 design points with at least one recorded rice season during 2016–2023. Plant functional type labels and irrigation events do not establish crop history. The figure shows the two parameters that exceed the 5 percent screening threshold at any of these design points.</p>
-<div id="fig-methane-oat" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" alt="Soil methane rate accounts for about 90 to 100 percent of methane parameter variance across 11 design points with rice history; soil respiration Q10 accounts for 0 to 10 percent.">
+<div id="fig-methane-oat" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" alt="Soil methane rate accounts for about 90 to 100 percent of methane parameter variance across 11 design points with rice history; soil respiration Q10 accounts for 0 to 10 percent." data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-methane-oat-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="figures/methane_oat_parameter_shares.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: Share of methane parameter variance across 11 design points with recorded rice seasons. Points represent design points; boxes show the median and interquartile range. The dashed line marks the 5 percent screening threshold."><img src="figures/methane_oat_parameter_shares.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:85.0%" alt="Soil methane rate accounts for about 90 to 100 percent of methane parameter variance across 11 design points with rice history; soil respiration Q10 accounts for 0 to 10 percent."></a>
@@ -423,7 +434,7 @@ Figure&nbsp;4: Share of methane parameter variance across 11 design points with 
 </section>
 <section id="response-to-each-parameter" class="level2">
 <h2 class="anchored" data-anchor-id="response-to-each-parameter">Response to each parameter</h2>
-<div id="fig-panel" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" alt="Grid of prior densities and response curves of soil carbon and modeled N2O-N flux for four soil parameters.">
+<div id="fig-panel" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" alt="Grid of prior densities and response curves of soil carbon and modeled N2O-N flux for four soil parameters." data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-panel-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="figures/response_curves_soil.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;5: Prior density and model response for the soil parameters at one row crop design point in the San Joaquin Valley. Points are the five runs, the larger point the median run, and the line PEcAn’s spline."><img src="figures/response_curves_soil.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%" alt="Grid of prior densities and response curves of soil carbon and modeled N2O-N flux for four soil parameters."></a>
@@ -433,7 +444,7 @@ Figure&nbsp;5: Prior density and model response for the soil parameters at one r
 </figcaption>
 </figure>
 </div>
-<div id="fig-curves-soc" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" alt="Response curves of soil carbon at every design point for the influential parameters.">
+<div id="fig-curves-soc" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" alt="Response curves of soil carbon at every design point for the influential parameters." data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-curves-soc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="figures/response_curves_TotSoilCarb.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;6: Response of soil carbon at every design point, as output over the design point’s median run, from the 2.3 to the 97.7 percentile of each prior."><img src="figures/response_curves_TotSoilCarb.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%" alt="Response curves of soil carbon at every design point for the influential parameters."></a>
@@ -443,7 +454,7 @@ Figure&nbsp;6: Response of soil carbon at every design point, as output over the
 </figcaption>
 </figure>
 </div>
-<div id="fig-curves-n2o" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" alt="Response curves of modeled N2O-N flux at every design point for the influential parameters.">
+<div id="fig-curves-n2o" class="lightbox quarto-float quarto-figure quarto-figure-center anchored" alt="Response curves of modeled N2O-N flux at every design point for the influential parameters." data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-curves-n2o-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="figures/response_curves_N2O_flux.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;7: Response of modeled N₂O-N flux at every design point, as in Figure&nbsp;6."><img src="figures/response_curves_N2O_flux.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:100.0%" alt="Response curves of modeled N2O-N flux at every design point for the influential parameters."></a>
