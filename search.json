@@ -4,14 +4,14 @@
     "href": "index.html",
     "title": "MAGiC Uncertainty",
     "section": "",
-    "text": "This site reports the sensitivity and uncertainty analyses of the SIPNET ecosystem model used in the MAGiC inventory runs for California cropland.\n\nLocal Sensitivity ranks the model parameters by their contribution to the variance of modeled soil carbon and nitrous oxide flux at 100 design points.\nGlobal Sensitivity partitions that variance among parameters, initial conditions, meteorology, and management at 10 design points.\n\nThe training pages show how to run both analyses on the inputs of an ensemble run."
+    "text": "This site reports the sensitivity and uncertainty analyses of the SIPNET ecosystem model used in the MAGiC inventory runs for California cropland.\n\nLocal Sensitivity ranks the model parameters by their contribution to the variance of modeled soil carbon and nitrous oxide flux at 100 design points, and methane at 11 design points with recorded rice seasons.\nGlobal Sensitivity partitions the modeled soil-carbon and nitrous-oxide output variance among parameters, initial conditions, meteorology, and management at 10 design points.\n\nThe training pages show how to run both analyses on the inputs of an ensemble run."
   },
   {
     "objectID": "analysis/local_sensitivity.html",
     "href": "analysis/local_sensitivity.html",
     "title": "Local Sensitivity Analysis",
     "section": "",
-    "text": "This report ranks the parameters of the SIPNET ecosystem model by their contribution to the uncertainty of modeled soil carbon and nitrous oxide flux. The analysis covers 100 design points on California cropland over 2016 to 2023. Results are each parameter’s share of parameter variance at each design point."
+    "text": "This report ranks SIPNET parameters by their contribution to the variance of modeled soil carbon and N₂O-N flux at 100 California cropland design points from 2016 to 2023. Methane results are reported for the 11 design points with at least one recorded rice season. Each result is a parameter’s share of modeled parameter variance at a design point, conditional on the current parameter priors."
   },
   {
     "objectID": "analysis/local_sensitivity.html#background",
@@ -25,63 +25,70 @@
     "href": "analysis/local_sensitivity.html#share-of-parameter-variance",
     "title": "Local Sensitivity Analysis",
     "section": "Share of parameter variance",
-    "text": "Share of parameter variance\n\n\n\nFigure 2: Prior uncertainty (CV), sensitivity (elasticity), and share of parameter variance. Points are medians across design points and bars span the interquartile range.\n\n\n\n\nTable 2: Share of parameter variance across the 100 design points, for parameters with a median share above 5 percent.\n\n\n\n\n\n\n\n\n\nOutput\nParameter\nMedian share (%)\nRange (%)\nDesign points over 5 percent\n\n\n\n\nSoil carbon\nSoil respiration Q10\n62\n4 to 78\n99\n\n\n\nBase soil respiration rate (0 °C, saturated soil)\n28\n2 to 42\n98\n\n\nNitrous oxide flux\nSoil respiration Q10\n46\n17 to 81\n100\n\n\n\nNitrogen volatilization rate constant\n40\n15 to 67\n100\n\n\n\nNitrogen leaching fraction\n8\n0 to 20\n76\n\n\n\n\nTwo soil parameters account for most of the parameter variance in soil carbon, and raising either lowers soil carbon at all 100 design points. A plant parameter exceeds 5 percent of the soil carbon variance at 19 of the 96 cropped design points, 18 of them woody perennial, and at none for nitrous oxide."
+    "text": "Share of parameter variance\n\n\n\nFigure 2: Prior uncertainty (CV), sensitivity (elasticity), and share of parameter variance. Points are medians across design points and bars span the interquartile range.\n\n\n\n\nTable 2: Share of parameter variance across the 100 design points, for parameters with a median share above 5 percent.\n\n\n\n\n\n\n\n\n\nOutput\nParameter\nMedian share (%)\nRange (%)\nDesign points over 5 percent\n\n\n\n\nSoil carbon\nSoil respiration Q10\n62\n4 to 78\n99\n\n\n\nBase soil respiration rate (0 °C, saturated soil)\n28\n2 to 42\n98\n\n\nModeled N₂O-N flux\nSoil respiration Q10\n46\n17 to 81\n100\n\n\n\nNitrogen volatilization rate constant\n40\n15 to 67\n100\n\n\n\nNitrogen leaching fraction\n8\n0 to 20\n76\n\n\n\n\nTwo soil parameters account for most of the parameter variance in soil carbon, and raising either lowers soil carbon at all 100 design points. A plant parameter exceeds 5 percent of the soil carbon variance at 19 of the 96 cropped design points, 18 of them woody perennial, and at none for modeled N₂O-N flux."
   },
   {
     "objectID": "analysis/local_sensitivity.html#variation-across-design-points-and-pfts",
     "href": "analysis/local_sensitivity.html#variation-across-design-points-and-pfts",
     "title": "Local Sensitivity Analysis",
     "section": "Variation across design points and PFTs",
-    "text": "Variation across design points and PFTs\n\n\n\nFigure 3: Share of parameter variance across design points. Upper panels: distribution across design points, with the mean marked by the green bar. Lower panels: mean share by PFT.\n\n\nThe two parameters with the largest mean share are the same in every PFT for each output."
+    "text": "Variation across design points and PFTs\n\n\n\nFigure 3: Share of parameter variance, shown separately for soil carbon and modeled N₂O-N flux. Upper panels show the distribution across design points; green marks show the mean. Each lower bar is the average share among design points assigned to that plant functional type (PFT), not a contribution from the PFT itself.\n\n\nThe two parameters with the largest mean share for soil carbon and modeled N₂O-N flux are the same in every plant functional type."
+  },
+  {
+    "objectID": "analysis/local_sensitivity.html#methane-at-sites-with-rice-history",
+    "href": "analysis/local_sensitivity.html#methane-at-sites-with-rice-history",
+    "title": "Local Sensitivity Analysis",
+    "section": "Methane at sites with rice history",
+    "text": "Methane at sites with rice history\nThe methane analysis includes 11 design points with at least one recorded rice season during 2016–2023. Plant functional type labels and irrigation events do not establish crop history. The figure shows the two parameters that exceed the 5 percent screening threshold at any of these design points.\n\n\n\nFigure 4: Share of methane parameter variance across 11 design points with recorded rice seasons. Points represent design points; boxes show the median and interquartile range. The dashed line marks the 5 percent screening threshold.\n\n\nThe soil methane rate accounts for a median 94 percent of methane parameter variance (range 90–100 percent). Soil respiration Q10 accounts for a median 5.7 percent (range 0–10 percent) and exceeds the screening threshold at eight design points. These shares describe sensitivity under the current priors, not parameter identifiability or agreement with observed methane. A reliable global variance partition is not available for methane."
   },
   {
     "objectID": "analysis/local_sensitivity.html#response-to-each-parameter",
     "href": "analysis/local_sensitivity.html#response-to-each-parameter",
     "title": "Local Sensitivity Analysis",
     "section": "Response to each parameter",
-    "text": "Response to each parameter\n\n\n\nFigure 4: Prior density and model response for the soil parameters at one row crop design point in the San Joaquin Valley. Points are the five runs, the larger point the median run, and the line PEcAn’s spline.\n\n\n\n\n\nFigure 5: Response of soil carbon at every design point, as output over the design point’s median run, from the 2.3 to the 97.7 percentile of each prior.\n\n\n\n\n\nFigure 6: Response of nitrous oxide flux at every design point, as in Figure 5."
+    "text": "Response to each parameter\n\n\n\nFigure 5: Prior density and model response for the soil parameters at one row crop design point in the San Joaquin Valley. Points are the five runs, the larger point the median run, and the line PEcAn’s spline.\n\n\n\n\n\nFigure 6: Response of soil carbon at every design point, as output over the design point’s median run, from the 2.3 to the 97.7 percentile of each prior.\n\n\n\n\n\nFigure 7: Response of modeled N₂O-N flux at every design point, as in Figure 6."
   },
   {
     "objectID": "analysis/local_sensitivity.html#reporting-scope",
     "href": "analysis/local_sensitivity.html#reporting-scope",
     "title": "Local Sensitivity Analysis",
     "section": "Reporting scope",
-    "text": "Reporting scope\nShares are reported for soil carbon and nitrous oxide flux. Methane and six other outputs were also computed. Modeled methane is near the precision of the model output, and plant carbon is low in these runs, with net primary productivity below 20 g C m-2 yr-1 at the median design point of every PFT; shares for these outputs are not presented."
+    "text": "Reporting scope\nShares are reported for soil carbon and modeled N₂O-N flux at all 100 design points, and for methane at the 11 design points with recorded rice seasons. Six other outputs were also computed. Plant carbon is low in these runs, with net primary productivity below 20 g C m-2 yr-1 at the median design point of every PFT; shares for these outputs are not presented."
   },
   {
     "objectID": "analysis/local_sensitivity.html#interpretation",
     "href": "analysis/local_sensitivity.html#interpretation",
     "title": "Local Sensitivity Analysis",
     "section": "Interpretation",
-    "text": "Interpretation\nThese are model-derived results. Parameters are drawn from priors that have not been updated with observations, so each share depends on the prior widths; the prior for the soil respiration Q10 is uniform from 1.4 to 5.0.\nEach parameter is varied with all others at their medians, so the shares divide the sum of single-parameter contributions and do not include interactions (Saltelli et al., 2019). Meteorology, initial conditions, and management are held at one ensemble member; the global sensitivity analysis compares those inputs with the parameters. In SIPNET 2.2.0 the nitrous oxide output is the total nitrogen volatilization flux.\nSee References for the cited sources."
+    "text": "Interpretation\nThese are model-derived results. Parameters are drawn from priors that have not been updated with observations, so each share depends on the prior widths; the prior for the soil respiration Q10 is uniform from 1.4 to 5.0.\nEach parameter is varied with all others at their medians, so the shares divide the sum of single-parameter contributions and do not include interactions (Saltelli et al., 2019). Meteorology, initial conditions, and management are held at one ensemble member; the global sensitivity analysis compares those inputs with the parameters.\nSee References for the cited sources."
   },
   {
     "objectID": "analysis/global_sensitivity.html",
     "href": "analysis/global_sensitivity.html",
     "title": "Global Sensitivity Analysis",
     "section": "",
-    "text": "This report partitions the variance of modeled soil carbon and nitrous oxide flux among four inputs: model parameters, initial conditions, meteorology, and management. The analysis covers 10 design points on California cropland over 2016 to 2023. Results are indices with 95 percent intervals at each design point."
+    "text": "This report partitions the variance of modeled soil carbon and N₂O-N flux among four inputs: model parameters, initial conditions, meteorology, and management. The analysis covers 10 design points on California cropland over 2016 to 2023. Results are indices with 95 percent bootstrap intervals at each design point."
   },
   {
     "objectID": "analysis/global_sensitivity.html#background",
     "href": "analysis/global_sensitivity.html#background",
     "title": "Global Sensitivity Analysis",
     "section": "Background",
-    "text": "Background\nThe one-at-a-time analysis, reported separately, ranks individual parameters but holds meteorology, initial conditions, and management at one realization. A variance-based global sensitivity analysis varies all four inputs together and assigns each a share of the output variance (Saltelli et al., 2008).\nTwo indices are reported for each input. The first-order index is the share of output variance from that input alone. The total-order index adds its interactions with the other inputs. Both are estimated with the Jansen estimators on the design of Saltelli et al. (2010), in which two independent samples of 1,000 rows are recombined so that each input varies alone (Jansen, 1999). Parameters are treated as one input and are not ranked individually.\n\n\n\nFigure 1: Design points, colored by the PFT they were run under. Labels identify the design points in the figures that follow. Outlines are the Cal-Adapt climate regions.\n\n\n\n\nTable 1: Configuration of the analysis.\n\n\nSetting\nValue\n\n\n\n\nModel\nSIPNET 2.2.0, nitrogen cycle and anaerobic processes on\n\n\nDesign points\n10: 4 woody perennial, 4 row crop, 1 corn, 1 alfalfa\n\n\nPeriod\n2016 to 2023, reported as the mean over the period\n\n\nParameters\nPFT priors of the statewide inventory runs\n\n\nMeteorology\n10 ERA5 ensemble members\n\n\nInitial conditions\nfirst 20 of the 50 inventory members\n\n\nManagement\n20 inventory ensemble members\n\n\nModel runs\n6,000 per design point\n\n\nIntervals\n95 percent, from 1,000 bootstrap resamples"
+    "text": "Background\nThe one-at-a-time analysis, reported separately, ranks individual parameters but holds meteorology, initial conditions, and management at one realization. A variance-based global sensitivity analysis varies all four inputs together and assigns each a share of the output variance (Saltelli et al., 2008).\nTwo indices are reported for each input. The first-order index is the share of output variance from that input alone. The total-order index adds its interactions with the other inputs. The indices use a variance-based Sobol design with two independent base samples of 1,000 rows that are recombined to vary each input separately (Jansen, 1999; Saltelli et al., 2010). Parameters are treated as one input and are not ranked individually.\n\n\n\nFigure 1: Design points, colored by the PFT they were run under. Labels identify the design points in the figures that follow. Outlines are the Cal-Adapt climate regions.\n\n\n\n\nTable 1: Configuration of the analysis.\n\n\nSetting\nValue\n\n\n\n\nModel\nSIPNET 2.2.0, nitrogen cycle and anaerobic processes on\n\n\nDesign points\n10: 4 woody perennial, 4 row crop, 1 corn, 1 alfalfa\n\n\nPeriod\n2016 to 2023, reported as the mean over the period\n\n\nParameters\nPFT priors of the statewide inventory runs\n\n\nMeteorology\n10 ERA5 ensemble members\n\n\nInitial conditions\nfirst 20 of the 50 inventory members\n\n\nManagement\n20 inventory ensemble members\n\n\nModel runs\n6,000 per design point\n\n\nIntervals\n95 percent, from 1,000 bootstrap resamples"
   },
   {
     "objectID": "analysis/global_sensitivity.html#share-of-output-variance-by-input",
     "href": "analysis/global_sensitivity.html#share-of-output-variance-by-input",
     "title": "Global Sensitivity Analysis",
     "section": "Share of output variance by input",
-    "text": "Share of output variance by input\n\n\n\nFigure 2: Share of output variance from each input at each design point, as first-order indices. Negative estimates are shown as 0. The grey segment is the variance the first-order indices leave unexplained; where the estimates sum to more than 1, the bar runs past 1 and has no grey segment.\n\n\n\n\nTable 2: Total-order index of each input across the 10 design points.\n\n\nOutput\nInput\nMedian\nRange across design points\n\n\n\n\nSoil carbon\nInitial conditions\n0.91\n0.56 to 1.08\n\n\n\nParameters\n0.13\n0.00 to 0.44\n\n\n\nManagement\n0.00\n0.00 to 0.01\n\n\n\nMeteorology\n0.00\n0.00 to 0.00\n\n\nNitrous oxide flux\nParameters\n1.00\n0.97 to 1.05\n\n\n\nManagement\n0.03\n0.01 to 0.07\n\n\n\nInitial conditions\n0.00\n0.00 to 0.03\n\n\n\nMeteorology\n0.00\n0.00 to 0.00\n\n\n\n\nInitial conditions account for most of the variance in soil carbon, and parameters for most of the variance in nitrous oxide, at every design point. Management and meteorology together have first-order indices of at most 0.06 for either output."
+    "text": "Share of output variance by input\n\n\n\nFigure 2: Share of output variance from each input at each design point, as first-order indices. Negative estimates are shown as 0. The grey segment is the variance the first-order indices leave unexplained; where the estimates sum to more than 1, the bar runs past 1 and has no grey segment.\n\n\n\n\nTable 2: Total-order index of each input across the 10 design points.\n\n\nOutput\nInput\nMedian\nRange across design points\n\n\n\n\nSoil carbon\nInitial conditions\n0.91\n0.56 to 1.08\n\n\n\nParameters\n0.13\n0.00 to 0.44\n\n\n\nManagement\n0.00\n0.00 to 0.01\n\n\n\nMeteorology\n0.00\n0.00 to 0.00\n\n\nModeled N₂O-N flux\nParameters\n1.00\n0.97 to 1.05\n\n\n\nManagement\n0.03\n0.01 to 0.07\n\n\n\nInitial conditions\n0.00\n0.00 to 0.03\n\n\n\nMeteorology\n0.00\n0.00 to 0.00\n\n\n\n\nInitial conditions account for most of the variance in mean soil-carbon stock, and parameters for most of the variance in modeled N₂O-N flux, at every design point. Management and meteorology together have first-order indices of at most 0.06 for either output."
   },
   {
     "objectID": "analysis/global_sensitivity.html#variation-across-design-points",
     "href": "analysis/global_sensitivity.html#variation-across-design-points",
     "title": "Global Sensitivity Analysis",
     "section": "Variation across design points",
-    "text": "Variation across design points\n\n\n\nFigure 3: First-order and total-order index of each input at each design point. Points are estimates and bars are 95 percent bootstrap intervals. Vertical lines mark 0 and 1.\n\n\nFor soil carbon, the total-order index of parameters is 0.23 to 0.44 at the five design points in the San Joaquin Valley and at most 0.03 at the other five. For nitrous oxide, the index of parameters is 0.97 to 1.05 at every design point.\nThe intervals of the largest indices are 0.11 to 0.20 wide for soil carbon and 0.24 to 0.40 wide for nitrous oxide. Estimates above 1 or below 0 have intervals that include that bound."
+    "text": "Variation across design points\n\n\n\nFigure 3: First-order and total-order index of each input at each design point. Points are estimates and bars are 95 percent bootstrap intervals. Vertical lines mark 0 and 1.\n\n\nFor soil carbon, the total-order index of parameters is 0.23 to 0.44 at the five design points in the San Joaquin Valley and at most 0.03 at the other five. For modeled N₂O-N flux, the index of parameters is 0.97 to 1.05 at every design point.\nThe intervals of the largest indices are 0.11 to 0.20 wide for soil carbon and 0.24 to 0.40 wide for modeled N₂O-N flux. Estimates above 1 or below 0 have intervals that include that bound."
   },
   {
     "objectID": "analysis/global_sensitivity.html#precision-of-the-indices",
@@ -95,7 +102,7 @@
     "href": "analysis/global_sensitivity.html#reporting-scope",
     "title": "Global Sensitivity Analysis",
     "section": "Reporting scope",
-    "text": "Reporting scope\nIndices are reported for soil carbon and nitrous oxide flux. Methane, aboveground biomass, and net ecosystem exchange were also computed. Modeled methane at these design points is near the precision of the model output, and plant carbon is low in these runs, with median aboveground biomass below 0.4 kg C m-2 at every design point; indices for these three outputs are not presented."
+    "text": "Reporting scope\nIndices are reported for soil carbon and modeled N₂O-N flux. Methane is addressed in the local analysis only; this global analysis does not establish a reliable methane variance partition. Aboveground biomass and net ecosystem exchange were also computed. Plant carbon is low in these runs, with median aboveground biomass below 0.4 kg C m-2 at every design point; indices for these two outputs are not presented."
   },
   {
     "objectID": "analysis/global_sensitivity.html#interpretation",

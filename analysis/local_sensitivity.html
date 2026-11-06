@@ -8,7 +8,7 @@
 
 <meta name="author" content="Akash B V">
 <meta name="author" content="David LeBauer">
-<meta name="dcterms.date" content="2026-09-28">
+<meta name="dcterms.date" content="2026-11-06">
 
 <title>MAGiC Uncertainty - Local Sensitivity Analysis</title>
 <style>
@@ -88,7 +88,6 @@ ul.task-list li input[type="checkbox"] {
     <div class="sidebar-title mb-0 py-0">
       <a href="../">MAGiC Uncertainty</a> 
         <div class="sidebar-tools-main">
-    <a href="" title="Status: Draft" class="sidebar-tool px-1"><i class="bi bi-exclamation-octagon"></i></a>
     <a href="https://github.com/ccmmf/uncertainty" title="" class="sidebar-tool px-1"><i class="bi bi-github"></i></a>
 </div>
     </div>
@@ -177,6 +176,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#background" id="toc-background" class="nav-link active" data-scroll-target="#background">Background</a></li>
   <li><a href="#share-of-parameter-variance" id="toc-share-of-parameter-variance" class="nav-link" data-scroll-target="#share-of-parameter-variance">Share of parameter variance</a></li>
   <li><a href="#variation-across-design-points-and-pfts" id="toc-variation-across-design-points-and-pfts" class="nav-link" data-scroll-target="#variation-across-design-points-and-pfts">Variation across design points and PFTs</a></li>
+  <li><a href="#methane-at-sites-with-rice-history" id="toc-methane-at-sites-with-rice-history" class="nav-link" data-scroll-target="#methane-at-sites-with-rice-history">Methane at sites with rice history</a></li>
   <li><a href="#response-to-each-parameter" id="toc-response-to-each-parameter" class="nav-link" data-scroll-target="#response-to-each-parameter">Response to each parameter</a></li>
   <li><a href="#reporting-scope" id="toc-reporting-scope" class="nav-link" data-scroll-target="#reporting-scope">Reporting scope</a></li>
   <li><a href="#interpretation" id="toc-interpretation" class="nav-link" data-scroll-target="#interpretation">Interpretation</a></li>
@@ -206,7 +206,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 28, 2026</p>
+      <p class="date">November 6, 2026</p>
     </div>
   </div>
   
@@ -216,7 +216,19 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<p>This report ranks the parameters of the SIPNET ecosystem model by their contribution to the uncertainty of modeled soil carbon and nitrous oxide flux. The analysis covers 100 design points on California cropland over 2016 to 2023. Results are each parameter’s share of parameter variance at each design point.</p>
+
+<style>
+@media (max-width: 575.98px) {
+  table.table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+</style>
+<p>This report ranks SIPNET parameters by their contribution to the variance of modeled soil carbon and N₂O-N flux at 100 California cropland design points from 2016 to 2023. Methane results are reported for the 11 design points with at least one recorded rice season. Each result is a parameter’s share of modeled parameter variance at a design point, conditional on the current parameter priors.</p>
 <section id="background" class="level2">
 <h2 class="anchored" data-anchor-id="background">Background</h2>
 <p>A parameter matters for prediction when the model is sensitive to it and its value is uncertain. The analysis combines the two, following the PEcAn variance decomposition (<a href="references.html">LeBauer et al., 2013</a>; <a href="references.html">Dietze et al., 2014</a>).</p>
@@ -277,7 +289,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="share-of-parameter-variance">Share of parameter variance</h2>
 <div id="fig-components" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="figures/variance_components.png" class="lightbox img-fluid figure-img" style="width:100.0%" alt="Dot plot of coefficient of variation, elasticity, and share of parameter variance for the influential parameters of soil carbon and nitrous oxide flux."></p>
+<p><img src="figures/variance_components.png" class="lightbox img-fluid figure-img" style="width:100.0%" alt="Dot plot of coefficient of variation, elasticity, and share of parameter variance for the influential parameters of soil carbon and modeled N2O-N flux."></p>
 <p></p><figcaption class="figure-caption">Figure&nbsp;2: Prior uncertainty (CV), sensitivity (elasticity), and share of parameter variance. Points are medians across design points and bars span the interquartile range.</figcaption><p></p>
 </figure>
 </div>
@@ -316,7 +328,7 @@ ul.task-list li input[type="checkbox"] {
 <td style="text-align: right;">98</td>
 </tr>
 <tr class="odd">
-<td>Nitrous oxide flux</td>
+<td>Modeled N₂O-N flux</td>
 <td>Soil respiration Q10</td>
 <td style="text-align: right;">46</td>
 <td style="text-align: right;">17 to 81</td>
@@ -339,47 +351,58 @@ ul.task-list li input[type="checkbox"] {
 </tbody>
 </table>
 </div>
-<p>Two soil parameters account for most of the parameter variance in soil carbon, and raising either lowers soil carbon at all 100 design points. A plant parameter exceeds 5 percent of the soil carbon variance at 19 of the 96 cropped design points, 18 of them woody perennial, and at none for nitrous oxide.</p>
+<p>Two soil parameters account for most of the parameter variance in soil carbon, and raising either lowers soil carbon at all 100 design points. A plant parameter exceeds 5 percent of the soil carbon variance at 19 of the 96 cropped design points, 18 of them woody perennial, and at none for modeled N₂O-N flux.</p>
 </section>
 <section id="variation-across-design-points-and-pfts" class="level2">
 <h2 class="anchored" data-anchor-id="variation-across-design-points-and-pfts">Variation across design points and PFTs</h2>
 <div id="fig-pft" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="figures/share_by_pft.png" class="lightbox img-fluid figure-img" style="width:100.0%" alt="Box plots of share of parameter variance across design points and bar charts of mean share by plant functional type, for soil carbon and nitrous oxide flux."></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;3: Share of parameter variance across design points. Upper panels: distribution across design points, with the mean marked by the green bar. Lower panels: mean share by PFT.</figcaption><p></p>
+<p><img src="figures/share_by_pft.png" class="lightbox img-fluid figure-img" style="width:100.0%" alt="For soil carbon and modeled N2O-N flux, upper boxplots show parameter shares across design points; lower bars show the average share within each plant functional type."></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;3: Share of parameter variance, shown separately for soil carbon and modeled N₂O-N flux. Upper panels show the distribution across design points; green marks show the mean. Each lower bar is the average share among design points assigned to that plant functional type (PFT), not a contribution from the PFT itself.</figcaption><p></p>
 </figure>
 </div>
-<p>The two parameters with the largest mean share are the same in every PFT for each output.</p>
+<p>The two parameters with the largest mean share for soil carbon and modeled N₂O-N flux are the same in every plant functional type.</p>
+</section>
+<section id="methane-at-sites-with-rice-history" class="level2">
+<h2 class="anchored" data-anchor-id="methane-at-sites-with-rice-history">Methane at sites with rice history</h2>
+<p>The methane analysis includes 11 design points with at least one recorded rice season during 2016–2023. Plant functional type labels and irrigation events do not establish crop history. The figure shows the two parameters that exceed the 5 percent screening threshold at any of these design points.</p>
+<div id="fig-methane-oat" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="figures/methane_oat_parameter_shares.png" class="lightbox img-fluid figure-img" style="width:85.0%" alt="Soil methane rate accounts for about 90 to 100 percent of methane parameter variance across 11 design points with rice history; soil respiration Q10 accounts for 0 to 10 percent."></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;4: Share of methane parameter variance across 11 design points with recorded rice seasons. Points represent design points; boxes show the median and interquartile range. The dashed line marks the 5 percent screening threshold.</figcaption><p></p>
+</figure>
+</div>
+<p>The soil methane rate accounts for a median 94 percent of methane parameter variance (range 90–100 percent). Soil respiration Q10 accounts for a median 5.7 percent (range 0–10 percent) and exceeds the screening threshold at eight design points. These shares describe sensitivity under the current priors, not parameter identifiability or agreement with observed methane. A reliable global variance partition is not available for methane.</p>
 </section>
 <section id="response-to-each-parameter" class="level2">
 <h2 class="anchored" data-anchor-id="response-to-each-parameter">Response to each parameter</h2>
 <div id="fig-panel" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="figures/response_curves_soil.png" class="lightbox img-fluid figure-img" style="width:80.0%" alt="Grid of prior densities and response curves of soil carbon and nitrous oxide flux for four soil parameters."></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;4: Prior density and model response for the soil parameters at one row crop design point in the San Joaquin Valley. Points are the five runs, the larger point the median run, and the line PEcAn’s spline.</figcaption><p></p>
+<p><img src="figures/response_curves_soil.png" class="lightbox img-fluid figure-img" style="width:80.0%" alt="Grid of prior densities and response curves of soil carbon and modeled N2O-N flux for four soil parameters."></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;5: Prior density and model response for the soil parameters at one row crop design point in the San Joaquin Valley. Points are the five runs, the larger point the median run, and the line PEcAn’s spline.</figcaption><p></p>
 </figure>
 </div>
 <div id="fig-curves-soc" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="figures/response_curves_TotSoilCarb.png" class="lightbox img-fluid figure-img" style="width:100.0%" alt="Response curves of soil carbon at every design point for the influential parameters."></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;5: Response of soil carbon at every design point, as output over the design point’s median run, from the 2.3 to the 97.7 percentile of each prior.</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;6: Response of soil carbon at every design point, as output over the design point’s median run, from the 2.3 to the 97.7 percentile of each prior.</figcaption><p></p>
 </figure>
 </div>
 <div id="fig-curves-n2o" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="figures/response_curves_N2O_flux.png" class="lightbox img-fluid figure-img" style="width:100.0%" alt="Response curves of nitrous oxide flux at every design point for the influential parameters."></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;6: Response of nitrous oxide flux at every design point, as in <a href="#fig-curves-soc">Figure&nbsp;5</a>.</figcaption><p></p>
+<p><img src="figures/response_curves_N2O_flux.png" class="lightbox img-fluid figure-img" style="width:100.0%" alt="Response curves of modeled N2O-N flux at every design point for the influential parameters."></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;7: Response of modeled N₂O-N flux at every design point, as in <a href="#fig-curves-soc">Figure&nbsp;6</a>.</figcaption><p></p>
 </figure>
 </div>
 </section>
 <section id="reporting-scope" class="level2">
 <h2 class="anchored" data-anchor-id="reporting-scope">Reporting scope</h2>
-<p>Shares are reported for soil carbon and nitrous oxide flux. Methane and six other outputs were also computed. Modeled methane is near the precision of the model output, and plant carbon is low in these runs, with net primary productivity below 20 g C m<sup>-2</sup> yr<sup>-1</sup> at the median design point of every PFT; shares for these outputs are not presented.</p>
+<p>Shares are reported for soil carbon and modeled N₂O-N flux at all 100 design points, and for methane at the 11 design points with recorded rice seasons. Six other outputs were also computed. Plant carbon is low in these runs, with net primary productivity below 20 g C m<sup>-2</sup> yr<sup>-1</sup> at the median design point of every PFT; shares for these outputs are not presented.</p>
 </section>
 <section id="interpretation" class="level2">
 <h2 class="anchored" data-anchor-id="interpretation">Interpretation</h2>
 <p>These are model-derived results. Parameters are drawn from priors that have not been updated with observations, so each share depends on the prior widths; the prior for the soil respiration Q10 is uniform from 1.4 to 5.0.</p>
-<p>Each parameter is varied with all others at their medians, so the shares divide the sum of single-parameter contributions and do not include interactions (<a href="references.html">Saltelli et al., 2019</a>). Meteorology, initial conditions, and management are held at one ensemble member; the global sensitivity analysis compares those inputs with the parameters. In SIPNET 2.2.0 the nitrous oxide output is the total nitrogen volatilization flux.</p>
+<p>Each parameter is varied with all others at their medians, so the shares divide the sum of single-parameter contributions and do not include interactions (<a href="references.html">Saltelli et al., 2019</a>). Meteorology, initial conditions, and management are held at one ensemble member; the global sensitivity analysis compares those inputs with the parameters.</p>
 <p>See <a href="references.html">References</a> for the cited sources.</p>
 
 
