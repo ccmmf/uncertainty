@@ -7,9 +7,10 @@ used in the MAGiC inventory runs for California cropland.
 
 - [Local Sensitivity](analysis/local_sensitivity.qmd) ranks the model parameters by their
   contribution to the variance of modeled soil carbon and nitrous oxide flux at 100 design
-  points.
-- [Global Sensitivity](analysis/global_sensitivity.qmd) partitions that variance among
-  parameters, initial conditions, meteorology, and management at 10 design points.
+  points, and methane at 11 design points with recorded rice seasons.
+- [Global Sensitivity](analysis/global_sensitivity.qmd) partitions the modeled soil-carbon
+  and nitrous-oxide output variance among parameters, initial conditions, meteorology,
+  and management at 10 design points.
 
 The [training](docs/training/index.qmd) pages show how to run both analyses on the
 inputs of an ensemble run.
